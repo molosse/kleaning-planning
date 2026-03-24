@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+data/users.json
+data/extras.json
+data/lieux.json
+*.log
+.DS_Store
