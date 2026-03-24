@@ -467,7 +467,7 @@ export default function App(){
     if(token){fetch("/api/auth/me",{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>{if(d.username)setUser(d);}).catch(()=>{});}
   },[]);
 
-  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();if(user.role==="admin")chargerUsers();},[user]);
+  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();if(user.role==="admin")chargerUsers();}},[user]);
 
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
   const chargerLieux=()=>apiCall("/api/lieux").then(d=>{if(d.lieux)setLieux(d.lieux);});
