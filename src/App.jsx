@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import Login from "./Login.jsx";
+import {
+  CalendarDays, MapPin, Users, UserPlus, Settings,
+  RefreshCw, Send, Copy, Check, ChevronRight,
+  Plus, X, Edit2, Trash2, Clock, AlertTriangle,
+  Home, Building2, Castle, Briefcase, Star,
+  LogOut, Menu, Zap, CheckCircle2, ShirtIcon,
+} from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════
 // KLEANING — APP MOBILE-FIRST v6
@@ -35,16 +42,61 @@ const CHAINE_COLORS=[
   {bg:"#dcfce7",border:"#4ade80",label:"#14532d"},
 ];
 
+// ── PALETTE MARRAKECH PREMIUM ─────────────────────────────────
+const C = {
+  navy:    "#0D1B2A",
+  navyMid: "#1A3550",
+  gold:    "#C9A84C",
+  goldSoft:"#F5ECD7",
+  bg:      "#F4F2EE",
+  bgCard:  "#FFFFFF",
+  border:  "#E8E0D5",
+  text:    "#1A1A2E",
+  textMid: "#4A5568",
+  textSoft:"#8A9BB0",
+  success: "#16714A",
+  successBg:"#ECFDF5",
+  error:   "#B91C1C",
+  errorBg: "#FEF2F2",
+  warn:    "#92400E",
+  warnBg:  "#FFFBEB",
+  warnBorder:"#FCD34D",
+};
+
 // ── CSS GLOBAL ────────────────────────────────────────────────
 const GLOBAL_CSS = `
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f1f5f9; }
+  body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; background: ${C.bg}; color: ${C.text}; }
   input, select, button, textarea { font-family: inherit; }
   button { cursor: pointer; }
+
+  /* Scrollbar élégante */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D1C9BE; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #B8AFA4; }
+
+  /* Animations */
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.2s ease-out; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+  .fade-in { animation: fadeIn 0.25s ease-out; }
+
+  /* Boutons interactifs — hover/active */
+  .btn-primary { transition: transform .15s, box-shadow .15s; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,27,42,0.25); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost:hover { background: rgba(201,168,76,0.08) !important; }
+  .btn-danger:hover { background: #FEE2E2 !important; color: #B91C1C !important; }
+
+  /* Inputs focus */
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: ${C.gold} !important;
+    background: #FFFDF7 !important;
+  }
+
   /* Navigation bottom mobile */
   .nav-bottom { display: none; }
   @media (max-width: 640px) {
@@ -58,11 +110,38 @@ const GLOBAL_CSS = `
   @media (min-width: 641px) {
     .mobile-only { display: none !important; }
   }
+
   /* Touch targets minimum 44px */
   .tap-target { min-height: 44px; min-width: 44px; }
+
   /* Scroll smooth */
   .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .scroll-x::-webkit-scrollbar { display: none; }
+
+  /* Cards */
+  .card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid ${C.border};
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(13,27,42,0.04);
+  }
+
+  /* Badge chips */
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 100px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid transparent;
+  }
+
+  /* Séparateur */
+  .divider { height: 1px; background: ${C.border}; margin: 12px 0; }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: ${C.textSoft};
+  }
 `;
 
 // ── UTILITAIRES ───────────────────────────────────────────────
@@ -225,7 +304,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
   },[openSel]);
 
   return(
-    <div style={{padding:"12px 14px",background:chaineBg||"white",borderLeft:`4px solid ${ep?ep.coul:chaineBorder||"#e2e8f0"}`}}>
+    <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||C.border}`}}>
 
       {/* Ligne 1 : heure + nom */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
@@ -418,8 +497,8 @@ function Wizard({onSave,onClose}){
             style={{flex:1,padding:14,background:"#f8fafc",color:"#475569",border:"1px solid #e2e8f0",
               borderRadius:12,fontSize:14,fontWeight:600,minHeight:50}}>← Retour</button>}
           <button onClick={next}
-            style={{flex:2,padding:14,background:"#0f172a",color:"white",border:"none",
-              borderRadius:12,fontSize:15,fontWeight:700,minHeight:50}}>
+            style={{flex:2,padding:14,background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,color:"white",border:"none",
+              borderRadius:12,fontSize:15,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit"}}>
             {step===WQ.length-1?"✅ Enregistrer":"Suivant →"}
           </button>
         </div>
@@ -559,33 +638,64 @@ export default function App(){
   return(
     <>
       <style>{GLOBAL_CSS}</style>
-      <div style={{fontFamily:"inherit",background:"#f1f5f9",minHeight:"100vh",paddingBottom:70}}>
+      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:C.bg,minHeight:"100vh",paddingBottom:70}}>
 
         {/* ── HEADER ─────────────────────────────────────── */}
-        <div style={{background:"#0f172a",padding:"12px 16px 10px",position:"sticky",top:0,zIndex:100}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",maxWidth:1080,margin:"0 auto"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:20}}>🧹</span>
+        <div style={{
+          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+          padding:"0 16px",
+          position:"sticky",top:0,zIndex:100,
+          boxShadow:"0 2px 12px rgba(13,27,42,0.3)",
+        }}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",maxWidth:1080,margin:"0 auto",height:58}}>
+
+            {/* Logo */}
+            <div style={{display:"flex",alignItems:"center",gap:11}}>
+              <div style={{
+                width:34,height:34,borderRadius:10,
+                background:"linear-gradient(135deg, rgba(201,168,76,0.3) 0%, rgba(201,168,76,0.1) 100%)",
+                border:"1px solid rgba(201,168,76,0.4)",
+                display:"flex",alignItems:"center",justifyContent:"center",
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
+                    fill="#C9A84C" strokeWidth="0.5" strokeLinejoin="round"/>
+                </svg>
+              </div>
               <div>
-                <div style={{color:"white",fontSize:15,fontWeight:700,lineHeight:1.2}}>Kleaning</div>
-                <div style={{color:"#64748b",fontSize:10,lineHeight:1.2}}>{user.displayName} · {syncTime}</div>
+                <div style={{color:"white",fontSize:15,fontWeight:700,letterSpacing:"-0.3px",lineHeight:1.2}}>Kleaning</div>
+                <div style={{color:"rgba(201,168,76,0.7)",fontSize:10,lineHeight:1.2,fontWeight:500}}>{user.displayName}</div>
               </div>
             </div>
 
             {/* Tabs desktop */}
-            <div className="nav-top-tabs" style={{display:"flex",gap:4,alignItems:"center"}}>
-              {TABS.map(([k,ic,l])=>(
-                <button key={k} onClick={()=>setOnglet(k)}
-                  style={{padding:"6px 12px",borderRadius:8,border:"none",fontSize:11,fontWeight:600,
-                    background:onglet===k?"white":"rgba(255,255,255,0.1)",
-                    color:onglet===k?"#0f172a":"rgba(255,255,255,0.7)"}}>
-                  {ic} {l}
-                </button>
-              ))}
-              <button onClick={logout}
-                style={{padding:"6px 10px",background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",
-                  border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,fontSize:11,marginLeft:4}}>
-                Déco
+            <div className="nav-top-tabs" style={{display:"flex",gap:2,alignItems:"center"}}>
+              {TABS.map(([k,ic,l])=>{
+                const active=onglet===k;
+                return(
+                  <button key={k} onClick={()=>setOnglet(k)}
+                    style={{
+                      padding:"7px 13px",borderRadius:9,border:"none",fontSize:12,fontWeight:600,
+                      background:active?"rgba(201,168,76,0.18)":"transparent",
+                      color:active?"#C9A84C":"rgba(255,255,255,0.55)",
+                      borderBottom:active?"2px solid #C9A84C":"2px solid transparent",
+                      transition:"all .15s",
+                    }}>
+                    {l}
+                  </button>
+                );
+              })}
+              <button onClick={logout} className="btn-ghost"
+                style={{
+                  marginLeft:8,padding:"6px 12px",
+                  background:"rgba(255,255,255,0.06)",
+                  color:"rgba(255,255,255,0.45)",
+                  border:"1px solid rgba(255,255,255,0.12)",
+                  borderRadius:9,fontSize:11,fontWeight:600,
+                  display:"flex",alignItems:"center",gap:5,
+                  transition:"all .15s",
+                }}>
+                <LogOut size={12}/> Déco
               </button>
             </div>
           </div>
@@ -598,51 +708,62 @@ export default function App(){
           {onglet==="planning"&&(
             <>
               {/* Barre chargement */}
-              <div style={{background:"white",borderRadius:12,padding:"12px 14px",marginBottom:12,
-                border:"1px solid #e2e8f0",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}>
+              <div className="card" style={{padding:"16px",marginBottom:14}}>
                 <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
                   <div style={{flex:"0 0 auto"}}>
-                    <label style={{fontSize:11,color:"#94a3b8",fontWeight:700,display:"block",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.04em"}}>Date</label>
+                    <label className="section-label" style={{display:"block",marginBottom:6}}>Date</label>
                     <input value={dateQ} onChange={e=>setDateQ(e.target.value)}
-                      style={{padding:"10px 12px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:14,
-                        width:120,fontFamily:"inherit",minHeight:44}}/>
+                      style={{padding:"10px 13px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
+                        width:130,fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text}}/>
                   </div>
-                  <button onClick={chargerAgenda} disabled={loading}
-                    style={{flex:1,minWidth:160,padding:"12px 16px",
-                      background:loading?"#e2e8f0":"#3b82f6",color:loading?"#94a3b8":"white",
-                      border:"none",borderRadius:9,fontSize:14,fontWeight:700,minHeight:44,
-                      display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                    <span style={{animation:loading?"spin .8s linear infinite":"none",display:"inline-block"}}>🔄</span>
-                    {loading?"Chargement...":"Charger l'agenda Ali"}
+                  <button onClick={chargerAgenda} disabled={loading} className="btn-primary"
+                    style={{
+                      flex:1,minWidth:160,padding:"12px 18px",
+                      background:loading?C.textSoft:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                      color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:46,
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                      boxShadow:loading?"none":"0 4px 14px rgba(13,27,42,0.25)",
+                      cursor:loading?"not-allowed":"pointer",
+                    }}>
+                    <RefreshCw size={15} style={{animation:loading?"spin .8s linear infinite":"none"}}/>
+                    {loading?"Chargement…":"Charger l'agenda Ali"}
                   </button>
                 </div>
 
                 {msg&&(
-                  <div style={{marginTop:10,padding:"9px 12px",borderRadius:9,fontSize:12,fontWeight:600,
-                    background:msg.startsWith("✅")?"#f0fdf4":msg.startsWith("ℹ️")?"#eff6ff":"#fef2f2",
-                    color:msg.startsWith("✅")?"#166534":msg.startsWith("ℹ️")?"#1e40af":"#dc2626",
-                    border:`1px solid ${msg.startsWith("✅")?"#86efac":msg.startsWith("ℹ️")?"#bfdbfe":"#fca5a5"}`,
+                  <div style={{marginTop:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,
+                    background:msg.startsWith("✅")?C.successBg:msg.startsWith("ℹ️")?"#EFF6FF":C.errorBg,
+                    color:msg.startsWith("✅")?C.success:msg.startsWith("ℹ️")?"#1E40AF":C.error,
+                    border:`1px solid ${msg.startsWith("✅")?"#A7F3D0":msg.startsWith("ℹ️")?"#BFDBFE":"#FECACA"}`,
                     display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <span style={{flex:1}}>{msg}</span>
-                    {nbSans>0&&<span style={{background:"#fef2f2",color:"#dc2626",padding:"3px 9px",borderRadius:8,fontSize:11,border:"1px solid #fca5a5",fontWeight:700,whiteSpace:"nowrap"}}>⚠️ {nbSans} sans assignation</span>}
-                    {nbVilla>0&&<span style={{background:"#fff7ed",color:"#ea580c",padding:"3px 9px",borderRadius:8,fontSize:11,border:"1px solid #fed7aa",fontWeight:700,whiteSpace:"nowrap"}}>🏠 {nbVilla} villa &lt; 2</span>}
+                    {msg.startsWith("✅")?<CheckCircle2 size={14}/>:msg.startsWith("ℹ️")?<Zap size={14}/>:<AlertTriangle size={14}/>}
+                    <span style={{flex:1}}>{msg.replace("✅ ","").replace("ℹ️ ","")}</span>
+                    {nbSans>0&&<span style={{background:C.errorBg,color:C.error,padding:"3px 9px",borderRadius:8,fontSize:11,border:"1px solid #FECACA",fontWeight:700,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}><AlertTriangle size={10}/>{nbSans} sans assignation</span>}
+                    {nbVilla>0&&<span style={{background:C.warnBg,color:C.warn,padding:"3px 9px",borderRadius:8,fontSize:11,border:`1px solid ${C.warnBorder}`,fontWeight:700,whiteSpace:"nowrap"}}>Villa &lt; 2</span>}
                   </div>
                 )}
               </div>
 
               {chaines.length===0?(
-                <div style={{background:"white",borderRadius:12,padding:"40px 20px",textAlign:"center",
-                  color:"#94a3b8",border:"1px dashed #e2e8f0",boxShadow:"0 1px 3px rgba(0,0,0,0.03)"}}>
-                  <div style={{fontSize:48,marginBottom:12}}>📅</div>
-                  <div style={{fontSize:15,fontWeight:600,color:"#475569",marginBottom:6}}>Aucun planning chargé</div>
-                  <div style={{fontSize:13}}>Saisissez une date et appuyez sur "Charger l'agenda Ali"</div>
+                <div className="card" style={{padding:"52px 24px",textAlign:"center"}}>
+                  <div style={{
+                    width:64,height:64,borderRadius:18,
+                    background:`linear-gradient(135deg, ${C.navy}14 0%, ${C.gold}18 100%)`,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    margin:"0 auto 18px",
+                    border:`1px solid ${C.border}`,
+                  }}>
+                    <CalendarDays size={28} color={C.gold}/>
+                  </div>
+                  <div style={{fontSize:16,fontWeight:600,color:C.text,marginBottom:6}}>Aucun planning chargé</div>
+                  <div style={{fontSize:13,color:C.textSoft}}>Saisissez une date et appuyez sur "Charger l'agenda Ali"</div>
                 </div>
               ):(
                 // Layout responsive : 2 colonnes sur desktop, 1 colonne sur mobile
                 <div className="layout-2col" style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:14,alignItems:"start"}}>
                   <div>
-                    <div style={{fontSize:12,fontWeight:600,color:"#94a3b8",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.05em"}}>
-                      ⚡ {chaines.length} chaînes · même couleur = assigner ensemble
+                    <div style={{fontSize:11,fontWeight:600,color:C.textSoft,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.07em",display:"flex",alignItems:"center",gap:6}}>
+                      <Zap size={11} color={C.gold}/> {chaines.length} chaîne{chaines.length>1?"s":""} · même couleur = assigner ensemble
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:12}}>
                       {chaines.map((chaine,ci)=>{
@@ -650,34 +771,38 @@ export default function App(){
                         const colorIdx=estPaire?chaines.filter((c,i)=>i<ci&&c.inters.length===2).length%CHAINE_COLORS.length:-1;
                         const couleur=estPaire?CHAINE_COLORS[colorIdx]:null;
                         const chaineBg=couleur?couleur.bg:"white";
-                        const chaineBorder=couleur?couleur.border:"#e2e8f0";
+                        const chaineBorder=couleur?couleur.border:C.border;
                         return(
-                          <div key={ci} style={{borderRadius:14,overflow:"hidden",
-                            border:`2px solid ${chaineBorder}`,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}}>
+                          <div key={ci} style={{borderRadius:16,overflow:"hidden",
+                            border:`1.5px solid ${chaineBorder}`,
+                            boxShadow:"0 2px 10px rgba(13,27,42,0.06)"}}>
                             {/* En-tête chaîne */}
                             <div style={{background:chaineBg,padding:"10px 14px",
                               display:"flex",justifyContent:"space-between",alignItems:"center",
                               borderBottom:`1px solid ${chaineBorder}`}}>
                               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                <span style={{fontSize:12,fontWeight:700,color:couleur?couleur.label:"#64748b"}}>
-                                  {estPaire?`🔗 Chaîne ${ci+1}`:`● Solo ${ci+1}`}
+                                <span style={{fontSize:12,fontWeight:700,color:couleur?couleur.label:C.textMid}}>
+                                  {estPaire?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
                                 </span>
-                                <span style={{fontSize:11,color:"#94a3b8"}}>
-                                  {chaine.dureeTotal}min{chaine.trajetTotal>0?` · 🚗${chaine.trajetTotal}min`:""}
+                                <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
+                                  <Clock size={10}/>{chaine.dureeTotal}min
+                                  {chaine.trajetTotal>0&&<><MapPin size={9}/>{chaine.trajetTotal}min</>}
                                 </span>
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                <span style={{fontSize:11,color:"#64748b"}}>Départ</span>
+                                <span style={{fontSize:11,color:C.textSoft}}>Départ</span>
                                 <select value={chaine.inters[0]?.heureDebut||"12:00"} onChange={e=>changerHeureCh(ci,e.target.value)}
-                                  style={{padding:"5px 8px",border:`1.5px solid ${chaineBorder}`,borderRadius:7,
-                                    fontSize:12,fontWeight:700,color:"#475569",background:"rgba(255,255,255,0.8)",
-                                    minHeight:36}}>
+                                  style={{padding:"5px 8px",border:`1.5px solid ${chaineBorder}`,borderRadius:8,
+                                    fontSize:12,fontWeight:700,color:C.textMid,background:"rgba(255,255,255,0.85)",
+                                    minHeight:36,fontFamily:"inherit"}}>
                                   {HEURES_S.map(h=><option key={h}>{h}</option>)}
                                 </select>
-                                <button onClick={()=>supprimerChaine(ci)}
-                                  style={{width:36,height:36,borderRadius:8,background:"rgba(255,255,255,0.8)",
-                                    border:"1.5px solid #fca5a5",color:"#dc2626",fontSize:16,
-                                    display:"flex",alignItems:"center",justifyContent:"center"}}>🗑</button>
+                                <button onClick={()=>supprimerChaine(ci)} className="btn-danger"
+                                  style={{width:34,height:34,borderRadius:8,background:"rgba(255,255,255,0.8)",
+                                    border:`1px solid ${C.border}`,color:C.textSoft,
+                                    display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"}}>
+                                  <Trash2 size={13}/>
+                                </button>
                               </div>
                             </div>
                             {/* Interventions */}
@@ -685,11 +810,11 @@ export default function App(){
                               <div key={inter.id}>
                                 <Carte interv={inter} extras={extras} equipe={equipe} onChange={(f,v)=>changeInChaine(ci,ii,f,v)} chaineBg={chaineBg} chaineBorder={chaineBorder}/>
                                 {ii<chaine.inters.length-1&&(
-                                  <div style={{display:"flex",alignItems:"center",gap:10,padding:"6px 14px",
+                                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",
                                     background:chaineBg,borderTop:`1px solid ${chaineBorder}`,borderBottom:`1px solid ${chaineBorder}`}}>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
-                                    <span style={{fontSize:11,color:"#64748b",fontWeight:600,whiteSpace:"nowrap"}}>
-                                      🚗 {trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min → {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
+                                    <span style={{fontSize:10,color:C.textSoft,fontWeight:600,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
+                                      <MapPin size={9}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
                                     </span>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
                                   </div>
@@ -701,61 +826,97 @@ export default function App(){
                       })}
                     </div>
 
-                    {/* Boutons actions — mobile uniquement, flottants en bas */}
-                    <div className="mobile-only" style={{display:"none",gap:10,marginTop:16,flexDirection:"column"}}>
-                      <button onClick={()=>setShowCharge(true)}
-                        style={{width:"100%",padding:14,background:"white",border:"1px solid #e2e8f0",
-                          borderRadius:12,fontSize:14,fontWeight:600,color:"#1e293b",
-                          display:"flex",alignItems:"center",justifyContent:"center",gap:8,minHeight:50}}>
-                        👥 Voir la charge du jour
-                        {conflits.length>0&&<span style={{background:"#fef2f2",color:"#dc2626",padding:"2px 8px",borderRadius:8,fontSize:12,border:"1px solid #fca5a5"}}>⚠️ {conflits.length} conflit{conflits.length>1?"s":""}</span>}
+                    {/* Boutons actions — mobile uniquement */}
+                    <div className="mobile-only" style={{display:"none",gap:10,marginTop:14,flexDirection:"column"}}>
+                      <button onClick={()=>setShowCharge(true)} className="card"
+                        style={{width:"100%",padding:"14px 16px",border:`1px solid ${C.border}`,
+                          borderRadius:12,fontSize:14,fontWeight:600,color:C.text,
+                          display:"flex",alignItems:"center",justifyContent:"center",gap:8,minHeight:50,cursor:"pointer",background:"white"}}>
+                        <Users size={16} color={C.gold}/>
+                        Charge du jour
+                        {conflits.length>0&&<span style={{background:C.errorBg,color:C.error,padding:"2px 8px",borderRadius:8,fontSize:12,border:"1px solid #FECACA",fontWeight:700}}>{conflits.length} conflit{conflits.length>1?"s":""}</span>}
                       </button>
-                      <button onClick={genWA}
-                        style={{width:"100%",padding:14,background:"#0f172a",color:"white",border:"none",
-                          borderRadius:12,fontSize:15,fontWeight:700,minHeight:50,
-                          display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                        💬 Générer le planning WhatsApp
+                      <button onClick={genWA} className="btn-primary"
+                        style={{width:"100%",padding:"14px 16px",
+                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          color:"white",border:"none",
+                          borderRadius:12,fontSize:14,fontWeight:600,minHeight:50,
+                          display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                          boxShadow:"0 4px 14px rgba(13,27,42,0.25)"}}>
+                        <Send size={15}/> Générer le planning WhatsApp
                       </button>
                     </div>
                   </div>
 
                   {/* Panneau droit — desktop only */}
-                  <div className="panel-right desktop-only" style={{display:"flex",flexDirection:"column",gap:12,position:"sticky",top:62}}>
-                    {/* Charge */}
-                    <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#0f172a",marginBottom:10}}>👥 Charge du jour</div>
+                  <div className="panel-right desktop-only" style={{display:"flex",flexDirection:"column",gap:12,position:"sticky",top:72}}>
+
+                    {/* Charge du jour */}
+                    <div className="card" style={{padding:16}}>
+                      <div style={{fontSize:11,fontWeight:700,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                        <Users size={12} color={C.gold}/> Charge du jour
+                      </div>
                       {equipe.filter(e=>e.actif!==false).map(e=>{const t=ch[e.nom]||[];return(
-                        <div key={e.nom} style={{marginBottom:6}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",borderRadius:8,background:e.bg}}>
-                            <span style={{fontWeight:700,fontSize:12,color:e.coul}}>{e.emoji} {e.nom}</span>
-                            <span style={{fontSize:11,fontWeight:700,color:t.length>=3?"#ef4444":t.length>=2?"#f97316":t.length>=1?"#10b981":"#94a3b8"}}>{t.length>0?`${t.length}×`:"—"}</span>
+                        <div key={e.nom} style={{marginBottom:8}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",borderRadius:10,background:e.bg,border:`1px solid ${e.coul}20`}}>
+                            <span style={{fontWeight:600,fontSize:12,color:e.coul}}>{e.emoji} {e.nom}</span>
+                            <span style={{fontSize:11,fontWeight:700,
+                              color:t.length>=3?"#DC2626":t.length>=2?"#D97706":t.length>=1?C.success:C.textSoft}}>
+                              {t.length>0?`${t.length} mission${t.length>1?"s":""}`:"—"}
+                            </span>
                           </div>
-                          {t.length>0&&<div style={{paddingLeft:8,marginTop:2}}>{t.map((x,i)=><div key={i} style={{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:3}}><span style={{color:e.coul}}>›</span>{toWA(x.heureDebut)} {x.nom.replace("Appartement GH ","").replace("Appartement ","")}</div>)}</div>}
+                          {t.length>0&&<div style={{paddingLeft:10,marginTop:3}}>{t.map((x,i)=>(
+                            <div key={i} style={{fontSize:10,color:C.textSoft,display:"flex",alignItems:"center",gap:4,paddingBottom:1}}>
+                              <ChevronRight size={9} color={e.coul}/>{toWA(x.heureDebut)} {x.nom.replace("Appartement GH ","").replace("Appartement ","")}
+                            </div>
+                          ))}</div>}
                         </div>
                       );})}
                     </div>
 
+                    {/* Conflits */}
                     {conflits.length>0
-                      ?<div style={{background:"#fef2f2",borderRadius:10,padding:10,border:"1px solid #fca5a5"}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"#dc2626",marginBottom:4}}>⚠️ Conflits</div>
-                        {conflits.map((c,i)=><div key={i} style={{fontSize:11,color:"#dc2626"}}>{c}</div>)}
+                      ?<div style={{background:C.errorBg,borderRadius:12,padding:"12px 14px",border:"1px solid #FECACA"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:C.error,marginBottom:6,display:"flex",alignItems:"center",gap:5,textTransform:"uppercase",letterSpacing:"0.06em"}}>
+                          <AlertTriangle size={12}/> Conflits ({conflits.length})
+                        </div>
+                        {conflits.map((cf,i)=><div key={i} style={{fontSize:11,color:C.error,paddingBottom:2}}>{cf}</div>)}
                       </div>
-                      :<div style={{background:"#f0fdf4",borderRadius:9,padding:"8px 10px",border:"1px solid #86efac",fontSize:12,fontWeight:600,color:"#16a34a"}}>✅ Aucun conflit</div>
+                      :<div className="card" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:8,background:C.successBg,border:`1px solid #A7F3D0`}}>
+                        <CheckCircle2 size={14} color={C.success}/>
+                        <span style={{fontSize:12,fontWeight:600,color:C.success}}>Aucun conflit</span>
+                      </div>
                     }
 
                     {/* WhatsApp */}
-                    <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#0f172a",marginBottom:10}}>💬 WhatsApp</div>
-                      <button onClick={genWA} style={{width:"100%",padding:11,border:"none",borderRadius:9,fontSize:13,fontWeight:700,background:"#0f172a",color:"white",marginBottom:8,minHeight:44}}>⚙️ Générer le planning</button>
+                    <div className="card" style={{padding:16}}>
+                      <div style={{fontSize:11,fontWeight:700,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                        <Send size={12} color={C.gold}/> WhatsApp
+                      </div>
+                      <button onClick={genWA} className="btn-primary"
+                        style={{width:"100%",padding:11,border:"none",borderRadius:10,fontSize:13,fontWeight:600,
+                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          color:"white",marginBottom:10,minHeight:44,cursor:"pointer",
+                          display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+                          boxShadow:"0 4px 12px rgba(13,27,42,0.2)"}}>
+                        <Zap size={14}/> Générer le planning
+                      </button>
                       {waText&&<>
                         <textarea readOnly value={waText} onClick={e=>{e.target.select();e.target.setSelectionRange(0,99999);}}
-                          style={{width:"100%",background:"#f8fafc",borderRadius:8,padding:10,fontFamily:"monospace",fontSize:10,lineHeight:1.7,border:"1px solid #e2e8f0",height:140,resize:"none",boxSizing:"border-box",color:"#1e293b",outline:"none",marginBottom:8}}/>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                          <button onClick={copier} style={{padding:"10px",border:"none",borderRadius:9,fontSize:13,fontWeight:700,background:copied?"#059669":"#475569",color:"white",minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                            {copied?"✅":"📋"} {copied?"Copié !":"Copier"}
+                          style={{width:"100%",background:"#FAFAF8",borderRadius:9,padding:10,fontFamily:"monospace",fontSize:10,lineHeight:1.7,border:`1px solid ${C.border}`,height:140,resize:"none",boxSizing:"border-box",color:C.text,outline:"none",marginBottom:8}}/>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                          <button onClick={copier}
+                            style={{padding:"10px",borderRadius:9,fontSize:12,fontWeight:600,cursor:"pointer",
+                              background:copied?C.successBg:"#F4F2EE",color:copied?C.success:C.textMid,
+                              border:`1px solid ${copied?"#A7F3D0":C.border}`,minHeight:42,
+                              display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                            {copied?<Check size={14}/>:<Copy size={14}/>} {copied?"Copié !":"Copier"}
                           </button>
-                          <button onClick={()=>{window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`,"_blank");setWaSent(true);}} style={{padding:"10px",border:"none",borderRadius:9,fontSize:13,fontWeight:700,background:waSent?"#128C7E":"#25D366",color:"white",minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                            {waSent?"✅":"📤"} {waSent?"Ouvert !":"WhatsApp"}
+                          <button onClick={()=>{window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`,"_blank");setWaSent(true);}}
+                            style={{padding:"10px",border:"none",borderRadius:9,fontSize:12,fontWeight:600,cursor:"pointer",
+                              background:waSent?"#128C7E":"#25D366",color:"white",minHeight:42,
+                              display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                            {waSent?<Check size={14}/>:<Send size={14}/>} {waSent?"Envoyé !":"WhatsApp"}
                           </button>
                         </div>
                       </>}
@@ -769,15 +930,21 @@ export default function App(){
           {/* ═══ LOGEMENTS ════════════════════════════════ */}
           {onglet==="lieux"&&(
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>🏠 {lieux.length} logements</div>
-                <button onClick={()=>setWizard(true)}
-                  style={{padding:"10px 16px",background:"#0f172a",color:"white",border:"none",
-                    borderRadius:10,fontSize:13,fontWeight:700,minHeight:44}}>
-                  + Ajouter
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <Home size={16} color={C.gold}/>
+                  <span style={{fontSize:15,fontWeight:700,color:C.text}}>{lieux.length} logements</span>
+                </div>
+                <button onClick={()=>setWizard(true)} className="btn-primary"
+                  style={{padding:"10px 18px",
+                    background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                    color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,minHeight:42,
+                    display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                    boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
+                  <Plus size={14}/> Ajouter
                 </button>
               </div>
-              {msg&&<div style={{marginBottom:10,padding:"9px 12px",borderRadius:9,fontSize:12,fontWeight:600,background:"#f0fdf4",color:"#166534",border:"1px solid #86efac"}}>{msg}</div>}
+              {msg&&<div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,background:C.successBg,color:C.success,border:"1px solid #A7F3D0",display:"flex",alignItems:"center",gap:7}}><CheckCircle2 size={14}/>{msg.replace("✅ ","").replace("🗑 ","")}</div>}
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {lieux.map(l=>{
                   const isEdit=editLieu?.id===l.id;
@@ -872,33 +1039,45 @@ export default function App(){
           {/* ═══ EXTRAS ═══════════════════════════════════ */}
           {onglet==="extras"&&(
             <div>
-              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:4}}>👤 Extras mémorisés</div>
-              <div style={{fontSize:12,color:"#64748b",marginBottom:16}}>Restent en mémoire jusqu'à suppression manuelle. Disponibles dans tous les plannings.</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <UserPlus size={16} color={C.gold}/>
+                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Extras mémorisés</span>
+              </div>
+              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>Restent en mémoire jusqu'à suppression. Disponibles dans tous les plannings.</div>
               <div style={{display:"flex",gap:8,marginBottom:16}}>
                 <input value={newExtra} onChange={e=>setNewExtra(e.target.value)} onKeyDown={e=>e.key==="Enter"&&ajouterExtra()}
                   placeholder="Prénom de l'extra"
-                  style={{flex:1,padding:"12px 14px",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:14,outline:"none",minHeight:48}}/>
-                <button onClick={ajouterExtra}
-                  style={{padding:"12px 18px",background:"#0f172a",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,minHeight:48}}>
-                  + Ajouter
+                  style={{flex:1,padding:"12px 14px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,outline:"none",minHeight:48,background:"#FAFAF8",color:C.text,fontFamily:"inherit"}}/>
+                <button onClick={ajouterExtra} className="btn-primary"
+                  style={{padding:"12px 18px",
+                    background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                    color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:48,
+                    display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                    boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
+                  <Plus size={15}/> Ajouter
                 </button>
               </div>
               {extras.length===0
-                ?<div style={{background:"white",borderRadius:12,padding:"28px",textAlign:"center",color:"#94a3b8",border:"1px dashed #e2e8f0"}}>
+                ?<div className="card" style={{padding:"32px",textAlign:"center",color:C.textSoft,border:`1px dashed ${C.border}`}}>
                   Tapez un prénom et appuyez sur Entrée ou + Ajouter
                 </div>
                 :<div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {extras.map(ex=>(
-                    <div key={ex.id} style={{background:"white",borderRadius:10,padding:"12px 14px",border:"1px solid #e2e8f0",
+                    <div key={ex.id} className="card" style={{padding:"12px 16px",
                       display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <div style={{fontWeight:600,fontSize:14,color:"#0f172a"}}>👤 {ex.nom}</div>
-                        <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Enregistré le {new Date(ex.createdAt).toLocaleDateString("fr-FR")}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:10}}>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:`${C.navy}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <UserPlus size={15} color={C.navyMid}/>
+                        </div>
+                        <div>
+                          <div style={{fontWeight:600,fontSize:14,color:C.text}}>{ex.nom}</div>
+                          <div style={{fontSize:11,color:C.textSoft,marginTop:1}}>Enregistré le {new Date(ex.createdAt).toLocaleDateString("fr-FR")}</div>
+                        </div>
                       </div>
-                      <button onClick={()=>supprimerExtra(ex.id)}
-                        style={{padding:"8px 14px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",
-                          color:"#dc2626",fontSize:13,fontWeight:600,minHeight:40}}>
-                        🗑 Retirer
+                      <button onClick={()=>supprimerExtra(ex.id)} className="btn-danger"
+                        style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"white",
+                          color:C.textSoft,fontSize:13,fontWeight:500,minHeight:38,display:"flex",alignItems:"center",gap:5,cursor:"pointer",transition:"all .15s"}}>
+                        <Trash2 size={13}/> Retirer
                       </button>
                     </div>
                   ))}
@@ -911,82 +1090,97 @@ export default function App(){
           {/* ═══ ÉQUIPE FIXE ══════════════════════════ */}
           {onglet==="equipe"&&(
             <div>
-              <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:4}}>👥 Équipe fixe</div>
-              <div style={{fontSize:12,color:"#64748b",marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <Users size={16} color={C.gold}/>
+                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Équipe fixe</span>
+              </div>
+              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>
                 Les employées listées ici apparaissent dans les assignations de chaque intervention.
-                {user.role!=="admin"&&<span style={{color:"#94a3b8"}}> Seul l'admin peut ajouter ou supprimer.</span>}
+                {user.role!=="admin"&&<span style={{color:C.textSoft}}> Seul l'admin peut ajouter ou supprimer.</span>}
               </div>
 
               {/* Ajouter employée — admin seulement */}
               {user.role==="admin"&&(
-                <div style={{background:"white",borderRadius:12,padding:"14px 16px",border:"1px solid #e2e8f0",marginBottom:14}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12}}>+ Ajouter une employée</div>
+                <div className="card" style={{padding:"16px",marginBottom:14}}>
+                  <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                    <Plus size={14} color={C.gold}/> Ajouter une employée
+                  </div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
-                    {/* Sélecteur emoji */}
                     <div>
-                      <label style={{fontSize:11,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Emoji</label>
+                      <label className="section-label" style={{display:"block",marginBottom:6}}>Emoji</label>
                       <select value={newEmp.emoji} onChange={e=>setNewEmp(p=>({...p,emoji:e.target.value}))}
-                        style={{padding:"10px 12px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:18,minHeight:48,minWidth:70}}>
+                        style={{padding:"10px 12px",border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:18,minHeight:48,minWidth:70,background:"#FAFAF8"}}>
                         {["👩","👩‍🦱","👩‍🦳","👩‍🦰","👨","👨‍🦱","👨‍🦳","👨‍🦰","🧑","👤"].map(em=><option key={em} value={em}>{em}</option>)}
                       </select>
                     </div>
                     <div style={{flex:1,minWidth:140}}>
-                      <label style={{fontSize:11,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Prénom</label>
+                      <label className="section-label" style={{display:"block",marginBottom:6}}>Prénom</label>
                       <input value={newEmp.nom} onChange={e=>setNewEmp(p=>({...p,nom:e.target.value}))}
                         onKeyDown={e=>e.key==="Enter"&&ajouterEmp()}
                         placeholder="ex: Rachida"
-                        style={{width:"100%",padding:"12px 14px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48}}/>
+                        style={{width:"100%",padding:"12px 14px",border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48,background:"#FAFAF8",color:C.text,fontFamily:"inherit"}}/>
                     </div>
-                    <div style={{paddingTop:22}}>
-                      <button onClick={ajouterEmp}
-                        style={{padding:"12px 18px",background:"#0f172a",color:"white",border:"none",
-                          borderRadius:9,fontSize:14,fontWeight:700,minHeight:48,whiteSpace:"nowrap"}}>
-                        + Ajouter
+                    <div style={{paddingTop:24}}>
+                      <button onClick={ajouterEmp} className="btn-primary"
+                        style={{padding:"12px 18px",
+                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          color:"white",border:"none",
+                          borderRadius:9,fontSize:14,fontWeight:600,minHeight:48,whiteSpace:"nowrap",
+                          cursor:"pointer",display:"flex",alignItems:"center",gap:6,
+                          boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
+                        <Plus size={15}/> Ajouter
                       </button>
                     </div>
                   </div>
-                  {empMsg&&<div style={{padding:"8px 12px",borderRadius:8,fontSize:12,fontWeight:600,
-                    background:empMsg.startsWith("✅")?"#f0fdf4":"#fef2f2",
-                    color:empMsg.startsWith("✅")?"#166534":"#dc2626",
-                    border:`1px solid ${empMsg.startsWith("✅")?"#86efac":"#fca5a5"}`}}>{empMsg}</div>}
+                  {empMsg&&<div style={{padding:"9px 12px",borderRadius:9,fontSize:12,fontWeight:500,
+                    background:empMsg.startsWith("✅")?C.successBg:C.errorBg,
+                    color:empMsg.startsWith("✅")?C.success:C.error,
+                    border:`1px solid ${empMsg.startsWith("✅")?"#A7F3D0":"#FECACA"}`,
+                    display:"flex",alignItems:"center",gap:6}}>
+                    {empMsg.startsWith("✅")?<CheckCircle2 size={13}/>:<AlertTriangle size={13}/>}
+                    {empMsg.replace("✅ ","").replace("🗑 ","")}
+                  </div>}
                 </div>
               )}
 
               {/* Liste des employées */}
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {equipe.map(emp=>(
-                  <div key={emp.id} style={{background:"white",borderRadius:12,padding:"12px 14px",
-                    border:"1px solid #e2e8f0",
-                    borderLeft:`4px solid ${emp.actif!==false?emp.coul:"#e2e8f0"}`,
-                    opacity:emp.actif===false?.55:1}}>
+                  <div key={emp.id} className="card" style={{
+                    padding:"12px 16px",
+                    borderLeft:`3px solid ${emp.actif!==false?emp.coul:C.border}`,
+                    opacity:emp.actif===false?.5:1,transition:"opacity .2s"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:42,height:42,borderRadius:"50%",background:emp.bg,
-                          display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:12}}>
+                        <div style={{width:44,height:44,borderRadius:"50%",background:emp.bg,
+                          display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,
+                          border:`2px solid ${emp.coul}30`}}>
                           {emp.emoji}
                         </div>
                         <div>
-                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:"#94a3b8"}}>{emp.nom}</div>
-                          <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>
-                            {emp.actif===false?"⛔ Inactive":"✅ Active · disponible dans les plannings"}
+                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:C.textSoft}}>{emp.nom}</div>
+                          <div style={{fontSize:11,color:C.textSoft,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
+                            {emp.actif===false
+                              ?<><X size={10}/>Inactive</>
+                              :<><CheckCircle2 size={10} color={C.success}/>Active</>}
                           </div>
                         </div>
                       </div>
 
                       {user.role==="admin"&&(
                         <div style={{display:"flex",gap:6,flexShrink:0}}>
-                          {/* Toggle actif/inactif */}
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
-                            style={{padding:"8px 12px",borderRadius:8,fontSize:12,fontWeight:600,minHeight:40,
-                              border:`1px solid ${emp.actif!==false?"#e2e8f0":"#86efac"}`,
-                              background:emp.actif!==false?"#f8fafc":"#f0fdf4",
-                              color:emp.actif!==false?"#64748b":"#16a34a"}}>
-                            {emp.actif!==false?"⛔ Désactiver":"✅ Activer"}
+                            style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
+                              border:`1px solid ${emp.actif!==false?C.border:"#A7F3D0"}`,
+                              background:emp.actif!==false?"#FAFAF8":C.successBg,
+                              color:emp.actif!==false?C.textMid:C.success,transition:"all .15s"}}>
+                            {emp.actif!==false?"Désactiver":"Activer"}
                           </button>
-                          {/* Supprimer */}
-                          <button onClick={()=>supprimerEmp(emp.id)}
-                            style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",
-                              background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:40}}>🗑</button>
+                          <button onClick={()=>supprimerEmp(emp.id)} className="btn-danger"
+                            style={{padding:"7px 11px",borderRadius:8,border:`1px solid ${C.border}`,
+                              background:"white",color:C.textSoft,fontSize:13,minHeight:38,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center"}}>
+                            <Trash2 size={13}/>
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1025,8 +1219,8 @@ export default function App(){
                         placeholder={ph} style={{width:"100%",padding:"12px 14px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48}}/>
                     </div>
                   ))}
-                  <button onClick={creerUser}
-                    style={{padding:"14px",background:"#0f172a",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,minHeight:50}}>
+                  <button onClick={creerUser} className="btn-primary"
+                    style={{padding:"14px",background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
                     Créer l'accès
                   </button>
                 </div>
@@ -1052,25 +1246,41 @@ export default function App(){
         </div>
 
         {/* ── NAVIGATION BAS — mobile uniquement ─────────── */}
-        <nav className="nav-bottom" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:100,
-          background:"white",borderTop:"1px solid #e2e8f0",
+        <nav className="nav-bottom" style={{
+          position:"fixed",bottom:0,left:0,right:0,zIndex:100,
+          background:C.navy,
+          borderTop:"1px solid rgba(201,168,76,0.2)",
           display:"flex",alignItems:"stretch",
-          paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
-          {TABS.map(([k,ic,l])=>(
-            <button key={k} onClick={()=>setOnglet(k)}
-              style={{flex:1,padding:"10px 4px 8px",background:"none",border:"none",
-                display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                color:onglet===k?"#3b82f6":"#94a3b8",cursor:"pointer",minHeight:56}}>
-              <span style={{fontSize:20}}>{ic}</span>
-              <span style={{fontSize:10,fontWeight:onglet===k?700:500}}>{l}</span>
-            </button>
-          ))}
+          paddingBottom:"env(safe-area-inset-bottom,0px)",
+          boxShadow:"0 -4px 20px rgba(13,27,42,0.25)",
+        }}>
+          {TABS.map(([k,,l])=>{
+            const active=onglet===k;
+            const NavIcons={planning:<CalendarDays size={20}/>,lieux:<Home size={20}/>,extras:<UserPlus size={20}/>,equipe:<Users size={20}/>,users:<Settings size={20}/>};
+            return(
+              <button key={k} onClick={()=>setOnglet(k)}
+                style={{
+                  flex:1,padding:"10px 4px 8px",background:"none",border:"none",
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                  color:active?C.gold:"rgba(255,255,255,0.38)",
+                  cursor:"pointer",minHeight:56,
+                  borderTop:active?`2px solid ${C.gold}`:"2px solid transparent",
+                  transition:"all .15s",
+                }}>
+                {NavIcons[k]||<Star size={20}/>}
+                <span style={{fontSize:9,fontWeight:active?700:500,letterSpacing:"0.04em"}}>{l}</span>
+              </button>
+            );
+          })}
           <button onClick={logout}
-            style={{flex:1,padding:"10px 4px 8px",background:"none",border:"none",
+            style={{
+              flex:1,padding:"10px 4px 8px",background:"none",border:"none",
               display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-              color:"#94a3b8",cursor:"pointer",minHeight:56}}>
-            <span style={{fontSize:20}}>🚪</span>
-            <span style={{fontSize:10}}>Sortir</span>
+              color:"rgba(255,255,255,0.3)",cursor:"pointer",minHeight:56,
+              borderTop:"2px solid transparent",
+            }}>
+            <LogOut size={20}/>
+            <span style={{fontSize:9,fontWeight:500}}>Sortir</span>
           </button>
         </nav>
 
