@@ -172,7 +172,9 @@ Ce projet est propriétaire de Casoar Services Marrakech.
 
 ## 📞 Support
 
-Pour toute question ou problème, contactez l'équipe de développement.
+Pour toute question ou problème, contactez l'équipe de développement:
+
+📧 **Email:** [Administrateur@kleaning.ma](mailto:Administrateur@kleaning.ma)
 
 ---
 
