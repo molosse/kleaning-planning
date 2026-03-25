@@ -1,9 +1,9 @@
 node_modules/
-dist/
 .node/
 .env
 data/users.json
 data/extras.json
 data/lieux.json
+data/historique.json
 *.log
 .DS_Store

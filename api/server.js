@@ -497,7 +497,10 @@ app.get("/api/calendar", auth, async (req, res) => {
 // GET /api/planning — liste des plannings sauvegardés (métadonnées uniquement)
 app.get("/api/planning", auth, (req, res) => {
   const h = readDB("historique.json", []);
-  const liste = h.map(e => ({ date: e.date, dateLabel: e.dateLabel, savedAt: e.savedAt, nbChaines: e.chaines?.length || 0 }));
+  const liste = h.map(e => {
+    const agents = [...new Set((e.chaines||[]).flatMap(c=>(c.inters||[]).flatMap(i=>i.employes||[])))];
+    return { date: e.date, dateLabel: e.dateLabel, savedAt: e.savedAt, nbChaines: e.chaines?.length || 0, agents };
+  });
   res.json({ historique: liste });
 });
 

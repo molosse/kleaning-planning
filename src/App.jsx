@@ -174,7 +174,7 @@ function toWA(h){return(h||"").replace(":","h");}
 
 // Retourne l'heure de début par défaut (en minutes) selon le nom de l'intervention
 // Certains clients ont des créneaux fixes connus (Cabinet médical à 8h00, Alami à 10h30, etc.)
-// defaultH est l'heure de départ configurée par l'utilisateur (sélecteur "Heure de départ")
+// defaultH est l'heure par défaut (12h00) si aucune règle fixe ne s'applique
 function hDefaut(nom,defaultH=12*60){
   if(/cabinet.m[eé]d/i.test(nom))return 8*60;
   if(/alami/i.test(nom))return 10*60+30;
@@ -669,12 +669,10 @@ export default function App(){
       const c=optimiser(parsed);setChaines(c);
       setSyncTime(`${dateQ} ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`);
       setMsg(`✅ ${parsed.length} interventions · ${c.length} chaînes`);
-      // Sauvegarde automatique de l'historique
-      const label=new Date(date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-      apiCall("/api/planning","POST",{date,dateLabel:label,chaines:c}).catch(()=>{});
     }else{setMsg(`ℹ️ Aucun événement — ${dateQ}`);}
     setLoading(false);
   };
+
 
   // Modifie un champ d'une intervention spécifique (ci=index chaîne, ii=index intervention)
   // Cas spéciaux :
@@ -789,6 +787,11 @@ export default function App(){
       txt+=`${taches} : ${emp==="__none__"?"**":`*${emp}*`},\n\n`;
     });
     txt=txt.trimEnd().replace(/,$/,"");setWaText(txt);setCopied(false);setWaSent(false);setShowWA(true);
+    // Sauvegarde du planning avec les agents assignés
+    const[dd,mm,yy]=dateQ.split("/");
+    const date=`${yy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+    const dateLabel=new Date(date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    apiCall("/api/planning","POST",{date,dateLabel,chaines}).catch(()=>{});
   };
 
   // Copie le texte WhatsApp dans le presse-papier (technique textarea pour compatibilité iOS)
@@ -839,19 +842,11 @@ export default function App(){
   // ── HISTORIQUE ─────────────────────────────────────────────
   // chargerHistorique : GET /api/planning — liste des métadonnées (date, dateLabel, nbChaines, savedAt)
   // chargerDetailHistorique : GET /api/planning/:date — charge les chaînes complètes pour expansion
-  // chargerPlanningHistorique : idem mais restaure le planning dans l'onglet Planning
   const chargerHistorique=()=>apiCall("/api/planning").then(d=>{if(d.historique)setHistorique(d.historique);});
   // Charge le détail d'un jour dans l'historique (pour l'expansion, sans naviguer)
   const chargerDetailHistorique=async(date)=>{
     const data=await apiCall(`/api/planning/${date}`);
     if(data.chaines)setHistorique(p=>p.map(h=>h.date===date?{...h,chaines:data.chaines}:h));
-  };
-  // Restaure un planning dans l'onglet Planning
-  const chargerPlanningHistorique=async(date)=>{
-    const data=await apiCall(`/api/planning/${date}`);
-    if(data.chaines){setChaines(data.chaines);
-      const[y,m,d2]=date.split("-");setDateQ(`${d2}/${m}/${y}`);
-      setMsg(`📅 Planning restauré : ${data.dateLabel}`);setOnglet("planning");}
   };
 
   // ── CALCULS DÉRIVÉS ────────────────────────────────────────
@@ -937,9 +932,9 @@ export default function App(){
                 <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
                   <div style={{flex:"1 1 120px"}}>
                     <label className="section-label" style={{display:"block",marginBottom:6}}>Date</label>
-                    <input value={dateQ} onChange={e=>setDateQ(e.target.value)}
+                    <input value={dateQ} readOnly
                       style={{padding:"10px 13px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
-                        width:"100%",fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text}}/>
+                        width:"100%",fontFamily:"inherit",minHeight:46,background:"#F0EDE8",color:C.textMid,cursor:"default"}}/>
                   </div>
                   <button onClick={chargerAgenda} disabled={loading} className="btn-primary"
                     style={{
@@ -1257,17 +1252,21 @@ export default function App(){
                                 · {new Date(h.savedAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
                               </span>
                             </div>
+                            {h.agents?.length>0&&(
+                              <div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:4}}>
+                                {h.agents.map(a=>{
+                                  const emp=EQUIPE.find(e=>e.nom===a);
+                                  return(
+                                    <span key={a} style={{fontSize:10,fontWeight:600,padding:"1px 7px",borderRadius:20,
+                                      background:emp?.bg||"#f1f5f9",color:emp?.coul||C.textMid,border:`1px solid ${emp?.coul||C.border}22`}}>
+                                      {emp?.emoji||"👤"} {a}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                            <button onClick={e=>{e.stopPropagation();chargerPlanningHistorique(h.date);}}
-                              className="btn-primary"
-                              style={{padding:"8px 14px",borderRadius:9,
-                                background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
-                                color:"white",border:"none",fontSize:12,fontWeight:600,
-                                display:"flex",alignItems:"center",gap:5,cursor:"pointer",
-                                boxShadow:"0 2px 8px rgba(13,27,42,0.2)",whiteSpace:"nowrap",minHeight:44}}>
-                              <RefreshCw size={11}/> Restaurer
-                            </button>
                             <ChevronRight size={16} color={C.textSoft}
                               style={{transform:isOpen?"rotate(90deg)":"rotate(0deg)",transition:"transform .2s"}}/>
                           </div>
