@@ -158,6 +158,52 @@ Voir [package.json](package.json) pour la liste complète des dépendances et ve
 
 Total: 173 packages installés
 
+## 🚀 Déploiement sur Infomaniak
+
+### Première installation
+
+1. **Se connecter à la console Infomaniak** (Tableau de bord → Consoles)
+
+2. **Cloner le dépôt**
+```bash
+cd ~/sites/planning.kleaning.ma
+rm -rf * .*  2>/dev/null
+git clone https://github.com/molosse/kleaning-planning.git .
+```
+
+3. **Installer les dépendances**
+```bash
+npm install --omit=dev
+```
+
+4. **Créer le dossier data**
+```bash
+mkdir -p data
+```
+
+5. **Créer le fichier `.env`** avec toutes les variables (JWT_SECRET, GOOGLE_*, NODE_ENV=production)
+
+6. **Créer le compte admin**
+```bash
+node scripts/setup.js
+```
+
+7. **Paramètres avancés Node.js** (Infomaniak → Avancé → Node.js) :
+   - Commande d'exécution : `node api/server.js`
+   - Port d'écoute : `3001`
+
+8. **Redémarrer** depuis le tableau de bord
+
+### Mises à jour
+
+```bash
+cd ~/sites/planning.kleaning.ma && git pull origin main
+```
+
+Puis **Redémarrer** depuis le tableau de bord Infomaniak.
+
+---
+
 ## 🤝 Contribuer
 
 1. Fork le dépôt
