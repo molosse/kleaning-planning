@@ -180,6 +180,7 @@ function hDefaut(nom,defaultH=12*60){
   if(/alami/i.test(nom))return 10*60+30;
   if(/zoraida/i.test(nom))return 11*60+30;
   if(/coralia/i.test(nom))return 11*60;
+  if(/escales/i.test(nom))return 9*60+30;
   return defaultH;
 }
 // Retourne l'heure de fin (en minutes). Certains clients ont une fin fixe (ex: Zoraida = 16h00).
@@ -188,6 +189,7 @@ function hFin(nom,d,defaultH=12*60){
   if(/cabinet.m[eé]d/i.test(nom))return 10*60;
   if(/alami/i.test(nom))return 12*60;
   if(/zoraida/i.test(nom))return 16*60;
+  if(/escales/i.test(nom))return 17*60+30;
   return hDefaut(nom,defaultH)+d;
 }
 
@@ -313,14 +315,16 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
       const r=anchorRef.current.getBoundingClientRect();
       const spaceBelow=window.innerHeight-r.bottom;
       const top=spaceBelow>240?r.bottom+6:r.top-242;
-      setPos({top,left:Math.min(r.left,window.innerWidth-210)});
+      const dropW=Math.min(210,window.innerWidth-16);
+      setPos({top,left:Math.max(8,Math.min(r.left,window.innerWidth-dropW-8)),width:dropW});
     }
   },[]);
 
   const content=(
     <>
     <div style={{position:"fixed",inset:0,zIndex:9998}} onClick={onClose}/>
-    <div style={{position:"fixed",top:pos.top,left:pos.left,zIndex:9999,minWidth:200,
+    <div style={{position:"fixed",top:pos.top,left:pos.left,zIndex:9999,
+      width:pos.width||200,
       background:"white",borderRadius:12,border:"1px solid #e2e8f0",
       boxShadow:"0 12px 32px rgba(0,0,0,0.2)",padding:10}}>
       {dispo.length===0
@@ -423,7 +427,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
       {/* Ligne 2 : badges */}
       <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
         <button onClick={()=>onChange("bla_linge",!interv.bla_linge)}
-          style={{padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:600,minHeight:34,
+          style={{padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:600,minHeight:44,
             background:interv.bla_linge?"#fef9c3":"rgba(255,255,255,0.7)",
             color:interv.bla_linge?"#92400e":"#94a3b8",
             border:`1.5px solid ${interv.bla_linge?"#fde68a":"rgba(0,0,0,0.1)"}`}}>
@@ -460,7 +464,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
         <div>
           {!(interv.employes||[]).length
             ?<button ref={btnRef} onClick={()=>setOpenSel(p=>!p)}
-              style={{padding:"6px 14px",borderRadius:20,fontSize:13,fontWeight:700,minHeight:40,
+              style={{padding:"6px 14px",borderRadius:20,fontSize:13,fontWeight:700,minHeight:44,
                 background:"rgba(255,255,255,0.9)",color:"#dc2626",border:"2px solid #fca5a5",
                 display:"flex",alignItems:"center",gap:6}}>
               ⚠️ À assigner
@@ -468,7 +472,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,lineHeight:1,fontWeight:700}}>+</span>
             </button>
             :<button ref={btnRef} onClick={()=>setOpenSel(p=>!p)}
-              style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.8)",
+              style={{width:44,height:44,borderRadius:"50%",background:"rgba(255,255,255,0.8)",
                 color:"#475569",border:"1.5px solid rgba(0,0,0,0.15)",fontSize:20,fontWeight:700,
                 display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
           }
@@ -515,7 +519,8 @@ function Wizard({onSave,onClose}){
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3000,
       display:"flex",alignItems:"flex-end",justifyContent:"center"}}
       onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div style={{background:"white",borderRadius:"20px 20px 0 0",padding:"0 20px 32px",
+      <div style={{background:"white",borderRadius:"20px 20px 0 0",
+        padding:`0 20px calc(32px + env(safe-area-inset-bottom, 0px))`,
         width:"100%",maxWidth:500,animation:"slideUp .25s ease-out"}}>
         <div style={{width:40,height:4,background:"#e2e8f0",borderRadius:4,margin:"14px auto 0"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",margin:"16px 0 12px"}}>
@@ -603,7 +608,6 @@ export default function App(){
   const[extras,setExtras]=useState([]);                 // Extras mémorisés (data/extras.json)
   const[users,setUsers]=useState([]);                   // Comptes utilisateurs (admin seulement)
   // ── Paramètres planning ────────────────────────────────────
-  const[heureDepart,setHeureDepart]=useState("12:00");  // Heure de départ par défaut des interventions
   const[chaines,setChaines]=useState([]);               // Tableau de chaînes [{inters,trajetTotal,dureeTotal}]
   const[associerMode,setAssocierMode]=useState(null);   // index de la chaîne en attente d'association
   const[searchLieux,setSearchLieux]=useState("");       // Filtre texte dans l'onglet Logements
@@ -661,7 +665,7 @@ export default function App(){
     const date=`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
     const data=await apiCall(`/api/calendar?date=${date}`);
     if(data.events?.length>0){
-      const parsed=data.events.map(e=>parseEv(e,lieux,hToMin(heureDepart)));
+      const parsed=data.events.map(e=>parseEv(e,lieux,12*60));
       const c=optimiser(parsed);setChaines(c);
       setSyncTime(`${dateQ} ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`);
       setMsg(`✅ ${parsed.length} interventions · ${c.length} chaînes`);
@@ -674,22 +678,43 @@ export default function App(){
 
   // Modifie un champ d'une intervention spécifique (ci=index chaîne, ii=index intervention)
   // Cas spéciaux :
-  //   - "employes" sur une chaîne pairée → synchronise les 2 tâches avec le même personnel
-  //   - "heureDebut" → recalcule en cascade toutes les heures fin/début suivantes (avec arrondi à 5min)
+  //   - "employes" → synchronise les 2 tâches si chaîne pairée
+  //   - "heureDebut" sur non-Bureau → recalcule heureFin = heureDebut + durée
+  //   - "heureDebut" sur Bureau → met à jour uniquement heureDebut (heureFin reste libre)
+  //   - "heureFin" → met à jour heureFin + fin numérique (Bureaux : saisie libre)
   const changeInChaine=(ci,ii,f,v)=>{
-    setChaines(p=>{const upd=[...p];const c={...upd[ci],inters:[...upd[ci].inters]};c.inters[ii]={...c.inters[ii],[f]:v};
-      // Si on modifie les employés d'une tâche dans une chaîne pairée → synchroniser l'autre tâche
-      if(f==="employes"&&c.inters.length===2){c.inters=c.inters.map(inter=>({...inter,employes:v}));}
-      if(f==="heureDebut"){let h=hToMin(v);c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=arrondir5(fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE));return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;}
-      upd[ci]=c;return upd;});setWaText("");
-  };
-
-  // Change l'heure de départ globale d'une chaîne entière (sélecteur "Départ" dans l'en-tête)
-  // Recalcule toutes les heures début/fin en cascade avec arrondi à 5 minutes
-  const changerHeureCh=(ci,newH)=>{
-    setChaines(p=>{const upd=[...p];const c={...upd[ci]};let h=hToMin(newH);
-      c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=arrondir5(fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE));return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});
-      c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;upd[ci]=c;return upd;});setWaText("");
+    setChaines(p=>{
+      const upd=[...p];
+      const c={...upd[ci],inters:[...upd[ci].inters]};
+      const inter=c.inters[ii];
+      const isBureau=inter.type==="Bureau"||inter.cli==="Cabinet médical";
+      if(f==="employes"){
+        const newEmps=v;
+        c.inters=c.inters.length===2
+          ?c.inters.map(x=>({...x,employes:newEmps}))
+          :[...c.inters.slice(0,ii),{...inter,employes:newEmps},...c.inters.slice(ii+1)];
+      } else if(f==="heureDebut"){
+        const debut=hToMin(v);
+        if(isBureau){
+          // Bureau : heureDebut libre, heureFin reste inchangée
+          c.inters=[...c.inters.slice(0,ii),{...inter,debut,heureDebut:minToH(debut)},...c.inters.slice(ii+1)];
+        } else {
+          // Appartement/Villa/Riad : heureFin = heureDebut + durée
+          const fin=debut+inter.d;
+          c.inters=[...c.inters.slice(0,ii),{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)},...c.inters.slice(ii+1)];
+        }
+      } else if(f==="heureFin"){
+        // Mise à jour libre de heureFin (Bureaux) + synchronise fin numérique
+        const fin=hToMin(v);
+        c.inters=[...c.inters.slice(0,ii),{...inter,fin,heureFin:minToH(fin)},...c.inters.slice(ii+1)];
+      } else {
+        c.inters=[...c.inters.slice(0,ii),{...inter,[f]:v},...c.inters.slice(ii+1)];
+      }
+      c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;
+      upd[ci]=c;
+      return upd;
+    });
+    setWaText("");
   };
 
   // Supprime une chaîne du planning courant (icône poubelle)
@@ -840,9 +865,6 @@ export default function App(){
   // Détection des conflits : si heureFin[i] > heureDebut[i+1] pour la même employée → conflit
   const conflits=equipe.filter(e=>e.actif!==false).flatMap(e=>{const all=chaines.flatMap(c=>c.inters.filter(i=>(i.employes||[]).includes(e.nom))).sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));const cfls=[];for(let i=0;i<all.length-1;i++)if(hToMin(all[i].heureFin)>hToMin(all[i+1].heureDebut))cfls.push(`${e.nom}: ${all[i].nom.split(" ").pop()} → ${all[i+1].nom.split(" ").pop()}`);return cfls;});
   const ch=charge();
-  // Plages horaires disponibles dans les sélecteurs de départ de chaîne (07:00 → 20:00 par pas de 30min)
-  const HEURES_S=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"];
-
   // Onglets de navigation — l'onglet "Comptes" n'est visible que pour l'administrateur
   const TABS=[["planning","📋","Planning"],["historique","📅","Historique"],["lieux","🏠","Logements"],["extras","👤","Extras"],["equipe","👥","Équipe"],...(user?.role==="admin"?[["users","⚙️","Comptes"]]:[] )];
 
@@ -851,7 +873,7 @@ export default function App(){
   return(
     <>
       <style>{GLOBAL_CSS}</style>
-      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:C.bg,minHeight:"100vh",paddingBottom:70}}>
+      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:C.bg,minHeight:"100vh",paddingBottom:"calc(70px + env(safe-area-inset-bottom, 0px))"}}>
 
         {/* ── HEADER ─────────────────────────────────────── */}
         <div style={{
@@ -913,23 +935,15 @@ export default function App(){
               {/* Barre chargement */}
               <div className="card" style={{padding:"16px",marginBottom:14}}>
                 <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
-                  <div style={{flex:"0 0 auto"}}>
+                  <div style={{flex:"1 1 120px"}}>
                     <label className="section-label" style={{display:"block",marginBottom:6}}>Date</label>
                     <input value={dateQ} onChange={e=>setDateQ(e.target.value)}
                       style={{padding:"10px 13px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
-                        width:130,fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text}}/>
-                  </div>
-                  <div style={{flex:"0 0 auto"}}>
-                    <label className="section-label" style={{display:"block",marginBottom:6}}>Heure de départ</label>
-                    <select value={heureDepart} onChange={e=>setHeureDepart(e.target.value)}
-                      style={{padding:"10px 12px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
-                        fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text,fontWeight:600}}>
-                      {["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00"].map(h=><option key={h}>{h}</option>)}
-                    </select>
+                        width:"100%",fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text}}/>
                   </div>
                   <button onClick={chargerAgenda} disabled={loading} className="btn-primary"
                     style={{
-                      flex:1,minWidth:160,padding:"12px 18px",
+                      flex:"1 1 160px",minWidth:0,padding:"12px 18px",
                       background:loading?C.textSoft:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
                       color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:46,
                       display:"flex",alignItems:"center",justifyContent:"center",gap:8,
@@ -998,6 +1012,7 @@ export default function App(){
                             {/* En-tête chaîne */}
                             <div style={{background:chaineBg,padding:"10px 14px",
                               display:"flex",justifyContent:"space-between",alignItems:"center",
+                              flexWrap:"wrap",gap:8,
                               borderBottom:`1px solid ${chaineBorder}`}}>
                               <div style={{display:"flex",alignItems:"center",gap:8}}>
                                 <span style={{fontSize:12,fontWeight:700,color:couleur?couleur.label:C.textMid}}>
@@ -1008,19 +1023,12 @@ export default function App(){
                                   {chaine.trajetTotal>0&&<><MapPin size={9}/>{chaine.trajetTotal}min</>}
                                 </span>
                               </div>
-                              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                <span style={{fontSize:11,color:C.textSoft}}>Départ</span>
-                                <select value={chaine.inters[0]?.heureDebut||"12:00"} onChange={e=>changerHeureCh(ci,e.target.value)}
-                                  style={{padding:"5px 8px",border:`1.5px solid ${chaineBorder}`,borderRadius:8,
-                                    fontSize:12,fontWeight:700,color:C.textMid,background:"rgba(255,255,255,0.85)",
-                                    minHeight:36,fontFamily:"inherit"}}>
-                                  {HEURES_S.map(h=><option key={h}>{h}</option>)}
-                                </select>
+                              <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                                 {/* Bouton Séparer — chaînes paires uniquement */}
                                 {estPaire&&(
                                   <button onClick={()=>separerChaine(ci)}
                                     title="Séparer en 2 tâches indépendantes"
-                                    style={{height:34,padding:"0 10px",borderRadius:8,
+                                    style={{minHeight:44,padding:"0 10px",borderRadius:8,
                                       background:"rgba(255,255,255,0.85)",
                                       border:`1px solid ${chaineBorder}`,color:couleur?couleur.label:C.textMid,
                                       display:"flex",alignItems:"center",gap:5,cursor:"pointer",
@@ -1032,7 +1040,7 @@ export default function App(){
                                 {estSolo&&!estVilla&&!estCible&&(
                                   estSource?(
                                     <button onClick={()=>setAssocierMode(null)}
-                                      style={{height:34,padding:"0 10px",borderRadius:8,
+                                      style={{minHeight:44,padding:"0 10px",borderRadius:8,
                                         background:C.warnBg,border:`1px solid ${C.warnBorder}`,
                                         color:C.warn,display:"flex",alignItems:"center",gap:5,
                                         cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
@@ -1042,7 +1050,7 @@ export default function App(){
                                     associerMode===null&&(
                                       <button onClick={()=>setAssocierMode(ci)}
                                         title="Associer à une autre tâche"
-                                        style={{height:34,padding:"0 10px",borderRadius:8,
+                                        style={{minHeight:44,padding:"0 10px",borderRadius:8,
                                           background:"rgba(255,255,255,0.85)",
                                           border:`1px solid ${C.border}`,color:C.textMid,
                                           display:"flex",alignItems:"center",gap:5,cursor:"pointer",
@@ -1055,7 +1063,7 @@ export default function App(){
                                 {/* Bouton Choisir — cible en mode association */}
                                 {estCible&&(
                                   <button onClick={()=>associerChaines(associerMode,ci)}
-                                    style={{height:34,padding:"0 12px",borderRadius:8,
+                                    style={{minHeight:44,padding:"0 12px",borderRadius:8,
                                       background:C.navy,color:"white",border:"none",
                                       display:"flex",alignItems:"center",gap:5,cursor:"pointer",
                                       fontSize:11,fontWeight:700,whiteSpace:"nowrap",
@@ -1064,7 +1072,7 @@ export default function App(){
                                   </button>
                                 )}
                                 <button onClick={()=>supprimerChaine(ci)} className="btn-danger"
-                                  style={{width:34,height:34,borderRadius:8,background:"rgba(255,255,255,0.8)",
+                                  style={{minWidth:44,minHeight:44,borderRadius:8,background:"rgba(255,255,255,0.8)",
                                     border:`1px solid ${C.border}`,color:C.textSoft,
                                     display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"}}>
                                   <Trash2 size={13}/>
@@ -1079,8 +1087,9 @@ export default function App(){
                                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",
                                     background:chaineBg,borderTop:`1px solid ${chaineBorder}`,borderBottom:`1px solid ${chaineBorder}`}}>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
-                                    <span style={{fontSize:10,color:C.textSoft,fontWeight:600,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
-                                      <MapPin size={9}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
+                                    <span style={{fontSize:10,color:C.textSoft,fontWeight:600,display:"flex",alignItems:"center",gap:4,
+                                      overflow:"hidden",maxWidth:"70%",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>
+                                      <MapPin size={9} style={{flexShrink:0}}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
                                     </span>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
                                   </div>
@@ -1236,7 +1245,8 @@ export default function App(){
                             </span>
                           </div>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontWeight:700,fontSize:14,color:C.text,marginBottom:2,textTransform:"capitalize"}}>
+                            <div style={{fontWeight:700,fontSize:14,color:C.text,marginBottom:2,textTransform:"capitalize",
+                              overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {h.dateLabel||h.date}
                             </div>
                             <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -1255,7 +1265,7 @@ export default function App(){
                                 background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
                                 color:"white",border:"none",fontSize:12,fontWeight:600,
                                 display:"flex",alignItems:"center",gap:5,cursor:"pointer",
-                                boxShadow:"0 2px 8px rgba(13,27,42,0.2)",whiteSpace:"nowrap",minHeight:36}}>
+                                boxShadow:"0 2px 8px rgba(13,27,42,0.2)",whiteSpace:"nowrap",minHeight:44}}>
                               <RefreshCw size={11}/> Restaurer
                             </button>
                             <ChevronRight size={16} color={C.textSoft}
@@ -1284,7 +1294,8 @@ export default function App(){
                                   <div key={ii} style={{padding:"8px 12px",borderBottom:ii<chaine.inters.length-1?`1px solid #f1f5f9`:"none"}}>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                                       <div style={{flex:1,minWidth:0}}>
-                                        <div style={{fontWeight:600,fontSize:13,color:C.text}}>
+                                        <div style={{fontWeight:600,fontSize:13,color:C.text,
+                                          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                           {TYPE_IC[inter.type]||"🔵"} {inter.nom}
                                         </div>
                                         <div style={{fontSize:11,color:C.textSoft,marginTop:2}}>
@@ -1390,16 +1401,16 @@ export default function App(){
                             {!isEdit
                               ?<><button onClick={()=>setEditLieu({...l})}
                                   style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
-                                    background:"#f8fafc",color:"#475569",fontSize:13,minHeight:40}}>✏️</button>
+                                    background:"#f8fafc",color:"#475569",fontSize:13,minHeight:44}}>✏️</button>
                                 <button onClick={()=>supprimerLieu(l.id)}
                                   style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",
-                                    background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:40}}>🗑</button></>
+                                    background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button></>
                               :<><button onClick={()=>modifierLieu(l.id,editLieu)}
                                   style={{padding:"8px 12px",borderRadius:8,border:"none",background:"#059669",
-                                    color:"white",fontSize:13,fontWeight:700,minHeight:40}}>✓</button>
+                                    color:"white",fontSize:13,fontWeight:700,minHeight:44}}>✓</button>
                                 <button onClick={()=>setEditLieu(null)}
                                   style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
-                                    background:"#f8fafc",color:"#64748b",fontSize:13,minHeight:40}}>✕</button></>
+                                    background:"#f8fafc",color:"#64748b",fontSize:13,minHeight:44}}>✕</button></>
                             }
                           </div>
                         </div>
@@ -1706,7 +1717,8 @@ export default function App(){
                   transition:"all .15s",
                 }}>
                 {NavIcons[k]||<Star size={20}/>}
-                <span style={{fontSize:9,fontWeight:active?700:500,letterSpacing:"0.04em"}}>{l}</span>
+                <span style={{fontSize:9,fontWeight:active?700:500,letterSpacing:"0.04em",
+                  maxWidth:"100%",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l}</span>
               </button>
             );
           })}
