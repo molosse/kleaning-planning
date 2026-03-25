@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Login from "./Login.jsx";
 import {
   CalendarDays, MapPin, Users, UserPlus, Settings,
@@ -14,12 +15,15 @@ import {
 // Breakpoints : mobile < 640px, tablet 640-1024px, desktop > 1024px
 // ═══════════════════════════════════════════════════════════════
 
+// ── ÉQUIPE PAR DÉFAUT (utilisée si l'API ne répond pas) ──────
+// Chaque membre a : id unique, nom, emoji d'avatar, couleur principale et fond de badge
 const EQUIPE_FALLBACK=[
   {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true},
   {id:"emp_2",nom:"Amina", emoji:"👩",  coul:"#059669",bg:"#d1fae5",actif:true},
   {id:"emp_3",nom:"Touria",emoji:"👩‍🦳",coul:"#7c3aed",bg:"#ede9fe",actif:true},
   {id:"emp_4",nom:"Imane", emoji:"👩‍🦰",coul:"#d97706",bg:"#fef3c7",actif:true},
 ];
+// Version allégée (sans id/actif) utilisée dans genWA et les badges de couleur
 const EQUIPE=[
   {nom:"Majda",  coul:"#2563eb",bg:"#dbeafe",emoji:"👩‍🦱"},
   {nom:"Amina",  coul:"#059669",bg:"#d1fae5",emoji:"👩"},
@@ -27,10 +31,16 @@ const EQUIPE=[
   {nom:"Imane",  coul:"#d97706",bg:"#fef3c7",emoji:"👩‍🦰"},
 ];
 
+// Icônes emoji par type de logement (affiché sur les cartes d'intervention)
 const TYPE_IC={"Bureau":"🔷","Appartement GH":"🟢","Villa":"🟠","Riad":"⭕","Appartement MM":"🔵","Appartement":"🟡"};
+// Icônes spéciales par client (surcharge le type)
 const CLIENT_IC={"Cabinet médical":"🔴"};
+// Types de logements disponibles dans le wizard et les filtres
 const TYPES=["Appartement GH","Appartement MM","Appartement","Villa","Riad","Bureau"];
+// Coordonnées du centre de Marrakech — utilisées comme fallback GPS si un lieu n'a pas de coords
 const CENTRE={lat:31.635,lng:-8.010};
+// Palettes de couleurs pour les chaînes pairées (fond + bordure + label)
+// Chaque chaîne formée de 2 interventions reçoit une couleur différente pour identification visuelle
 const CHAINE_COLORS=[
   {bg:"#fef9c3",border:"#fbbf24",label:"#92400e"},
   {bg:"#d1fae5",border:"#34d399",label:"#065f46"},
@@ -145,27 +155,45 @@ const GLOBAL_CSS = `
 `;
 
 // ── UTILITAIRES ───────────────────────────────────────────────
+
+// Calcul de la distance à vol d'oiseau entre deux points GPS (formule Haversine)
+// Retourne la distance en km. Si les coords manquent, on suppose 5 km par défaut.
 function distKm(a,b){if(!a||!b)return 5;const R=6371,dlat=Math.PI/180*(b.lat-a.lat),dlng=Math.PI/180*(b.lng-a.lng);const x=Math.sin(dlat/2)**2+Math.cos(Math.PI/180*a.lat)*Math.cos(Math.PI/180*b.lat)*Math.sin(dlng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
 // Vitesse scooter en milieu urbain Marrakech : ~35 km/h + 3 min arrêt/stationnement
+// Utilisé pour estimer les temps de trajet entre deux interventions chaînées
 function trajetMin(a,b){return Math.round(distKm(a,b)/35*60)+3;}
+// Arrondir une durée (en minutes) au prochain multiple de 5
+// Ex : 133 → 135, 130 → 130. Appliqué aux heures de début des 2èmes tâches chainées.
+function arrondir5(m){return Math.ceil(m/5)*5;}
+// Convertit un nombre de minutes en chaîne "HH:MM" (ex : 750 → "12:30")
 function minToH(m){return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;}
+// Convertit une chaîne "HH:MM" en minutes depuis minuit (ex : "12:30" → 750)
 function hToMin(h){const[a,b]=(h||"12:00").split(":").map(Number);return a*60+b;}
+// Formate l'heure pour WhatsApp : "12:30" → "12h30"
 function toWA(h){return(h||"").replace(":","h");}
 
-function hDefaut(nom){
+// Retourne l'heure de début par défaut (en minutes) selon le nom de l'intervention
+// Certains clients ont des créneaux fixes connus (Cabinet médical à 8h00, Alami à 10h30, etc.)
+// defaultH est l'heure de départ configurée par l'utilisateur (sélecteur "Heure de départ")
+function hDefaut(nom,defaultH=12*60){
   if(/cabinet.m[eé]d/i.test(nom))return 8*60;
   if(/alami/i.test(nom))return 10*60+30;
   if(/zoraida/i.test(nom))return 11*60+30;
   if(/coralia/i.test(nom))return 11*60;
-  return 12*60;
+  return defaultH;
 }
-function hFin(nom,d){
+// Retourne l'heure de fin (en minutes). Certains clients ont une fin fixe (ex: Zoraida = 16h00).
+// Par défaut : heure de début + durée de l'intervention.
+function hFin(nom,d,defaultH=12*60){
   if(/cabinet.m[eé]d/i.test(nom))return 10*60;
   if(/alami/i.test(nom))return 12*60;
   if(/zoraida/i.test(nom))return 16*60;
-  return hDefaut(nom)+d;
+  return hDefaut(nom,defaultH)+d;
 }
 
+// Recherche floue d'un lieu dans la liste en comparant les 7 premiers caractères du nom nettoyé
+// Nettoie les préfixes communs ("Appartement GH ", "Villa ", "GH ", "Airbnb ") avant comparaison
+// Utilisé pour faire correspondre les titres Google Calendar avec les lieux enregistrés
 function matchLieu(s,lieux){
   if(!s||!lieux?.length)return null;
   const n=s.toLowerCase();
@@ -175,7 +203,10 @@ function matchLieu(s,lieux){
   });
 }
 
-function parseEv(ev,lieux){
+// Transforme un événement Google Calendar brut en objet intervention structuré
+// Détermine le type (Villa, Appartement GH…), associe le lieu GPS, calcule début/fin
+// defaultH = heure de départ configurable transmise depuis l'état App
+function parseEv(ev,lieux,defaultH=12*60){
   const s=ev.summary||"";const nom=ev.nom||s;
   const lieu=matchLieu(nom,lieux)||matchLieu(s,lieux);
   // Détection Villa : priorité au lieu trouvé, sinon par le nom de l'événement
@@ -187,10 +218,18 @@ function parseEv(ev,lieux){
     ?(matchLieu(nom,villaLieux)||matchLieu(s,villaLieux))
     :null;
   const lieuFinal=lieuVilla||lieu;
-  const d=lieuFinal?.d||(t==="Villa"?240:90);const debut=hDefaut(nom);const fin=hFin(nom,d);
+  const d=lieuFinal?.d||(t==="Villa"?240:90);const debut=hDefaut(nom,defaultH);const fin=hFin(nom,d,defaultH);
   return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,heureDebut:minToH(debut),heureFin:minToH(fin)};
 }
 
+// Algorithme d'optimisation du planning : groupe les interventions en chaînes de 2 maximum
+// Règles de chaînage :
+//   - Les Villas ne sont JAMAIS chaînées (elles nécessitent une équipe dédiée)
+//   - Deux interventions Bureau ne peuvent être chaînées qu'entre elles
+//   - Le trajet entre les deux lieux doit être ≤ 20 min en scooter
+//   - La différence d'heure de début doit être ≤ 30 min
+// Tri initial : Bureaux en premier, puis MM, puis Riads, puis le reste (par durée décroissante)
+// Retourne un tableau de chaînes triées par heure de début, avec temps de trajet recalculés
 function optimiser(interventions){
   if(!interventions.length)return[];
   const sorted=[...interventions].sort((a,b)=>{
@@ -222,19 +261,23 @@ function optimiser(interventions){
   }
   const result=chaines.map(chaine=>{
     const lieux=chaine.map(i=>sorted[i]);let h=lieux[0].debut;
-    const inters=lieux.map((l,i)=>{const debut=h,fin=debut+l.d;if(i<lieux.length-1)h=fin+trajetMin(lieux[i].lieu||CENTRE,lieux[i+1].lieu||CENTRE);return{...l,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});
+    const inters=lieux.map((l,i)=>{const debut=h,fin=debut+l.d;if(i<lieux.length-1)h=arrondir5(fin+trajetMin(lieux[i].lieu||CENTRE,lieux[i+1].lieu||CENTRE));return{...l,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});
     const tT=lieux.reduce((s,_,i)=>i<lieux.length-1?s+trajetMin(lieux[i].lieu||CENTRE,lieux[i+1].lieu||CENTRE):s,0);
     return{inters,trajetTotal:tT,dureeTotal:inters[inters.length-1].fin-inters[0].debut};
   });
   return result.sort((a,b)=>a.inters[0].debut-b.inters[0].debut);
 }
 
+// Wrapper fetch authentifié — lit le JWT dans sessionStorage et l'envoie dans le header
+// Utilisé pour tous les appels API internes (lieux, extras, equipe, planning, calendar…)
 function apiCall(path,method="GET",body=null){
   const token=sessionStorage.getItem("kleaning_token");
   return fetch(path,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},...(body?{body:JSON.stringify(body)}:{})}).then(r=>r.json());
 }
 
 // ── BOTTOM SHEET (mobile) — drawer qui monte du bas ──────────
+// Composant générique : fond semi-transparent + panel blanc animé depuis le bas
+// Utilisé pour afficher la charge du jour et le planning WhatsApp sur mobile
 function BottomSheet({visible,onClose,title,children}){
   if(!visible)return null;
   return(
@@ -254,17 +297,32 @@ function BottomSheet({visible,onClose,title,children}){
   );
 }
 
-// ── SÉLECTEUR EMPLOYÉ — bottom sheet sur mobile ───────────────
+// ── SÉLECTEUR EMPLOYÉ — dropdown porté dans document.body ────
+// Utilise createPortal pour éviter le clipping par overflow:hidden des cartes parentes
+// La position (top/left) est calculée depuis getBoundingClientRect() du bouton déclencheur
+// Affiche : les membres de l'équipe disponibles (actifs non encore assignés) + les extras mémorisés
+// Affiche aussi une section "Retirer" pour désassigner quelqu'un
 function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef}){
   const allE=extras.map(e=>({nom:e.nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"}));
   const dispo=[...(equipeS||EQUIPE_FALLBACK).filter(e=>!employes.includes(e.nom)&&e.actif!==false),...allE.filter(e=>!employes.includes(e.nom))];
 
-  // Desktop : dropdown relatif à l'ancre
-  // Mobile : bottom sheet géré par le parent
-  return(
-    <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:999,minWidth:180,
+  // Position fixe calculée depuis l'ancre pour éviter le clipping (overflow:hidden des parents)
+  const[pos,setPos]=useState({top:0,left:0});
+  useEffect(()=>{
+    if(anchorRef?.current){
+      const r=anchorRef.current.getBoundingClientRect();
+      const spaceBelow=window.innerHeight-r.bottom;
+      const top=spaceBelow>240?r.bottom+6:r.top-242;
+      setPos({top,left:Math.min(r.left,window.innerWidth-210)});
+    }
+  },[]);
+
+  const content=(
+    <>
+    <div style={{position:"fixed",inset:0,zIndex:9998}} onClick={onClose}/>
+    <div style={{position:"fixed",top:pos.top,left:pos.left,zIndex:9999,minWidth:200,
       background:"white",borderRadius:12,border:"1px solid #e2e8f0",
-      boxShadow:"0 12px 32px rgba(0,0,0,0.15)",padding:10}}>
+      boxShadow:"0 12px 32px rgba(0,0,0,0.2)",padding:10}}>
       {dispo.length===0
         ?<p style={{fontSize:13,color:"#94a3b8",margin:0,padding:"4px 0"}}>Toutes assignées</p>
         :<>
@@ -292,10 +350,16 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
         );})}
       </>}
     </div>
+  </>
   );
+  return createPortal(content,document.body);
 }
 
 // ── CARTE INTERVENTION ────────────────────────────────────────
+// Affiche une intervention individuelle dans une chaîne
+// Permet : modifier l'heure (début/fin pour Bureaux), toggler "bla linge", assigner/retirer des employées
+// Props : interv = données de l'intervention, onChange = callback (field, value)
+// chaineBg/chaineBorder = couleurs héritées de la chaîne parente pour cohérence visuelle
 function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
   const[openSel,setOpenSel]=useState(false);
   const[editHr,setEditHr]=useState(false);
@@ -304,16 +368,8 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
   const isVilla=interv.type==="Villa";
   const villaManque=isVilla&&(interv.employes||[]).length<2;
   const ic=CLIENT_IC[interv.cli]||TYPE_IC[interv.type]||"🔵";
-  const HEURES=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","17:00"];
-  const selRef=useRef();
-
-  // Fermer le sélecteur si clic extérieur
-  useEffect(()=>{
-    if(!openSel)return;
-    const h=e=>{if(selRef.current&&!selRef.current.contains(e.target))setOpenSel(false);};
-    document.addEventListener("mousedown",h);document.addEventListener("touchstart",h);
-    return()=>{document.removeEventListener("mousedown",h);document.removeEventListener("touchstart",h);};
-  },[openSel]);
+  const HEURES=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"];
+  const btnRef=useRef();
 
   return(
     <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||C.border}`}}>
@@ -376,7 +432,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
       </div>
 
       {/* Ligne 3 : assignation */}
-      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",position:"relative"}} ref={selRef}>
+      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
         <span style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",flexShrink:0}}>Assignées</span>
 
         {(interv.employes||[]).map(nom=>{
@@ -401,9 +457,9 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
         )}
 
         {/* Bouton + */}
-        <div style={{position:"relative"}}>
+        <div>
           {!(interv.employes||[]).length
-            ?<button onClick={()=>setOpenSel(p=>!p)}
+            ?<button ref={btnRef} onClick={()=>setOpenSel(p=>!p)}
               style={{padding:"6px 14px",borderRadius:20,fontSize:13,fontWeight:700,minHeight:40,
                 background:"rgba(255,255,255,0.9)",color:"#dc2626",border:"2px solid #fca5a5",
                 display:"flex",alignItems:"center",gap:6}}>
@@ -411,13 +467,14 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
               <span style={{width:22,height:22,borderRadius:"50%",background:"#dc2626",color:"white",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,lineHeight:1,fontWeight:700}}>+</span>
             </button>
-            :<button onClick={()=>setOpenSel(p=>!p)}
+            :<button ref={btnRef} onClick={()=>setOpenSel(p=>!p)}
               style={{width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,0.8)",
                 color:"#475569",border:"1.5px solid rgba(0,0,0,0.15)",fontSize:20,fontWeight:700,
                 display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
           }
           {openSel&&(
             <SelEmp employes={interv.employes||[]} extras={extras} equipe={equipeP||EQUIPE_FALLBACK}
+              anchorRef={btnRef}
               onAdd={n=>{if(!(interv.employes||[]).includes(n))onChange("employes",[...(interv.employes||[]),n]);}}
               onRemove={n=>onChange("employes",(interv.employes||[]).filter(x=>x!==n))}
               onClose={()=>setOpenSel(false)}/>
@@ -429,6 +486,9 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
 }
 
 // ── WIZARD LOGEMENT ───────────────────────────────────────────
+// Formulaire multi-étapes pour ajouter un nouveau logement
+// Chaque étape correspond à un champ (WQ = Wizard Questions)
+// Navigation avant/arrière, validation des champs requis, raccourcis clavier (Entrée)
 const WQ=[
   {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
   {id:"type",    label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
@@ -524,76 +584,123 @@ function Wizard({onSave,onClose}){
 }
 
 // ── APP PRINCIPALE ────────────────────────────────────────────
+// Point d'entrée de l'application. Gère :
+//   - L'authentification (user = null → écran Login)
+//   - La navigation entre onglets (planning / historique / lieux / extras / equipe / users)
+//   - Toutes les données métier : chaines, lieux, extras, equipe, historique
+//   - Les actions utilisateur : charger agenda, modifier interventions, générer WhatsApp
 export default function App(){
-  const[user,setUser]=useState(null);
-  const[onglet,setOnglet]=useState("planning");
-  const[dateQ,setDateQ]=useState(()=>{const d=new Date();d.setDate(d.getDate()+1);return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;});
-  const[loading,setLoading]=useState(false);
-  const[msg,setMsg]=useState("");
-  const[syncTime,setSyncTime]=useState("—");
-  const[lieux,setLieux]=useState([]);
-  const[extras,setExtras]=useState([]);
-  const[users,setUsers]=useState([]);
-  const[chaines,setChaines]=useState([]);
-  const[associerMode,setAssocierMode]=useState(null); // index de la chaîne en attente d'association
-  const[waText,setWaText]=useState("");
-  const[copied,setCopied]=useState(false);
-  const[waSent,setWaSent]=useState(false);
-  const[wizard,setWizard]=useState(false);
-  const[newExtra,setNewExtra]=useState("");
-  const[newUser,setNewUser]=useState({username:"",password:"",displayName:""});
-  const[userMsg,setUserMsg]=useState("");
-  const[editLieu,setEditLieu]=useState(null);
-  const[showWA,setShowWA]=useState(false);
-  const[showCharge,setShowCharge]=useState(false);
+  // ── Authentification & navigation ──────────────────────────
+  const[user,setUser]=useState(null);                  // Utilisateur connecté (null = non connecté)
+  const[onglet,setOnglet]=useState("planning");         // Onglet actif
+  // ── Planning : date & chargement ───────────────────────────
+  const[dateQ,setDateQ]=useState(()=>{const d=new Date();d.setDate(d.getDate()+1);return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;}); // Initialisé à J+1
+  const[loading,setLoading]=useState(false);            // Indicateur de chargement agenda
+  const[msg,setMsg]=useState("");                       // Message de statut (succès / erreur / info)
+  const[syncTime,setSyncTime]=useState("—");            // Horodatage du dernier chargement
+  // ── Données métier ─────────────────────────────────────────
+  const[lieux,setLieux]=useState([]);                   // Liste des logements (data/lieux.json)
+  const[extras,setExtras]=useState([]);                 // Extras mémorisés (data/extras.json)
+  const[users,setUsers]=useState([]);                   // Comptes utilisateurs (admin seulement)
+  // ── Paramètres planning ────────────────────────────────────
+  const[heureDepart,setHeureDepart]=useState("12:00");  // Heure de départ par défaut des interventions
+  const[chaines,setChaines]=useState([]);               // Tableau de chaînes [{inters,trajetTotal,dureeTotal}]
+  const[associerMode,setAssocierMode]=useState(null);   // index de la chaîne en attente d'association
+  const[searchLieux,setSearchLieux]=useState("");       // Filtre texte dans l'onglet Logements
+  // ── Historique des plannings ───────────────────────────────
+  const[historique,setHistorique]=useState([]);         // Liste des entrées historique (métadonnées)
+  const[histExpanded,setHistExpanded]=useState(null);   // Date du planning actuellement développé
+  const[histVisible,setHistVisible]=useState(15);       // Nombre d'entrées affichées (charge +15 sur demande)
+  // ── WhatsApp ───────────────────────────────────────────────
+  const[waText,setWaText]=useState("");                 // Texte généré pour WhatsApp
+  const[copied,setCopied]=useState(false);              // Feedback visuel bouton "Copier"
+  const[waSent,setWaSent]=useState(false);              // Feedback visuel bouton "WhatsApp"
+  // ── UI modaux / formulaires ────────────────────────────────
+  const[wizard,setWizard]=useState(false);              // Afficher le wizard ajout logement
+  const[newExtra,setNewExtra]=useState("");             // Champ saisie extra
+  const[newUser,setNewUser]=useState({username:"",password:"",displayName:""}); // Formulaire création compte
+  const[userMsg,setUserMsg]=useState("");               // Retour création/suppression utilisateur
+  const[editLieu,setEditLieu]=useState(null);           // Logement en cours d'édition inline (null = aucun)
+  const[showWA,setShowWA]=useState(false);              // BottomSheet WhatsApp sur mobile
+  const[showCharge,setShowCharge]=useState(false);      // BottomSheet charge du jour sur mobile
+  // ── Équipe fixe (chargée depuis API, avec fallback) ────────
   const[equipe,setEquipe]=useState([
     {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true},
     {id:"emp_2",nom:"Amina", emoji:"👩",  coul:"#059669",bg:"#d1fae5",actif:true},
     {id:"emp_3",nom:"Touria",emoji:"👩‍🦳",coul:"#7c3aed",bg:"#ede9fe",actif:true},
     {id:"emp_4",nom:"Imane", emoji:"👩‍🦰",coul:"#d97706",bg:"#fef3c7",actif:true},
   ]);
-  const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});
-  const[empMsg,setEmpMsg]=useState("");
+  const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
+  const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
 
+  // Vérification du token JWT au montage : si valide, reconnecte l'utilisateur sans re-login
   useEffect(()=>{
     const token=sessionStorage.getItem("kleaning_token");
     if(token){fetch("/api/auth/me",{headers:{Authorization:`Bearer ${token}`}}).then(r=>r.json()).then(d=>{if(d.username)setUser(d);}).catch(()=>{});}
   },[]);
 
-  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();if(user.role==="admin")chargerUsers();}},[user]);
+  // Chargement initial des données dès que l'utilisateur est authentifié
+  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();chargerHistorique();if(user.role==="admin")chargerUsers();}},[user]);
+  // Rafraîchit l'historique à chaque visite de l'onglet Historique
+  useEffect(()=>{if(onglet==="historique")chargerHistorique();},[onglet]);
 
+  // Chargement des données persistées depuis l'API (fichiers JSON côté serveur)
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
   const chargerLieux=()=>apiCall("/api/lieux").then(d=>{if(d.lieux)setLieux(d.lieux);});
-  const chargerUsers=()=>apiCall("/api/users").then(d=>{if(d.users)setUsers(d.users);});
+  const chargerUsers=()=>apiCall("/api/users").then(d=>{if(d.users)setUsers(d.users);}); // Admin seulement
   const chargerEquipe=()=>apiCall("/api/equipe").then(d=>{if(d.equipe&&d.equipe.length)setEquipe(d.equipe);});
 
+  // Charge le planning du jour depuis Google Calendar via l'API
+  // 1. Convertit la date DD/MM/YYYY en YYYY-MM-DD pour l'API
+  // 2. Parse les événements en interventions (parseEv)
+  // 3. Optimise les chaînes (optimiser)
+  // 4. Sauvegarde automatiquement le planning dans l'historique (POST /api/planning)
   const chargerAgenda=async()=>{
     setLoading(true);setMsg("");setWaText("");
     const[d,m,y]=dateQ.split("/");
-    const data=await apiCall(`/api/calendar?date=${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`);
+    const date=`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+    const data=await apiCall(`/api/calendar?date=${date}`);
     if(data.events?.length>0){
-      const parsed=data.events.map(e=>parseEv(e,lieux));
+      const parsed=data.events.map(e=>parseEv(e,lieux,hToMin(heureDepart)));
       const c=optimiser(parsed);setChaines(c);
       setSyncTime(`${dateQ} ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`);
       setMsg(`✅ ${parsed.length} interventions · ${c.length} chaînes`);
+      // Sauvegarde automatique de l'historique
+      const label=new Date(date).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+      apiCall("/api/planning","POST",{date,dateLabel:label,chaines:c}).catch(()=>{});
     }else{setMsg(`ℹ️ Aucun événement — ${dateQ}`);}
     setLoading(false);
   };
 
+  // Modifie un champ d'une intervention spécifique (ci=index chaîne, ii=index intervention)
+  // Cas spéciaux :
+  //   - "employes" sur une chaîne pairée → synchronise les 2 tâches avec le même personnel
+  //   - "heureDebut" → recalcule en cascade toutes les heures fin/début suivantes (avec arrondi à 5min)
   const changeInChaine=(ci,ii,f,v)=>{
     setChaines(p=>{const upd=[...p];const c={...upd[ci],inters:[...upd[ci].inters]};c.inters[ii]={...c.inters[ii],[f]:v};
-      if(f==="heureDebut"){let h=hToMin(v);c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE);return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;}
+      // Si on modifie les employés d'une tâche dans une chaîne pairée → synchroniser l'autre tâche
+      if(f==="employes"&&c.inters.length===2){c.inters=c.inters.map(inter=>({...inter,employes:v}));}
+      if(f==="heureDebut"){let h=hToMin(v);c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=arrondir5(fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE));return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;}
       upd[ci]=c;return upd;});setWaText("");
   };
 
+  // Change l'heure de départ globale d'une chaîne entière (sélecteur "Départ" dans l'en-tête)
+  // Recalcule toutes les heures début/fin en cascade avec arrondi à 5 minutes
   const changerHeureCh=(ci,newH)=>{
     setChaines(p=>{const upd=[...p];const c={...upd[ci]};let h=hToMin(newH);
-      c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE);return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});
+      c.inters=c.inters.map((inter,i)=>{const debut=h,fin=debut+inter.d;if(i<c.inters.length-1)h=arrondir5(fin+trajetMin(inter.lieu||CENTRE,c.inters[i+1].lieu||CENTRE));return{...inter,debut,fin,heureDebut:minToH(debut),heureFin:minToH(fin)};});
       c.dureeTotal=c.inters[c.inters.length-1].fin-c.inters[0].debut;upd[ci]=c;return upd;});setWaText("");
   };
 
+  // Supprime une chaîne du planning courant (icône poubelle)
   const supprimerChaine=ci=>{setChaines(p=>p.filter((_,i)=>i!==ci));setWaText("");};
 
+  // Fusionne deux chaînes solo en une chaîne pairée
+  // - Trie par heure de début pour mettre la plus tôt en première position
+  // - Calcule le temps de trajet scooter entre les deux lieux
+  // - Fusionne les employés des deux tâches (union, sans doublon)
+  // - Recalcule les heures avec arrondi à 5 minutes
+  // - Supprime les deux solos et les remplace par la chaîne pairée
   const associerChaines=(ci1,ci2)=>{
     setChaines(p=>{
       const upd=[...p];
@@ -604,9 +711,11 @@ export default function App(){
       // Recalculer les heures avec trajet scooter
       const trajet=trajetMin(first.lieu||CENTRE,second.lieu||CENTRE);
       const d1=first.debut, f1=d1+first.d;
-      const d2=f1+trajet,  f2=d2+second.d;
-      const i1={...first, debut:d1,fin:f1,heureDebut:minToH(d1),heureFin:minToH(f1)};
-      const i2={...second,debut:d2,fin:f2,heureDebut:minToH(d2),heureFin:minToH(f2)};
+      const d2=arrondir5(f1+trajet), f2=d2+second.d;
+      // Fusionner les employés des deux tâches — même équipe pour les 2
+      const employes=[...new Set([...(first.employes||[]),...(second.employes||[])])];
+      const i1={...first, debut:d1,fin:f1,heureDebut:minToH(d1),heureFin:minToH(f1),employes};
+      const i2={...second,debut:d2,fin:f2,heureDebut:minToH(d2),heureFin:minToH(f2),employes};
       const newChaine={inters:[i1,i2],trajetTotal:trajet,dureeTotal:f2-d1};
       // Supprimer les deux solos (index décroissant pour éviter le décalage)
       const[hi,lo]=ci1>ci2?[ci1,ci2]:[ci2,ci1];
@@ -618,6 +727,8 @@ export default function App(){
     setWaText("");
   };
 
+  // Sépare une chaîne pairée en deux chaînes solo indépendantes
+  // Les employés sont conservés sur chaque tâche séparée
   const separerChaine=ci=>{
     setChaines(p=>{
       const upd=[...p];
@@ -635,6 +746,11 @@ export default function App(){
     setWaText("");
   };
 
+  // Génère le texte WhatsApp formaté du planning du jour
+  // Structure : une ligne par employée, avec ses interventions dans l'ordre chronologique
+  // Format : "🟢 _Nom apt_ 12h30 : *Amina*, \n\n🟢 _Nom apt 2_ 14h00 : *Majda*, \n\n"
+  // Les interventions non assignées sont regroupées sous "**" (à assigner)
+  // Un double saut de ligne entre chaque ligne pour la lisibilité
   const genWA=()=>{
     const[d,m,y]=dateQ.split("/");
     const label=new Date(`${y}-${m}-${d}`).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -645,14 +761,19 @@ export default function App(){
       const sorted=[...inters].sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));
       const isBur=t=>t==="Bureau"||t==="Cabinet médical";
       const taches=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (bla linge)":""}`).join(", ");
-      txt+=`${taches} : ${emp==="__none__"?"**":`*${emp}*`},\n`;
+      txt+=`${taches} : ${emp==="__none__"?"**":`*${emp}*`},\n\n`;
     });
     txt=txt.trimEnd().replace(/,$/,"");setWaText(txt);setCopied(false);setWaSent(false);setShowWA(true);
   };
 
+  // Copie le texte WhatsApp dans le presse-papier (technique textarea pour compatibilité iOS)
   const copier=()=>{if(!waText)return;const ta=document.createElement("textarea");ta.value=waText;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,99999);try{document.execCommand("copy");setCopied(true);setTimeout(()=>setCopied(false),3000);}catch{}document.body.removeChild(ta);};
 
-  // ── ÉQUIPE ────────────────────────────────────────────
+  // ── ÉQUIPE ────────────────────────────────────────────────
+  // CRUD employées : données persistées dans data/equipe.json via l'API
+  // ajouterEmp : POST /api/equipe — ajoute une nouvelle employée
+  // supprimerEmp : DELETE /api/equipe/:id — retire définitivement une employée
+  // toggleEmpActif : PUT /api/equipe/:id — active/désactive (utile pour absences prolongées)
   const ajouterEmp=async()=>{
     const {nom,emoji}=newEmp;
     if(!nom.trim())return;
@@ -670,24 +791,60 @@ export default function App(){
     if(data.employe)setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
   };
 
+  // ── EXTRAS ─────────────────────────────────────────────────
+  // Les extras sont des agents ponctuels mémorisés (data/extras.json)
+  // Ils apparaissent dans le sélecteur d'assignation de toutes les interventions
   const ajouterExtra=async()=>{const n=newExtra.trim();if(!n)return;const data=await apiCall("/api/extras","POST",{nom:n});if(data.extra){setExtras(p=>[...p,data.extra]);setNewExtra("");}};
   const supprimerExtra=async(id)=>{await apiCall(`/api/extras/${id}`,"DELETE");setExtras(p=>p.filter(e=>e.id!==id));};
+  // ── LIEUX ──────────────────────────────────────────────────
+  // CRUD logements : données persistées dans data/lieux.json
+  // ajouterLieu : appelé depuis le Wizard après validation du formulaire multi-étapes
+  // modifierLieu : met à jour un logement existant (édition inline dans l'onglet Logements)
   const ajouterLieu=async(lieu)=>{const data=await apiCall("/api/lieux","POST",lieu);if(data.logement){setLieux(p=>[...p,data.logement]);setWizard(false);setMsg(`✅ "${data.logement.nom}" ajouté`);}};
   const supprimerLieu=async(id)=>{const l=lieux.find(x=>x.id===id);await apiCall(`/api/lieux/${id}`,"DELETE");setLieux(p=>p.filter(x=>x.id!==id));setMsg(`🗑 "${l?.nom}" supprimé`);};
   const modifierLieu=async(id,data)=>{const res=await apiCall(`/api/lieux/${id}`,"PUT",data);if(res.logement){setLieux(p=>p.map(l=>l.id===id?res.logement:l));setEditLieu(null);setMsg("✅ Mis à jour");}};
+  // ── UTILISATEURS (admin seulement) ─────────────────────────
+  // Gestion des comptes d'accès à l'application (data/users.json)
+  // Seul l'admin peut créer ou supprimer des accès — l'onglet "Comptes" est masqué pour les non-admins
   const creerUser=async()=>{const data=await apiCall("/api/users","POST",newUser);if(data.user){setUsers(p=>[...p,data.user]);setNewUser({username:"",password:"",displayName:""});setUserMsg(`✅ "${data.user.displayName}" créé`);}else setUserMsg(data.message||"Erreur");};
   const supprimerUser=async(id)=>{const data=await apiCall(`/api/users/${id}`,"DELETE");if(data.message){setUsers(p=>p.filter(u=>u.id!==id));setUserMsg(data.message);}};
+  // Déconnexion : supprime le JWT du sessionStorage et réinitialise l'état user
   const logout=()=>{sessionStorage.removeItem("kleaning_token");setUser(null);};
 
+  // ── HISTORIQUE ─────────────────────────────────────────────
+  // chargerHistorique : GET /api/planning — liste des métadonnées (date, dateLabel, nbChaines, savedAt)
+  // chargerDetailHistorique : GET /api/planning/:date — charge les chaînes complètes pour expansion
+  // chargerPlanningHistorique : idem mais restaure le planning dans l'onglet Planning
+  const chargerHistorique=()=>apiCall("/api/planning").then(d=>{if(d.historique)setHistorique(d.historique);});
+  // Charge le détail d'un jour dans l'historique (pour l'expansion, sans naviguer)
+  const chargerDetailHistorique=async(date)=>{
+    const data=await apiCall(`/api/planning/${date}`);
+    if(data.chaines)setHistorique(p=>p.map(h=>h.date===date?{...h,chaines:data.chaines}:h));
+  };
+  // Restaure un planning dans l'onglet Planning
+  const chargerPlanningHistorique=async(date)=>{
+    const data=await apiCall(`/api/planning/${date}`);
+    if(data.chaines){setChaines(data.chaines);
+      const[y,m,d2]=date.split("-");setDateQ(`${d2}/${m}/${y}`);
+      setMsg(`📅 Planning restauré : ${data.dateLabel}`);setOnglet("planning");}
+  };
+
+  // ── CALCULS DÉRIVÉS ────────────────────────────────────────
+  // Détecte les villas (par type ou par nom, pour les interventions parsées depuis Google Calendar)
   const isVillaInter=inter=>inter.type==="Villa"||/\bvilla\b/i.test(inter.nom);
-  const nbSans=chaines.flatMap(c=>c.inters).filter(i=>!(i.employes||[]).length).length;
-  const nbVilla=chaines.flatMap(c=>c.inters).filter(i=>i.type==="Villa"&&(i.employes||[]).length<2).length;
+  // Compteurs d'alertes affichés dans la barre de statut après chargement
+  const nbSans=chaines.flatMap(c=>c.inters).filter(i=>!(i.employes||[]).length).length;  // Interventions sans employée
+  const nbVilla=chaines.flatMap(c=>c.inters).filter(i=>i.type==="Villa"&&(i.employes||[]).length<2).length; // Villas avec moins de 2 personnes
+  // Charge du jour : dictionnaire {nomEmployée: [interventions]} pour le panneau latéral
   const charge=()=>{const c={};chaines.flatMap(x=>x.inters).forEach(i=>(i.employes||[]).forEach(n=>{if(!c[n])c[n]=[];c[n].push(i);}));return c;};
+  // Détection des conflits : si heureFin[i] > heureDebut[i+1] pour la même employée → conflit
   const conflits=equipe.filter(e=>e.actif!==false).flatMap(e=>{const all=chaines.flatMap(c=>c.inters.filter(i=>(i.employes||[]).includes(e.nom))).sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));const cfls=[];for(let i=0;i<all.length-1;i++)if(hToMin(all[i].heureFin)>hToMin(all[i+1].heureDebut))cfls.push(`${e.nom}: ${all[i].nom.split(" ").pop()} → ${all[i+1].nom.split(" ").pop()}`);return cfls;});
   const ch=charge();
-  const HEURES_S=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","17:00"];
+  // Plages horaires disponibles dans les sélecteurs de départ de chaîne (07:00 → 20:00 par pas de 30min)
+  const HEURES_S=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"];
 
-  const TABS=[["planning","📋","Planning"],["lieux","🏠","Logements"],["extras","👤","Extras"],["equipe","👥","Équipe"],...(user?.role==="admin"?[["users","⚙️","Comptes"]]:[] )];
+  // Onglets de navigation — l'onglet "Comptes" n'est visible que pour l'administrateur
+  const TABS=[["planning","📋","Planning"],["historique","📅","Historique"],["lieux","🏠","Logements"],["extras","👤","Extras"],["equipe","👥","Équipe"],...(user?.role==="admin"?[["users","⚙️","Comptes"]]:[] )];
 
   if(!user)return<Login onLogin={u=>{setUser(u);}}/>;
 
@@ -762,6 +919,14 @@ export default function App(){
                       style={{padding:"10px 13px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
                         width:130,fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text}}/>
                   </div>
+                  <div style={{flex:"0 0 auto"}}>
+                    <label className="section-label" style={{display:"block",marginBottom:6}}>Heure de départ</label>
+                    <select value={heureDepart} onChange={e=>setHeureDepart(e.target.value)}
+                      style={{padding:"10px 12px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
+                        fontFamily:"inherit",minHeight:46,background:"#FAFAF8",color:C.text,fontWeight:600}}>
+                      {["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00"].map(h=><option key={h}>{h}</option>)}
+                    </select>
+                  </div>
                   <button onClick={chargerAgenda} disabled={loading} className="btn-primary"
                     style={{
                       flex:1,minWidth:160,padding:"12px 18px",
@@ -772,7 +937,7 @@ export default function App(){
                       cursor:loading?"not-allowed":"pointer",
                     }}>
                     <RefreshCw size={15} style={{animation:loading?"spin .8s linear infinite":"none"}}/>
-                    {loading?"Chargement…":"Charger l'agenda Ali"}
+                    {loading?"Chargement…":"Charger l'agenda Kleaning"}
                   </button>
                 </div>
 
@@ -997,7 +1162,7 @@ export default function App(){
                       <button onClick={genWA} className="btn-primary"
                         style={{width:"100%",padding:11,border:"none",borderRadius:10,fontSize:13,fontWeight:600,
                           background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
-                          color:"white",marginBottom:10,minHeight:44,cursor:"pointer",
+                          color:"white",marginBottom:8,minHeight:44,cursor:"pointer",
                           display:"flex",alignItems:"center",justifyContent:"center",gap:7,
                           boxShadow:"0 4px 12px rgba(13,27,42,0.2)"}}>
                         <Zap size={14}/> Générer le planning
@@ -1028,10 +1193,140 @@ export default function App(){
             </>
           )}
 
+          {/* ═══ HISTORIQUE ═══════════════════════════════ */}
+          {onglet==="historique"&&(
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <Clock size={16} color={C.gold}/>
+                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Historique des plannings</span>
+              </div>
+              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>Plannings générés et sauvegardés automatiquement. Cliquez sur un jour pour le consulter ou le restaurer.</div>
+
+              {historique.length===0?(
+                <div className="card" style={{padding:"48px 24px",textAlign:"center"}}>
+                  <div style={{fontSize:40,marginBottom:12}}>📅</div>
+                  <div style={{fontSize:15,fontWeight:600,color:C.text,marginBottom:6}}>Aucun historique</div>
+                  <div style={{fontSize:13,color:C.textSoft}}>Les plannings générés apparaîtront ici automatiquement</div>
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {historique.slice(0,histVisible).map(h=>{
+                    const isOpen=histExpanded===h.date;
+                    const nbInters=h.nbChaines; // on a le nb de chaînes dans les métadonnées
+                    return(
+                      <div key={h.date} className="card" style={{overflow:"hidden",transition:"all .2s"}}>
+                        {/* En-tête du jour */}
+                        <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}
+                          onClick={()=>{
+                            if(isOpen){setHistExpanded(null);return;}
+                            setHistExpanded(h.date);
+                            // Charger le détail si pas encore chargé
+                            if(!h.chaines) chargerDetailHistorique(h.date).catch(()=>{});
+                          }}>
+                          {/* Indicateur jour */}
+                          <div style={{width:46,height:46,borderRadius:12,flexShrink:0,
+                            background:`linear-gradient(135deg, ${C.navy}12 0%, ${C.gold}18 100%)`,
+                            border:`1px solid ${C.border}`,
+                            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                            <span style={{fontSize:16,fontWeight:800,color:C.navy,lineHeight:1}}>
+                              {new Date(h.date).getDate()}
+                            </span>
+                            <span style={{fontSize:9,fontWeight:600,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.04em"}}>
+                              {new Date(h.date).toLocaleDateString("fr-FR",{month:"short"})}
+                            </span>
+                          </div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontWeight:700,fontSize:14,color:C.text,marginBottom:2,textTransform:"capitalize"}}>
+                              {h.dateLabel||h.date}
+                            </div>
+                            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                              <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
+                                <Zap size={10} color={C.gold}/>{h.nbChaines} chaîne{h.nbChaines>1?"s":""}
+                              </span>
+                              <span style={{fontSize:11,color:C.textSoft}}>
+                                · {new Date(h.savedAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                            <button onClick={e=>{e.stopPropagation();chargerPlanningHistorique(h.date);}}
+                              className="btn-primary"
+                              style={{padding:"8px 14px",borderRadius:9,
+                                background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                                color:"white",border:"none",fontSize:12,fontWeight:600,
+                                display:"flex",alignItems:"center",gap:5,cursor:"pointer",
+                                boxShadow:"0 2px 8px rgba(13,27,42,0.2)",whiteSpace:"nowrap",minHeight:36}}>
+                              <RefreshCw size={11}/> Restaurer
+                            </button>
+                            <ChevronRight size={16} color={C.textSoft}
+                              style={{transform:isOpen?"rotate(90deg)":"rotate(0deg)",transition:"transform .2s"}}/>
+                          </div>
+                        </div>
+
+                        {/* Détail développé */}
+                        {isOpen&&h.chaines&&(
+                          <div style={{borderTop:`1px solid ${C.border}`,padding:"12px 16px",
+                            background:C.bg,display:"flex",flexDirection:"column",gap:8}}>
+                            {h.chaines.map((chaine,ci)=>(
+                              <div key={ci} style={{background:"white",borderRadius:10,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+                                <div style={{padding:"8px 12px",background:`${C.navy}06`,
+                                  borderBottom:`1px solid ${C.border}`,
+                                  display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                  <span style={{fontSize:12,fontWeight:700,color:C.textMid}}>
+                                    {chaine.inters.length===2?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
+                                  </span>
+                                  <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
+                                    <Clock size={9}/>{chaine.inters[0]?.heureDebut||""}
+                                    {chaine.inters.length>1&&<> → {chaine.inters[chaine.inters.length-1]?.heureFin}</>}
+                                  </span>
+                                </div>
+                                {chaine.inters.map((inter,ii)=>(
+                                  <div key={ii} style={{padding:"8px 12px",borderBottom:ii<chaine.inters.length-1?`1px solid #f1f5f9`:"none"}}>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                                      <div style={{flex:1,minWidth:0}}>
+                                        <div style={{fontWeight:600,fontSize:13,color:C.text}}>
+                                          {TYPE_IC[inter.type]||"🔵"} {inter.nom}
+                                        </div>
+                                        <div style={{fontSize:11,color:C.textSoft,marginTop:2}}>
+                                          {inter.heureDebut} · {inter.d}min{inter.lieu?.q&&` · ${inter.lieu.q}`}
+                                        </div>
+                                      </div>
+                                      {(inter.employes||[]).length>0&&(
+                                        <div style={{fontSize:11,fontWeight:600,color:C.textMid,flexShrink:0,marginLeft:8}}>
+                                          {(inter.employes||[]).join(", ")}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Voir plus */}
+                  {historique.length>histVisible&&(
+                    <button onClick={()=>setHistVisible(p=>p+15)}
+                      style={{padding:"13px",border:`1.5px dashed ${C.border}`,borderRadius:12,
+                        background:"transparent",color:C.textMid,fontSize:13,fontWeight:600,
+                        cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,minHeight:48}}
+                      className="btn-ghost">
+                      <ChevronRight size={14} style={{transform:"rotate(90deg)"}}/>
+                      Voir {Math.min(15,historique.length-histVisible)} plannings de plus
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ═══ LOGEMENTS ════════════════════════════════ */}
           {onglet==="lieux"&&(
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <Home size={16} color={C.gold}/>
                   <span style={{fontSize:15,fontWeight:700,color:C.text}}>{lieux.length} logements</span>
@@ -1045,9 +1340,22 @@ export default function App(){
                   <Plus size={14}/> Ajouter
                 </button>
               </div>
+              {/* Barre de recherche */}
+              <div style={{position:"relative",marginBottom:14}}>
+                <input value={searchLieux} onChange={e=>setSearchLieux(e.target.value)}
+                  placeholder="Rechercher par nom, quartier, client, type…"
+                  style={{width:"100%",padding:"11px 14px 11px 40px",border:`1.5px solid ${C.border}`,borderRadius:10,
+                    fontSize:14,outline:"none",background:"white",color:C.text,fontFamily:"inherit",
+                    boxSizing:"border-box",minHeight:46}}/>
+                <MapPin size={15} color={C.textSoft} style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}/>
+                {searchLieux&&<button onClick={()=>setSearchLieux("")}
+                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                    background:"none",border:"none",color:C.textSoft,cursor:"pointer",fontSize:16,padding:4,lineHeight:1}}>✕</button>}
+              </div>
               {msg&&<div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,background:C.successBg,color:C.success,border:"1px solid #A7F3D0",display:"flex",alignItems:"center",gap:7}}><CheckCircle2 size={14}/>{msg.replace("✅ ","").replace("🗑 ","")}</div>}
+              {searchLieux&&<div style={{fontSize:12,color:C.textSoft,marginBottom:10}}>{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length} résultat{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length>1?"s":""}</div>}
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                {lieux.map(l=>{
+                {lieux.filter(l=>{if(!searchLieux)return true;const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).map(l=>{
                   const isEdit=editLieu?.id===l.id;
                   const bC=l.type==="Villa"?"#d97706":l.type==="Riad"?"#dc2626":l.type==="Bureau"?"#2563eb":"#059669";
                   return(
@@ -1386,7 +1694,7 @@ export default function App(){
         }}>
           {TABS.map(([k,,l])=>{
             const active=onglet===k;
-            const NavIcons={planning:<CalendarDays size={20}/>,lieux:<Home size={20}/>,extras:<UserPlus size={20}/>,equipe:<Users size={20}/>,users:<Settings size={20}/>};
+            const NavIcons={planning:<CalendarDays size={20}/>,historique:<Clock size={20}/>,lieux:<Home size={20}/>,extras:<UserPlus size={20}/>,equipe:<Users size={20}/>,users:<Settings size={20}/>};
             return(
               <button key={k} onClick={()=>setOnglet(k)}
                 style={{

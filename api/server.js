@@ -490,6 +490,40 @@ app.get("/api/calendar", auth, async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// HISTORIQUE DES PLANNINGS
+// ══════════════════════════════════════════════════════════════
+
+// GET /api/planning — liste des plannings sauvegardés (métadonnées uniquement)
+app.get("/api/planning", auth, (req, res) => {
+  const h = readDB("historique.json", []);
+  const liste = h.map(e => ({ date: e.date, dateLabel: e.dateLabel, savedAt: e.savedAt, nbChaines: e.chaines?.length || 0 }));
+  res.json({ historique: liste });
+});
+
+// GET /api/planning/:date — récupérer un planning complet par date
+app.get("/api/planning/:date", auth, (req, res) => {
+  const date = req.params.date;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ message: "Format date invalide" });
+  const h = readDB("historique.json", []);
+  const entry = h.find(e => e.date === date);
+  if (!entry) return res.status(404).json({ message: "Planning non trouvé" });
+  res.json(entry);
+});
+
+// POST /api/planning — sauvegarder ou mettre à jour un planning
+app.post("/api/planning", auth, (req, res) => {
+  const { date, chaines, dateLabel } = req.body;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ message: "Format date invalide" });
+  if (!Array.isArray(chaines)) return res.status(400).json({ message: "Format invalide" });
+  const h = readDB("historique.json", []);
+  const entry = { date, dateLabel: sanitize(dateLabel || date, 100), savedAt: new Date().toISOString(), chaines };
+  const idx = h.findIndex(e => e.date === date);
+  if (idx >= 0) { h[idx] = entry; } else { h.unshift(entry); if (h.length > 90) h.splice(90); }
+  writeDB("historique.json", h);
+  res.json({ message: "Planning sauvegardé", date });
+});
+
 // ── FRONTEND ──────────────────────────────────────────────────
 // ✅ Les fichiers statiques sont servis APRÈS les routes API
 app.use(express.static(path.join(__dirname, "../dist")));
