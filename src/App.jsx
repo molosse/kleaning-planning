@@ -146,7 +146,8 @@ const GLOBAL_CSS = `
 
 // ── UTILITAIRES ───────────────────────────────────────────────
 function distKm(a,b){if(!a||!b)return 5;const R=6371,dlat=Math.PI/180*(b.lat-a.lat),dlng=Math.PI/180*(b.lng-a.lng);const x=Math.sin(dlat/2)**2+Math.cos(Math.PI/180*a.lat)*Math.cos(Math.PI/180*b.lat)*Math.sin(dlng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
-function trajetMin(a,b){return Math.round(distKm(a,b)/25*60)+5;}
+// Vitesse scooter en milieu urbain Marrakech : ~35 km/h + 3 min arrêt/stationnement
+function trajetMin(a,b){return Math.round(distKm(a,b)/35*60)+3;}
 function minToH(m){return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;}
 function hToMin(h){const[a,b]=(h||"12:00").split(":").map(Number);return a*60+b;}
 function toWA(h){return(h||"").replace(":","h");}
@@ -177,9 +178,17 @@ function matchLieu(s,lieux){
 function parseEv(ev,lieux){
   const s=ev.summary||"";const nom=ev.nom||s;
   const lieu=matchLieu(nom,lieux)||matchLieu(s,lieux);
-  const t=lieu?.type||ev.type||"Appartement GH";
-  const d=lieu?.d||90;const debut=hDefaut(nom);const fin=hFin(nom,d);
-  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",lieu,d,debut,fin,employes:[],bla_linge:false,heureDebut:minToH(debut),heureFin:minToH(fin)};
+  // Détection Villa : priorité au lieu trouvé, sinon par le nom de l'événement
+  const typeParNom=/\bvilla\b/i.test(nom)||/\bvilla\b/i.test(s)?"Villa":null;
+  const t=lieu?.type||typeParNom||ev.type||"Appartement GH";
+  // Si type Villa mais lieu non trouvé (ou lieu non-villa), chercher parmi les villas uniquement
+  const villaLieux=lieux.filter(l=>l.type==="Villa");
+  const lieuVilla=t==="Villa"&&lieu?.type!=="Villa"
+    ?(matchLieu(nom,villaLieux)||matchLieu(s,villaLieux))
+    :null;
+  const lieuFinal=lieuVilla||lieu;
+  const d=lieuFinal?.d||(t==="Villa"?240:90);const debut=hDefaut(nom);const fin=hFin(nom,d);
+  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,heureDebut:minToH(debut),heureFin:minToH(fin)};
 }
 
 function optimiser(interventions){
@@ -194,10 +203,13 @@ function optimiser(interventions){
     if(assigned.has(inter.id))continue;
     const idx=sorted.findIndex(x=>x.id===inter.id);
     const chaine=[idx];assigned.add(inter.id);
-    if(chaine.length<2){
+    // Les Villas ne sont jamais chaînées — vérification sur type ET nom
+    const isVilla=i=>sorted[i].type==="Villa"||/\bvilla\b/i.test(sorted[i].nom);
+    if(chaine.length<2&&!isVilla(idx)){
       let best=null,bestT=Infinity;
       for(let j=0;j<sorted.length;j++){
         if(assigned.has(sorted[j].id))continue;
+        if(isVilla(j))continue; // jamais de Villa en chaîne
         if(sorted[idx].type==="Bureau"&&sorted[j].type!=="Bureau")continue;
         if(sorted[idx].type!=="Bureau"&&sorted[j].type==="Bureau")continue;
         if(Math.abs(sorted[j].debut-sorted[idx].debut)>30)continue;
@@ -522,6 +534,7 @@ export default function App(){
   const[extras,setExtras]=useState([]);
   const[users,setUsers]=useState([]);
   const[chaines,setChaines]=useState([]);
+  const[associerMode,setAssocierMode]=useState(null); // index de la chaîne en attente d'association
   const[waText,setWaText]=useState("");
   const[copied,setCopied]=useState(false);
   const[waSent,setWaSent]=useState(false);
@@ -580,6 +593,47 @@ export default function App(){
 
   const supprimerChaine=ci=>{setChaines(p=>p.filter((_,i)=>i!==ci));setWaText("");};
 
+  const associerChaines=(ci1,ci2)=>{
+    setChaines(p=>{
+      const upd=[...p];
+      const a=upd[ci1].inters[0];
+      const b=upd[ci2].inters[0];
+      // Trier par heure de début : la plus tôt en premier
+      const[first,second]=a.debut<=b.debut?[a,b]:[b,a];
+      // Recalculer les heures avec trajet scooter
+      const trajet=trajetMin(first.lieu||CENTRE,second.lieu||CENTRE);
+      const d1=first.debut, f1=d1+first.d;
+      const d2=f1+trajet,  f2=d2+second.d;
+      const i1={...first, debut:d1,fin:f1,heureDebut:minToH(d1),heureFin:minToH(f1)};
+      const i2={...second,debut:d2,fin:f2,heureDebut:minToH(d2),heureFin:minToH(f2)};
+      const newChaine={inters:[i1,i2],trajetTotal:trajet,dureeTotal:f2-d1};
+      // Supprimer les deux solos (index décroissant pour éviter le décalage)
+      const[hi,lo]=ci1>ci2?[ci1,ci2]:[ci2,ci1];
+      upd.splice(hi,1);
+      upd.splice(lo,1,newChaine);
+      return upd;
+    });
+    setAssocierMode(null);
+    setWaText("");
+  };
+
+  const separerChaine=ci=>{
+    setChaines(p=>{
+      const upd=[...p];
+      const c=upd[ci];
+      if(c.inters.length<2)return p;
+      // Créer deux chaînes solo à partir des deux interventions
+      const solos=c.inters.map(inter=>({
+        inters:[inter],
+        trajetTotal:0,
+        dureeTotal:inter.d,
+      }));
+      upd.splice(ci,1,...solos);
+      return upd;
+    });
+    setWaText("");
+  };
+
   const genWA=()=>{
     const[d,m,y]=dateQ.split("/");
     const label=new Date(`${y}-${m}-${d}`).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -624,6 +678,7 @@ export default function App(){
   const supprimerUser=async(id)=>{const data=await apiCall(`/api/users/${id}`,"DELETE");if(data.message){setUsers(p=>p.filter(u=>u.id!==id));setUserMsg(data.message);}};
   const logout=()=>{sessionStorage.removeItem("kleaning_token");setUser(null);};
 
+  const isVillaInter=inter=>inter.type==="Villa"||/\bvilla\b/i.test(inter.nom);
   const nbSans=chaines.flatMap(c=>c.inters).filter(i=>!(i.employes||[]).length).length;
   const nbVilla=chaines.flatMap(c=>c.inters).filter(i=>i.type==="Villa"&&(i.employes||[]).length<2).length;
   const charge=()=>{const c={};chaines.flatMap(x=>x.inters).forEach(i=>(i.employes||[]).forEach(n=>{if(!c[n])c[n]=[];c[n].push(i);}));return c;};
@@ -650,21 +705,11 @@ export default function App(){
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",maxWidth:1080,margin:"0 auto",height:58}}>
 
             {/* Logo */}
-            <div style={{display:"flex",alignItems:"center",gap:11}}>
-              <div style={{
-                width:34,height:34,borderRadius:10,
-                background:"linear-gradient(135deg, rgba(201,168,76,0.3) 0%, rgba(201,168,76,0.1) 100%)",
-                border:"1px solid rgba(201,168,76,0.4)",
-                display:"flex",alignItems:"center",justifyContent:"center",
-              }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
-                    fill="#C9A84C" strokeWidth="0.5" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div>
-                <div style={{color:"white",fontSize:15,fontWeight:700,letterSpacing:"-0.3px",lineHeight:1.2}}>Kleaning</div>
-                <div style={{color:"rgba(201,168,76,0.7)",fontSize:10,lineHeight:1.2,fontWeight:500}}>{user.displayName}</div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <img src="/logo.png" alt="KleanBnB"
+                style={{height:36,width:"auto",objectFit:"contain",filter:"brightness(0) invert(1)",opacity:0.92}}/>
+              <div style={{color:"rgba(201,168,76,0.7)",fontSize:10,lineHeight:1.2,fontWeight:500,whiteSpace:"nowrap"}}>
+                {user.displayName}
               </div>
             </div>
 
@@ -768,14 +813,22 @@ export default function App(){
                     <div style={{display:"flex",flexDirection:"column",gap:12}}>
                       {chaines.map((chaine,ci)=>{
                         const estPaire=chaine.inters.length===2;
+                        const estSolo=chaine.inters.length===1;
+                        const inter0=chaine.inters[0];
+                        const estVilla=isVillaInter(inter0);
+                        // En mode association : cette chaîne est la source
+                        const estSource=associerMode===ci;
+                        // En mode association : cette chaîne est une cible eligible
+                        const estCible=associerMode!==null&&associerMode!==ci&&estSolo&&!estVilla;
                         const colorIdx=estPaire?chaines.filter((c,i)=>i<ci&&c.inters.length===2).length%CHAINE_COLORS.length:-1;
                         const couleur=estPaire?CHAINE_COLORS[colorIdx]:null;
-                        const chaineBg=couleur?couleur.bg:"white";
-                        const chaineBorder=couleur?couleur.border:C.border;
+                        const chaineBg=estSource?"#FFFBEB":estCible?`${C.navy}08`:couleur?couleur.bg:"white";
+                        const chaineBorder=estSource?C.warnBorder:estCible?C.navy:couleur?couleur.border:C.border;
                         return(
                           <div key={ci} style={{borderRadius:16,overflow:"hidden",
-                            border:`1.5px solid ${chaineBorder}`,
-                            boxShadow:"0 2px 10px rgba(13,27,42,0.06)"}}>
+                            border:`${estSource||estCible?"2px":"1.5px"} solid ${chaineBorder}`,
+                            boxShadow:estCible?`0 0 0 3px ${C.navy}18`:"0 2px 10px rgba(13,27,42,0.06)",
+                            transition:"all .2s"}}>
                             {/* En-tête chaîne */}
                             <div style={{background:chaineBg,padding:"10px 14px",
                               display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -797,6 +850,53 @@ export default function App(){
                                     minHeight:36,fontFamily:"inherit"}}>
                                   {HEURES_S.map(h=><option key={h}>{h}</option>)}
                                 </select>
+                                {/* Bouton Séparer — chaînes paires uniquement */}
+                                {estPaire&&(
+                                  <button onClick={()=>separerChaine(ci)}
+                                    title="Séparer en 2 tâches indépendantes"
+                                    style={{height:34,padding:"0 10px",borderRadius:8,
+                                      background:"rgba(255,255,255,0.85)",
+                                      border:`1px solid ${chaineBorder}`,color:couleur?couleur.label:C.textMid,
+                                      display:"flex",alignItems:"center",gap:5,cursor:"pointer",
+                                      fontSize:11,fontWeight:600,whiteSpace:"nowrap",transition:"all .15s"}}>
+                                    <X size={11}/> Séparer
+                                  </button>
+                                )}
+                                {/* Bouton Associer / Annuler / Choisir */}
+                                {estSolo&&!estVilla&&!estCible&&(
+                                  estSource?(
+                                    <button onClick={()=>setAssocierMode(null)}
+                                      style={{height:34,padding:"0 10px",borderRadius:8,
+                                        background:C.warnBg,border:`1px solid ${C.warnBorder}`,
+                                        color:C.warn,display:"flex",alignItems:"center",gap:5,
+                                        cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
+                                      <X size={11}/> Annuler
+                                    </button>
+                                  ):(
+                                    associerMode===null&&(
+                                      <button onClick={()=>setAssocierMode(ci)}
+                                        title="Associer à une autre tâche"
+                                        style={{height:34,padding:"0 10px",borderRadius:8,
+                                          background:"rgba(255,255,255,0.85)",
+                                          border:`1px solid ${C.border}`,color:C.textMid,
+                                          display:"flex",alignItems:"center",gap:5,cursor:"pointer",
+                                          fontSize:11,fontWeight:600,whiteSpace:"nowrap",transition:"all .15s"}}>
+                                        🔗 Associer
+                                      </button>
+                                    )
+                                  )
+                                )}
+                                {/* Bouton Choisir — cible en mode association */}
+                                {estCible&&(
+                                  <button onClick={()=>associerChaines(associerMode,ci)}
+                                    style={{height:34,padding:"0 12px",borderRadius:8,
+                                      background:C.navy,color:"white",border:"none",
+                                      display:"flex",alignItems:"center",gap:5,cursor:"pointer",
+                                      fontSize:11,fontWeight:700,whiteSpace:"nowrap",
+                                      boxShadow:"0 2px 8px rgba(13,27,42,0.3)"}}>
+                                    ✓ Choisir
+                                  </button>
+                                )}
                                 <button onClick={()=>supprimerChaine(ci)} className="btn-danger"
                                   style={{width:34,height:34,borderRadius:8,background:"rgba(255,255,255,0.8)",
                                     border:`1px solid ${C.border}`,color:C.textSoft,

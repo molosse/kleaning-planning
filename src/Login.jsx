@@ -186,28 +186,18 @@ export default function Login({ onLogin }) {
           border: "1px solid rgba(232,224,213,0.8)",
         }}>
           {/* Logo */}
-          <div style={{ marginBottom: 36 }}>
-            <div style={{
-              width: 52, height: 52, borderRadius: 14,
-              background: "linear-gradient(135deg, #0D1B2A 0%, #1A3550 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              marginBottom: 20,
-              boxShadow: "0 4px 12px rgba(13,27,42,0.25)",
-            }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z"
-                  fill="#C9A84C" stroke="#C9A84C" strokeWidth="0.5" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <h1 style={{
-              margin: "0 0 4px",
-              fontSize: 26, fontWeight: 700, color: "#0D1B2A",
-              letterSpacing: "-0.5px",
-              fontFamily: "'Inter', sans-serif",
-            }}>
-              Kleaning
-            </h1>
-            <p style={{ margin: 0, fontSize: 14, color: "#8A9BB0" }}>
+          <div style={{ marginBottom: 32, textAlign: "center" }}>
+            <img
+              src="/logo.png"
+              alt="KleanBnB"
+              style={{
+                width: 160,
+                height: "auto",
+                objectFit: "contain",
+                marginBottom: 8,
+              }}
+            />
+            <p style={{ margin: 0, fontSize: 13, color: "#8A9BB0" }}>
               Planning & Optimisation · Marrakech
             </p>
           </div>
