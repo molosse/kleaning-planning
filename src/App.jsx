@@ -430,15 +430,16 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
 
 // ── WIZARD LOGEMENT ───────────────────────────────────────────
 const WQ=[
-  {id:"nom",   label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
-  {id:"type",  label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
-  {id:"cli",   label:"Client / Propriétaire",     placeholder:"ex: GetHost, Atlas",      req:false},
-  {id:"q",     label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true},
-  {id:"lat",   label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
-  {id:"lng",   label:"Longitude GPS",             placeholder:"ex: -8.018080",           req:true},
-  {id:"d",     label:"Durée intervention (min)",  placeholder:"ex: 90",                  req:true},
-  {id:"code",  label:"Code d'accès",              placeholder:"ex: 262626#",             req:false},
-  {id:"notes", label:"Notes accès",               placeholder:"ex: 5ème étage",          req:false},
+  {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
+  {id:"type",    label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
+  {id:"cli",     label:"Client / Propriétaire",     placeholder:"ex: GetHost, Atlas",      req:false},
+  {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true},
+  {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: 12 Rue Ibn Khaldoun ou https://maps.google.com/?q=...",req:false},
+  {id:"lat",     label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
+  {id:"lng",     label:"Longitude GPS",             placeholder:"ex: -8.018080",           req:true},
+  {id:"d",       label:"Durée intervention (min)",  placeholder:"ex: 90",                  req:true},
+  {id:"code",    label:"Code d'accès",              placeholder:"ex: 262626#",             req:false},
+  {id:"notes",   label:"Notes accès",               placeholder:"ex: 5ème étage",          req:false},
 ];
 function Wizard({onSave,onClose}){
   const[step,setStep]=useState(0);const[data,setData]=useState({});const[err,setErr]=useState("");
@@ -447,7 +448,7 @@ function Wizard({onSave,onClose}){
     if(q.req&&!data[q.id]){setErr("Champ obligatoire");return;}setErr("");
     if(step<WQ.length-1)setStep(s=>s+1);
     else onSave({nom:data.nom,type:data.type||"Appartement GH",cli:data.cli||"Particulier",
-      q:data.q||"Guéliz",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
+      q:data.q||"Guéliz",adresse:data.adresse||"",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
       d:parseInt(data.d)||90,code:data.code||"",notes:data.notes||""});
   };
   return(
@@ -1128,6 +1129,35 @@ export default function App(){
                             }
                           </div>}
                         </div>
+
+                        {/* Adresse */}
+                        {(isEdit||l.adresse)&&(()=>{
+                          const isMap=l.adresse&&/maps\.google|goo\.gl\/maps|maps\.app\.goo/i.test(l.adresse);
+                          return(
+                            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+                              <div className="section-label" style={{marginBottom:5}}>Adresse</div>
+                              {isEdit
+                                ?<input value={editLieu.adresse||""} onChange={e=>setEditLieu(p=>({...p,adresse:e.target.value}))}
+                                  placeholder="Adresse texte ou lien Google Maps"
+                                  style={{width:"100%",padding:"7px 10px",border:`1px solid ${C.border}`,borderRadius:8,
+                                    fontSize:13,outline:"none",boxSizing:"border-box",minHeight:40,
+                                    background:"#FAFAF8",fontFamily:"inherit",color:C.text}}/>
+                                :(isMap
+                                  ?<a href={l.adresse} target="_blank" rel="noopener noreferrer"
+                                    style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:13,
+                                      color:C.navyMid,fontWeight:500,textDecoration:"none",
+                                      padding:"5px 10px",borderRadius:8,background:`${C.navy}08`,
+                                      border:`1px solid ${C.navy}18`}}>
+                                    <MapPin size={13} color={C.gold}/> Voir sur Google Maps
+                                  </a>
+                                  :<span style={{fontSize:13,color:C.textMid,display:"flex",alignItems:"center",gap:5}}>
+                                    <MapPin size={13} color={C.gold}/>{l.adresse}
+                                  </span>
+                                )
+                              }
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

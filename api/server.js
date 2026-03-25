@@ -340,8 +340,9 @@ app.post("/api/lieux", auth, (req, res) => {
   const lat  = parseFloat(req.body.lat);
   const lng  = parseFloat(req.body.lng);
   const d    = parseInt(req.body.d);
-  const code = sanitize(req.body.code, 50);
-  const notes = sanitize(req.body.notes, 500);
+  const code    = sanitize(req.body.code, 50);
+  const notes   = sanitize(req.body.notes, 500);
+  const adresse = sanitize(req.body.adresse, 500);
 
   // Validations
   if (!nom || !type || !q) return res.status(400).json({ message: "nom, type et quartier sont requis" });
@@ -351,7 +352,7 @@ app.post("/api/lieux", auth, (req, res) => {
   if (isNaN(d) || d < 15 || d > 720) return res.status(400).json({ message: "Durée invalide (15-720 minutes)" });
 
   const lieux = readDB("lieux.json");
-  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", q, lat, lng, d, code, notes, createdAt: new Date().toISOString() };
+  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", q, adresse: adresse||"", lat, lng, d, code, notes, createdAt: new Date().toISOString() };
   lieux.push(l);
   writeDB("lieux.json", lieux);
   res.status(201).json({ logement: l, message: "Logement ajouté" });
@@ -373,8 +374,9 @@ app.put("/api/lieux/:id", auth, (req, res) => {
   if (b.lat != null) { const lat = parseFloat(b.lat); if (!isNaN(lat)) lieux[idx].lat = lat; }
   if (b.lng != null) { const lng = parseFloat(b.lng); if (!isNaN(lng)) lieux[idx].lng = lng; }
   if (b.d)     { const d = parseInt(b.d); if (!isNaN(d) && d >= 15 && d <= 720) lieux[idx].d = d; }
-  if (b.code  !== undefined) lieux[idx].code  = sanitize(b.code, 50);
-  if (b.notes !== undefined) lieux[idx].notes = sanitize(b.notes, 500);
+  if (b.code    !== undefined) lieux[idx].code    = sanitize(b.code, 50);
+  if (b.notes   !== undefined) lieux[idx].notes   = sanitize(b.notes, 500);
+  if (b.adresse !== undefined) lieux[idx].adresse = sanitize(b.adresse, 500);
   lieux[idx].updatedAt = new Date().toISOString();
 
   writeDB("lieux.json", lieux);
