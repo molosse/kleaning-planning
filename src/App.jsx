@@ -13,7 +13,7 @@ import {
   DS, DS_LOGIN, CHAINE_COLORS,
   EQUIPE, EQUIPE_FALLBACK,
   TYPE_IC, CLIENT_IC, TYPES, CENTRE,
-  QUARTIERS,
+  QUARTIERS, QUARTIERS_WITH_DETAILS,
 } from "./constants";
 
 // ═══════════════════════════════════════════════════════════════
@@ -524,11 +524,13 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
 // Formulaire multi-étapes pour ajouter un nouveau logement
 // Chaque étape correspond à un champ (WQ = Wizard Questions)
 // Navigation avant/arrière, validation des champs requis, raccourcis clavier (Entrée)
+// Quartiers formatés : "Nom — Catégorie (X km)"
+const quartierOptions=QUARTIERS_WITH_DETAILS.map(q=>`${q.name} — ${q.category} (${q.kmCenter} km)`);
 const WQ=[
   {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
   {id:"type",    label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
   {id:"cli",     label:"Client / Propriétaire",     placeholder:"ex: GetHost, Atlas",      req:false},
-  {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true,datalist:QUARTIERS},
+  {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true,datalist:quartierOptions},
   {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: 12 Rue Ibn Khaldoun ou https://maps.google.com/?q=...",req:false},
   {id:"lat",     label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
   {id:"lng",     label:"Longitude GPS",             placeholder:"ex: -8.018080",           req:true},
