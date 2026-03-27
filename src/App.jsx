@@ -664,16 +664,41 @@ function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
 
 // ── DAYS OFF MODAL ────────────────────────────────────────────
 // Modal pour gérer les jours off des employées
-// Permet sélection de plage de dates (du/au) qui s'expanse en dates individuelles
+// Supporte DEUX systèmes : dates spécifiques + jours de semaine récurrents
 function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
+  // Extraire les données initiales (support ancien et nouveau format)
+  const specificDatesInit=initialDates?.specificDates||initialDates||[];
+  const recurringWeekdaysInit=initialDates?.recurringWeekdays||[];
+
   const[startDate,setStartDate]=useState("");
   const[endDate,setEndDate]=useState("");
-  const[datesList,setDatesList]=useState(initialDates||[]);
+  const[datesList,setDatesList]=useState(specificDatesInit);
+  const[weekdays,setWeekdays]=useState(recurringWeekdaysInit);
 
-  // Initialise la modale avec les dates existantes
-  useEffect(()=>{setDatesList(initialDates||[]);setStartDate("");setEndDate("");},[visible,initialDates]);
+  // Initialise la modale avec les données existantes
+  useEffect(()=>{
+    const specDates=initialDates?.specificDates||initialDates||[];
+    const recWeekdays=initialDates?.recurringWeekdays||[];
+    setDatesList(specDates);
+    setWeekdays(recWeekdays);
+    setStartDate("");
+    setEndDate("");
+  },[visible,initialDates]);
 
   if(!visible)return null;
+
+  // Noms des jours en français
+  const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+  const dayShort=["DIM","LUN","MAR","MER","JEU","VEN","SAM"];
+
+  // Toggle un jour de semaine
+  const toggleWeekday=(day)=>{
+    if(weekdays.includes(day)){
+      setWeekdays(p=>p.filter(x=>x!==day));
+    }else{
+      setWeekdays(p=>[...p,day].sort());
+    }
+  };
 
   // Ajoute une date individuelle
   const addDate=()=>{if(!startDate)return;if(!datesList.includes(startDate)){setDatesList(p=>[...p,startDate].sort());setStartDate("");}};
@@ -697,14 +722,36 @@ function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3500,
       display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:420,
-        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out",maxHeight:"80vh",overflow:"auto"}}>
+      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:440,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out",maxHeight:"85vh",overflow:"auto"}}>
         <h3 style={{margin:"0 0 12px",fontSize:18,fontWeight:700,color:"#0f172a"}}>📅 Jours off - {empName}</h3>
-        <p style={{margin:"0 0 16px",fontSize:13,color:"#64748b"}}>Indiquez les dates où l'employée sera absente</p>
+        <p style={{margin:"0 0 16px",fontSize:13,color:"#64748b"}}>Sélectionnez les jours off spécifiques et/ou les jours de semaine récurrents</p>
 
-        {/* Ajouter plage de dates */}
+        {/* ─ SECTION 1: Jours de semaine récurrents ─ */}
+        <div style={{marginBottom:14,padding:"12px",background:"#f0f9ff",borderRadius:10,border:"1px solid #7dd3fc"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#0369a1",marginBottom:8}}>Jours de semaine (récurrents)</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+            {dayShort.map((day,i)=>(
+              <button key={i} onClick={()=>toggleWeekday(i)}
+                style={{padding:"6px 8px",borderRadius:6,fontSize:11,fontWeight:600,
+                  border:`1px solid ${weekdays.includes(i)?"#0284c7":"#cbd5e1"}`,
+                  background:weekdays.includes(i)?"#0284c7":"white",
+                  color:weekdays.includes(i)?"white":"#334155",
+                  cursor:"pointer",transition:"all .15s"}}>
+                {day}
+              </button>
+            ))}
+          </div>
+          {weekdays.length>0&&(
+            <div style={{marginTop:8,fontSize:11,color:"#0369a1",fontWeight:600}}>
+              ✓ {weekdays.length} jour{weekdays.length>1?"s":""}: {weekdays.map(w=>dayNames[w]).join(", ")}
+            </div>
+          )}
+        </div>
+
+        {/* ─ SECTION 2: Plage de dates spécifiques ─ */}
         <div style={{marginBottom:14,padding:"12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"#166534",marginBottom:8}}>Plage de dates (du/au)</div>
+          <div style={{fontSize:12,fontWeight:600,color:"#166534",marginBottom:8}}>Dates spécifiques (du/au)</div>
           <div style={{display:"flex",gap:8,marginBottom:8}}>
             <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
               style={{flex:1,padding:"8px 10px",border:"1px solid #dcfce7",borderRadius:6,fontSize:12}}/>
@@ -718,7 +765,7 @@ function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
           </button>
         </div>
 
-        {/* Ajouter date individuelle */}
+        {/* ─ SECTION 3: Ajouter date individuelle ─ */}
         <div style={{marginBottom:14,padding:"12px",background:"#eff6ff",borderRadius:10,border:"1px solid #bfdbfe"}}>
           <div style={{fontSize:12,fontWeight:600,color:"#1e40af",marginBottom:8}}>Ou ajouter une date</div>
           <div style={{display:"flex",gap:8}}>
@@ -732,11 +779,11 @@ function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
           </div>
         </div>
 
-        {/* Liste des dates */}
+        {/* ─ SECTION 4: Dates sélectionnées ─ */}
         {datesList.length>0&&(
           <div style={{marginBottom:14,padding:"12px",background:"#fafaf8",borderRadius:10,border:"1px solid #e7e5e4"}}>
             <div style={{fontSize:12,fontWeight:600,color:"#274c5b",marginBottom:8}}>Dates sélectionnées ({datesList.length})</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,maxHeight:150,overflow:"auto"}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,maxHeight:120,overflow:"auto"}}>
               {datesList.map(d=>(
                 <div key={d} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 8px",background:"white",
                   borderRadius:6,border:"1px solid #d1d5db",fontSize:12,color:"#374151"}}>
@@ -751,17 +798,17 @@ function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
           </div>
         )}
 
-        {/* Boutons */}
+        {/* ─ BOUTONS ─ */}
         <div style={{display:"flex",gap:10}}>
           <button onClick={onCancel}
             style={{flex:1,padding:12,background:"#f1f5f9",border:"1px solid #e2e8f0",
               borderRadius:10,fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer",transition:"all .15s"}}>
             Annuler
           </button>
-          <button onClick={()=>onSave(datesList)}
+          <button onClick={()=>onSave(datesList,weekdays)}
             style={{flex:1,padding:12,background:"#059669",border:"none",
               borderRadius:10,fontSize:13,fontWeight:600,color:"white",cursor:"pointer",transition:"all .15s"}}>
-            Enregistrer ({datesList.length})
+            Enregistrer ({datesList.length+weekdays.length})
           </button>
         </div>
       </div>
@@ -835,9 +882,26 @@ export default function App(){
   useEffect(()=>{if(onglet==="historique")chargerHistorique();},[onglet]);
 
   // Initialise les jours off à partir des données de l'équipe
+  // Support ancien format (array) et nouveau format (objet avec specificDates + recurringWeekdays)
   useEffect(()=>{
     const jours={};
-    equipe.forEach(emp=>{if(emp.joursOff&&emp.joursOff.length>0)jours[emp.id]=emp.joursOff;});
+    equipe.forEach(emp=>{
+      if(emp.joursOff){
+        // Ancien format : array de dates
+        if(Array.isArray(emp.joursOff)){
+          if(emp.joursOff.length>0){
+            jours[emp.id]={specificDates:emp.joursOff,recurringWeekdays:[]};
+          }
+        }
+        // Nouveau format : objet {specificDates, recurringWeekdays}
+        else if(typeof emp.joursOff==='object'){
+          const hasData=(emp.joursOff.specificDates?.length>0||emp.joursOff.recurringWeekdays?.length>0);
+          if(hasData){
+            jours[emp.id]=emp.joursOff;
+          }
+        }
+      }
+    });
     setEmpJoursOff(jours);
   },[equipe]);
 
@@ -1035,14 +1099,16 @@ export default function App(){
   };
 
   // Sauvegarde les jours off d'une employée
-  // Envoie au backend : PUT /api/equipe/:id avec {joursOff: [...dates]}
-  const saveDaysOff=async(empId,dates)=>{
-    const data=await apiCall(`/api/equipe/${empId}`,"PUT",{joursOff:dates});
+  // Supporte deux types : dates spécifiques + jours de semaine récurrents
+  // Envoie au backend : PUT /api/equipe/:id avec {joursOff: {specificDates, recurringWeekdays}}
+  const saveDaysOff=async(empId,specificDates,recurringWeekdays)=>{
+    const joursOff={specificDates,recurringWeekdays};
+    const data=await apiCall(`/api/equipe/${empId}`,"PUT",{joursOff});
     if(data.employe){
       setEquipe(p=>p.map(x=>x.id===empId?data.employe:x));
-      setEmpJoursOff(p=>({...p,[empId]:dates}));
+      setEmpJoursOff(p=>({...p,[empId]:joursOff}));
       setDaysOffModal(null);
-      setEmpMsg(`✅ Jours off mis à jour pour`,setTimeout(()=>setEmpMsg(""),3000));
+      setEmpMsg(`✅ Jours off mis à jour pour "${data.employe.nom}"`,setTimeout(()=>setEmpMsg(""),3000));
     }
   };
 
@@ -1866,11 +1932,16 @@ export default function App(){
                         <div>
                           <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3,display:"flex",alignItems:"center",gap:8}}>
                             {emp.nom}
-                            {empJoursOff[emp.id]&&empJoursOff[emp.id].length>0&&(
-                              <span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:6,fontWeight:600}}>
-                                📅 {empJoursOff[emp.id].length}
-                              </span>
-                            )}
+                            {empJoursOff[emp.id]&&(()=>{
+                              // Support ancien format (array) et nouveau format (objet)
+                              const data=empJoursOff[emp.id];
+                              const totalCount=Array.isArray(data)?data.length:((data.specificDates?.length||0)+(data.recurringWeekdays?.length||0));
+                              return totalCount>0?(
+                                <span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:6,fontWeight:600}}>
+                                  📅 {totalCount}
+                                </span>
+                              ):null;
+                            })()}
                           </div>
                           <div style={{fontSize:11,color:DS.ink3,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
                             {emp.actif===false
@@ -2076,8 +2147,8 @@ export default function App(){
           visible={true}
           empId={daysOffModal.empId}
           empName={equipe.find(e=>e.id===daysOffModal.empId)?.nom||""}
-          initialDates={empJoursOff[daysOffModal.empId]||[]}
-          onSave={(dates)=>saveDaysOff(daysOffModal.empId,dates)}
+          initialDates={empJoursOff[daysOffModal.empId]||{specificDates:[],recurringWeekdays:[]}}
+          onSave={(specificDates,recurringWeekdays)=>saveDaysOff(daysOffModal.empId,specificDates,recurringWeekdays)}
           onCancel={()=>setDaysOffModal(null)}
         />}
 

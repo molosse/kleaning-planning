@@ -588,7 +588,7 @@ app.post("/api/equipe", auth, adminOnly, (req, res) => {
   res.status(201).json({ employe: emp, message: `"${nom}" ajoutée à l'équipe` });
 });
 
-// PUT /api/equipe/:id — modifier (nom, emoji, couleur, actif)
+// PUT /api/equipe/:id — modifier (nom, emoji, couleur, actif, joursOff)
 app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
@@ -598,12 +598,19 @@ app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   const idx = equipe.findIndex(e => e.id === id);
   if (idx === -1) return res.status(404).json({ message: "Employée non trouvée" });
 
-  const { nom, emoji, coul, bg, actif } = req.body;
+  const { nom, emoji, coul, bg, actif, joursOff } = req.body;
   if (nom)             equipe[idx].nom   = sanitize(nom, 60);
   if (emoji)           equipe[idx].emoji = sanitize(emoji, 5);
   if (/^#[0-9a-fA-F]{6}$/.test(coul || "")) equipe[idx].coul = coul;
   if (/^#[0-9a-fA-F]{6}$/.test(bg   || "")) equipe[idx].bg   = bg;
   if (actif !== undefined) equipe[idx].actif = !!actif;
+  // Persiste joursOff : objet avec specificDates et recurringWeekdays
+  if (joursOff !== undefined && typeof joursOff === 'object') {
+    equipe[idx].joursOff = {
+      specificDates: Array.isArray(joursOff.specificDates) ? joursOff.specificDates : [],
+      recurringWeekdays: Array.isArray(joursOff.recurringWeekdays) ? joursOff.recurringWeekdays : []
+    };
+  }
   equipe[idx].updatedAt = new Date().toISOString();
 
   writeDB("equipe.json", equipe);
