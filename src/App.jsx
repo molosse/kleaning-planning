@@ -1,96 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Login from "./Login.jsx";
+import { LocationIcon, TimeIcon, PropertyIcon, TeamIcon, DeleteIcon } from "./icons/index.jsx";
 import {
-  CalendarDays, MapPin, Users, UserPlus, Settings,
-  RefreshCw, Send, Copy, Check, ChevronRight,
-  Plus, X, Edit2, Trash2, Clock, AlertTriangle,
-  Home, Building2, Castle, Briefcase, Star,
+  CalendarDays, UserPlus, Settings,
+  RefreshCw, Send, Copy, Check,  ChevronRight,
+  Plus, X, Edit2, AlertTriangle,
+  Building2, Castle, Briefcase, Star,
   LogOut, Menu, Zap, CheckCircle2, ShirtIcon,
 } from "lucide-react";
+import {
+  DS, DS_LOGIN, CHAINE_COLORS,
+  EQUIPE, EQUIPE_FALLBACK,
+  TYPE_IC, CLIENT_IC, TYPES, CENTRE,
+} from "./constants";
 
 // ═══════════════════════════════════════════════════════════════
 // KLEANING — APP MOBILE-FIRST v6
 // Design : utilitarian + épuré, optimisé tactile
 // Breakpoints : mobile < 640px, tablet 640-1024px, desktop > 1024px
 // ═══════════════════════════════════════════════════════════════
-
-// ── ÉQUIPE PAR DÉFAUT (utilisée si l'API ne répond pas) ──────
-// Chaque membre a : id unique, nom, emoji d'avatar, couleur principale et fond de badge
-const EQUIPE_FALLBACK=[
-  {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true},
-  {id:"emp_2",nom:"Amina", emoji:"👩",  coul:"#059669",bg:"#d1fae5",actif:true},
-  {id:"emp_3",nom:"Touria",emoji:"👩‍🦳",coul:"#7c3aed",bg:"#ede9fe",actif:true},
-  {id:"emp_4",nom:"Imane", emoji:"👩‍🦰",coul:"#d97706",bg:"#fef3c7",actif:true},
-];
-// Version allégée (sans id/actif) utilisée dans genWA et les badges de couleur
-const EQUIPE=[
-  {nom:"Majda",  coul:"#2563eb",bg:"#dbeafe",emoji:"👩‍🦱"},
-  {nom:"Amina",  coul:"#059669",bg:"#d1fae5",emoji:"👩"},
-  {nom:"Touria", coul:"#7c3aed",bg:"#ede9fe",emoji:"👩‍🦳"},
-  {nom:"Imane",  coul:"#d97706",bg:"#fef3c7",emoji:"👩‍🦰"},
-];
-
-// Icônes emoji par type de logement (affiché sur les cartes d'intervention)
-const TYPE_IC={"Bureau":"🔷","Appartement GH":"🟢","Villa":"🟠","Riad":"⭕","Appartement MM":"🔵","Appartement":"🟡"};
-// Icônes spéciales par client (surcharge le type)
-const CLIENT_IC={"Cabinet médical":"🔴"};
-// Types de logements disponibles dans le wizard et les filtres
-const TYPES=["Appartement GH","Appartement MM","Appartement","Villa","Riad","Bureau"];
-// Coordonnées du centre de Marrakech — utilisées comme fallback GPS si un lieu n'a pas de coords
-const CENTRE={lat:31.635,lng:-8.010};
-// Palettes de couleurs pour les chaînes pairées (fond + bordure + label)
-// Chaque chaîne formée de 2 interventions reçoit une couleur différente pour identification visuelle
-const CHAINE_COLORS=[
-  {bg:"#fef9c3",border:"#fbbf24",label:"#92400e"},
-  {bg:"#d1fae5",border:"#34d399",label:"#065f46"},
-  {bg:"#dbeafe",border:"#60a5fa",label:"#1e40af"},
-  {bg:"#ede9fe",border:"#a78bfa",label:"#5b21b6"},
-  {bg:"#ffedd5",border:"#fb923c",label:"#9a3412"},
-  {bg:"#fce7f3",border:"#f472b6",label:"#9d174d"},
-  {bg:"#e0f2fe",border:"#38bdf8",label:"#075985"},
-  {bg:"#dcfce7",border:"#4ade80",label:"#14532d"},
-];
-
-// ── DESIGN SYSTEM TOKENS (Intervention & Travaux) ─────────────────────────────────
-const DS = {
-  // Neutrals
-  ink:      "#0f1117",
-  ink2:     "#3d4155",
-  ink3:     "#7c829a",
-  ink4:     "#b0b5c8",
-
-  paper:    "#f8f7f4",
-  paper2:   "#f1f0ec",
-  paper3:   "#e8e6e0",
-  line:     "#e2e0da",
-
-  // Brand (Primary - Warm Brick/Orange)
-  brand:    "#c84b1f",
-  brand2:   "#e06235",
-  brandSoft:"#fdf1ec",
-  brandMid: "#f5c5b0",
-
-  // Status Colors
-  sage:     "#3a6b54",
-  sageSoft: "#edf4f0",
-  sageMid:  "#9ec4b0",
-
-  amber:    "#b5620a",
-  amberSoft:"#fdf3e7",
-
-  cobalt:   "#1e4fa8",
-  cobaltSoft:"#edf1fb",
-
-  ruby:     "#b5172d",
-  rubySoft: "#fdeef0",
-
-  // Radius
-  radiusSm: "6px",
-  radiusMd: "12px",
-  radiusLg: "20px",
-  radiusXl: "28px",
-};
 
 // ── CSS GLOBAL ────────────────────────────────────────────────
 const GLOBAL_CSS = `
@@ -1104,8 +1033,8 @@ export default function App(){
                                   {estPaire?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
                                 </span>
                                 <span style={{fontSize:11,color:DS.ink3,display:"flex",alignItems:"center",gap:4}}>
-                                  <Clock size={10}/>{chaine.dureeTotal}min
-                                  {chaine.trajetTotal>0&&<><MapPin size={9}/>{chaine.trajetTotal}min</>}
+                                  <TimeIcon size={10}/>{chaine.dureeTotal}min
+                                  {chaine.trajetTotal>0&&<><LocationIcon size={9}/>{chaine.trajetTotal}min</>}
                                 </span>
                               </div>
                               <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -1160,7 +1089,7 @@ export default function App(){
                                   style={{minWidth:44,minHeight:44,borderRadius:8,background:"rgba(255,255,255,0.8)",
                                     border:`1px solid ${DS.line}`,color:DS.ink3,
                                     display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"}}>
-                                  <Trash2 size={13}/>
+                                  <DeleteIcon size={13}/>
                                 </button>
                               </div>
                             </div>
@@ -1174,7 +1103,7 @@ export default function App(){
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
                                     <span style={{fontSize:10,color:DS.ink3,fontWeight:600,display:"flex",alignItems:"center",gap:4,
                                       overflow:"hidden",maxWidth:"70%",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>
-                                      <MapPin size={9} style={{flexShrink:0}}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
+                                      <LocationIcon size={9} style={{flexShrink:0}}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
                                     </span>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
                                   </div>
@@ -1192,7 +1121,7 @@ export default function App(){
                         style={{width:"100%",padding:"14px 16px",border:`1px solid ${DS.line}`,
                           borderRadius:12,fontSize:14,fontWeight:600,color:DS.ink,
                           display:"flex",alignItems:"center",justifyContent:"center",gap:8,minHeight:50,cursor:"pointer",background:"white"}}>
-                        <Users size={16} color={DS.brand}/>
+                        <TeamIcon size={16} color={DS.brand}/>
                         Charge du jour
                         {conflits.length>0&&<span style={{background:DS.rubySoft,color:DS.ruby,padding:"2px 8px",borderRadius:8,fontSize:12,border:"1px solid #FECACA",fontWeight:700}}>{conflits.length} conflit{conflits.length>1?"s":""}</span>}
                       </button>
@@ -1214,7 +1143,7 @@ export default function App(){
                     {/* Charge du jour */}
                     <div className="card" style={{padding:16}}>
                       <div style={{fontSize:11,fontWeight:700,color:DS.ink3,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-                        <Users size={12} color={DS.brand}/> Charge du jour
+                        <TeamIcon size={12} color={DS.brand}/> Charge du jour
                       </div>
                       {equipe.filter(e=>e.actif!==false).map(e=>{const t=ch[e.nom]||[];return(
                         <div key={e.nom} style={{marginBottom:8}}>
@@ -1291,7 +1220,7 @@ export default function App(){
           {onglet==="historique"&&(
             <div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <Clock size={16} color={DS.brand}/>
+                <TimeIcon size={16} color={DS.brand}/>
                 <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Historique des plannings</span>
               </div>
               <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>Plannings générés et sauvegardés automatiquement. Cliquez sur un jour pour le consulter ou le restaurer.</div>
@@ -1375,7 +1304,7 @@ export default function App(){
                                     {chaine.inters.length===2?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
                                   </span>
                                   <span style={{fontSize:11,color:DS.ink3,display:"flex",alignItems:"center",gap:4}}>
-                                    <Clock size={9}/>{chaine.inters[0]?.heureDebut||""}
+                                    <TimeIcon size={9}/>{chaine.inters[0]?.heureDebut||""}
                                     {chaine.inters.length>1&&<> → {chaine.inters[chaine.inters.length-1]?.heureFin}</>}
                                   </span>
                                 </div>
@@ -1428,7 +1357,7 @@ export default function App(){
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <Home size={16} color={DS.brand}/>
+                  <PropertyIcon size={16} color={DS.brand}/>
                   <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>{lieux.length} logements</span>
                 </div>
                 <button onClick={()=>setWizard(true)} className="btn-primary"
@@ -1447,7 +1376,7 @@ export default function App(){
                   style={{width:"100%",padding:"11px 14px 11px 40px",border:`1.5px solid ${DS.line}`,borderRadius:10,
                     fontSize:14,outline:"none",background:"white",color:DS.ink,fontFamily:"inherit",
                     boxSizing:"border-box",minHeight:46}}/>
-                <MapPin size={15} color={DS.ink3} style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}/>
+                <LocationIcon size={15} color={DS.ink3} style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}/>
                 {searchLieux&&<button onClick={()=>setSearchLieux("")}
                   style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
                     background:"none",border:"none",color:DS.ink3,cursor:"pointer",fontSize:16,padding:4,lineHeight:1}}>✕</button>}
@@ -1556,10 +1485,10 @@ export default function App(){
                                       color:DS.ink2,fontWeight:500,textDecoration:"none",
                                       padding:"5px 10px",borderRadius:8,background:`${DS.ink}08`,
                                       border:`1px solid ${DS.ink}18`}}>
-                                    <MapPin size={13} color={DS.brand}/> Voir sur Google Maps
+                                    <LocationIcon size={13} color={DS.brand}/> Voir sur Google Maps
                                   </a>
                                   :<span style={{fontSize:13,color:DS.ink2,display:"flex",alignItems:"center",gap:5}}>
-                                    <MapPin size={13} color={DS.brand}/>{l.adresse}
+                                    <LocationIcon size={13} color={DS.brand}/>{l.adresse}
                                   </span>
                                 )
                               }
@@ -1615,7 +1544,7 @@ export default function App(){
                       <button onClick={()=>supprimerExtra(ex.id)} className="btn-danger"
                         style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${DS.line}`,background:"white",
                           color:DS.ink3,fontSize:13,fontWeight:500,minHeight:38,display:"flex",alignItems:"center",gap:5,cursor:"pointer",transition:"all .15s"}}>
-                        <Trash2 size={13}/> Retirer
+                        <DeleteIcon size={13}/> Retirer
                       </button>
                     </div>
                   ))}
@@ -1629,7 +1558,7 @@ export default function App(){
           {onglet==="equipe"&&(
             <div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <Users size={16} color={DS.brand}/>
+                <TeamIcon size={16} color={DS.brand}/>
                 <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Équipe fixe</span>
               </div>
               <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>
@@ -1717,7 +1646,7 @@ export default function App(){
                           <button onClick={()=>supprimerEmp(emp.id)} className="btn-danger"
                             style={{padding:"7px 11px",borderRadius:8,border:`1px solid ${DS.line}`,
                               background:"white",color:DS.ink3,fontSize:13,minHeight:38,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center"}}>
-                            <Trash2 size={13}/>
+                            <DeleteIcon size={13}/>
                           </button>
                         </div>
                       )}
@@ -1794,7 +1723,7 @@ export default function App(){
         }}>
           {TABS.map(([k,,l])=>{
             const active=onglet===k;
-            const NavIcons={planning:<CalendarDays size={20}/>,historique:<Clock size={20}/>,lieux:<Home size={20}/>,extras:<UserPlus size={20}/>,equipe:<Users size={20}/>,users:<Settings size={20}/>};
+            const NavIcons={planning:<CalendarDays size={20}/>,historique:<TimeIcon size={20}/>,lieux:<PropertyIcon size={20}/>,extras:<UserPlus size={20}/>,equipe:<TeamIcon size={20}/>,users:<Settings size={20}/>};
             return(
               <button key={k} onClick={()=>setOnglet(k)}
                 style={{
