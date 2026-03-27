@@ -298,13 +298,13 @@ export default function Login({ onLogin }) {
                 width: "100%", padding: "15px",
                 background: loading
                   ? "#94a3b8"
-                  : "linear-gradient(135deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 100%)",
+                  : `linear-gradient(135deg, ${DS_LOGIN.darkNavy} 0%, #1a2d47 50%, #2a4a6f 100%)`,
                 color: "white",
-                border: "none", borderRadius: 14, fontSize: 15, fontWeight: 600,
+                border: `2px solid ${loading ? "transparent" : "${DS_LOGIN.gold}"}`, borderRadius: 14, fontSize: 15, fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer",
                 minHeight: 52, fontFamily: "inherit",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                boxShadow: loading ? "none" : "0 4px 14px rgba(13,27,42,0.3)",
+                boxShadow: loading ? "none" : `0 4px 14px rgba(13,27,42,0.4), inset 0 1px 0 rgba(201,168,76,0.3)`,
                 transition: "all .2s",
                 letterSpacing: "0.02em",
               }}
