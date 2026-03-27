@@ -52,39 +52,60 @@ const CHAINE_COLORS=[
   {bg:"#dcfce7",border:"#4ade80",label:"#14532d"},
 ];
 
-// ── PALETTE MARRAKECH PREMIUM ─────────────────────────────────
-const C = {
-  navy:    "#0D1B2A",
-  navyMid: "#1A3550",
-  gold:    "#C9A84C",
-  goldSoft:"#F5ECD7",
-  bg:      "#F4F2EE",
-  bgCard:  "#FFFFFF",
-  border:  "#E8E0D5",
-  text:    "#1A1A2E",
-  textMid: "#4A5568",
-  textSoft:"#8A9BB0",
-  success: "#16714A",
-  successBg:"#ECFDF5",
-  error:   "#B91C1C",
-  errorBg: "#FEF2F2",
-  warn:    "#92400E",
-  warnBg:  "#FFFBEB",
-  warnBorder:"#FCD34D",
+// ── DESIGN SYSTEM TOKENS (Intervention & Travaux) ─────────────────────────────────
+const DS = {
+  // Neutrals
+  ink:      "#0f1117",
+  ink2:     "#3d4155",
+  ink3:     "#7c829a",
+  ink4:     "#b0b5c8",
+
+  paper:    "#f8f7f4",
+  paper2:   "#f1f0ec",
+  paper3:   "#e8e6e0",
+  line:     "#e2e0da",
+
+  // Brand (Primary - Warm Brick/Orange)
+  brand:    "#c84b1f",
+  brand2:   "#e06235",
+  brandSoft:"#fdf1ec",
+  brandMid: "#f5c5b0",
+
+  // Status Colors
+  sage:     "#3a6b54",
+  sageSoft: "#edf4f0",
+  sageMid:  "#9ec4b0",
+
+  amber:    "#b5620a",
+  amberSoft:"#fdf3e7",
+
+  cobalt:   "#1e4fa8",
+  cobaltSoft:"#edf1fb",
+
+  ruby:     "#b5172d",
+  rubySoft: "#fdeef0",
+
+  // Radius
+  radiusSm: "6px",
+  radiusMd: "12px",
+  radiusLg: "20px",
+  radiusXl: "28px",
 };
 
 // ── CSS GLOBAL ────────────────────────────────────────────────
 const GLOBAL_CSS = `
+  @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap");
+
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; background: ${C.bg}; color: ${C.text}; }
+  body { margin: 0; font-family: 'Bricolage Grotesque', 'Segoe UI', system-ui, -apple-system, sans-serif; background: ${DS.paper}; color: ${DS.ink}; }
   input, select, button, textarea { font-family: inherit; }
   button { cursor: pointer; }
 
   /* Scrollbar élégante */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #D1C9BE; border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: #B8AFA4; }
+  ::-webkit-scrollbar-thumb { background: ${DS.paper3}; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: ${DS.line}; }
 
   /* Animations */
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -94,17 +115,46 @@ const GLOBAL_CSS = `
   .fade-in { animation: fadeIn 0.25s ease-out; }
 
   /* Boutons interactifs — hover/active */
-  .btn-primary { transition: transform .15s, box-shadow .15s; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,27,42,0.25); }
+  .btn-primary {
+    background: ${DS.brand};
+    color: white;
+    transition: transform .15s, box-shadow .15s;
+    border: none;
+    border-radius: ${DS.radiusMd};
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(200,75,31,.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(200,75,31,.35);
+    background: #b03f16;
+  }
   .btn-primary:active { transform: translateY(0); }
-  .btn-ghost:hover { background: rgba(201,168,76,0.08) !important; }
-  .btn-danger:hover { background: #FEE2E2 !important; color: #B91C1C !important; }
+
+  .btn-secondary {
+    background: ${DS.paper2};
+    color: ${DS.ink};
+    border: 1px solid ${DS.line};
+    border-radius: ${DS.radiusMd};
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-secondary:hover { background: ${DS.paper3}; }
+
+  .btn-ghost:hover { background: rgba(200,75,31,0.08) !important; }
+  .btn-danger:hover { background: ${DS.rubySoft} !important; color: ${DS.ruby} !important; }
 
   /* Inputs focus */
   input:focus, select:focus, textarea:focus {
     outline: none;
-    border-color: ${C.gold} !important;
-    background: #FFFDF7 !important;
+    border-color: ${DS.brand} !important;
+    background: #fffbf7 !important;
   }
 
   /* Navigation bottom mobile */
@@ -128,12 +178,44 @@ const GLOBAL_CSS = `
   .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .scroll-x::-webkit-scrollbar { display: none; }
 
+  /* Typography */
+  .display {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(42px, 5vw, 72px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+  }
+  .h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: ${DS.ink};
+    margin: 0 0 8px 0;
+  }
+  .h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: ${DS.ink};
+    margin: 0 0 6px 0;
+  }
+  .body {
+    font-size: 15px;
+    color: ${DS.ink2};
+    line-height: 1.65;
+  }
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
   /* Cards */
   .card {
     background: white;
-    border-radius: 16px;
-    border: 1px solid ${C.border};
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(13,27,42,0.04);
+    border-radius: ${DS.radiusLg};
+    border: 1px solid ${DS.line};
+    box-shadow: 0 1px 3px rgba(15,17,23,.06), 0 1px 2px rgba(15,17,23,.04);
   }
 
   /* Badge chips */
@@ -144,15 +226,23 @@ const GLOBAL_CSS = `
     border: 1px solid transparent;
   }
 
+  /* Status badges */
+  .badge-wait { background: ${DS.amberSoft}; color: ${DS.amber}; }
+  .badge-active { background: ${DS.cobaltSoft}; color: ${DS.cobalt}; }
+  .badge-done { background: ${DS.sageSoft}; color: ${DS.sage}; }
+  .badge-urgent { background: ${DS.brandSoft}; color: ${DS.brand}; }
+  .badge-litige { background: ${DS.rubySoft}; color: ${DS.ruby}; }
+
   /* Séparateur */
-  .divider { height: 1px; background: ${C.border}; margin: 12px 0; }
+  .divider { height: 1px; background: ${DS.line}; margin: 12px 0; }
 
   /* Section label */
   .section-label {
     font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: ${C.textSoft};
+    text-transform: uppercase; color: ${DS.ink3};
   }
 `;
+
 
 // ── UTILITAIRES ───────────────────────────────────────────────
 
@@ -376,7 +466,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
   const btnRef=useRef();
 
   return(
-    <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||C.border}`}}>
+    <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||DS.line}`}}>
 
       {/* Ligne 1 : heure + nom */}
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
@@ -575,7 +665,7 @@ function Wizard({onSave,onClose}){
             style={{flex:1,padding:14,background:"#f8fafc",color:"#475569",border:"1px solid #e2e8f0",
               borderRadius:12,fontSize:14,fontWeight:600,minHeight:50}}>← Retour</button>}
           <button onClick={next}
-            style={{flex:2,padding:14,background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,color:"white",border:"none",
+            style={{flex:2,padding:14,background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,color:"white",border:"none",
               borderRadius:12,fontSize:15,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit"}}>
             {step===WQ.length-1?"✅ Enregistrer":"Suivant →"}
           </button>
@@ -868,11 +958,11 @@ export default function App(){
   return(
     <>
       <style>{GLOBAL_CSS}</style>
-      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:C.bg,minHeight:"100vh",paddingBottom:"calc(70px + env(safe-area-inset-bottom, 0px))"}}>
+      <div style={{fontFamily:"'Inter','Segoe UI',system-ui,sans-serif",background:DS.paper,minHeight:"100vh",paddingBottom:"calc(70px + env(safe-area-inset-bottom, 0px))"}}>
 
         {/* ── HEADER ─────────────────────────────────────── */}
         <div style={{
-          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+          background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
           padding:"0 16px",
           position:"sticky",top:0,zIndex:100,
           boxShadow:"0 2px 12px rgba(13,27,42,0.3)",
@@ -933,13 +1023,13 @@ export default function App(){
                   <div style={{flex:"1 1 120px"}}>
                     <label className="section-label" style={{display:"block",marginBottom:6}}>Date</label>
                     <input value={dateQ} readOnly
-                      style={{padding:"10px 13px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,
-                        width:"100%",fontFamily:"inherit",minHeight:46,background:"#F0EDE8",color:C.textMid,cursor:"default"}}/>
+                      style={{padding:"10px 13px",border:`1.5px solid ${DS.line}`,borderRadius:10,fontSize:14,
+                        width:"100%",fontFamily:"inherit",minHeight:46,background:"#F0EDE8",color:DS.ink2,cursor:"default"}}/>
                   </div>
                   <button onClick={chargerAgenda} disabled={loading} className="btn-primary"
                     style={{
                       flex:"1 1 160px",minWidth:0,padding:"12px 18px",
-                      background:loading?C.textSoft:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                      background:loading?DS.ink3:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                       color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:46,
                       display:"flex",alignItems:"center",justifyContent:"center",gap:8,
                       boxShadow:loading?"none":"0 4px 14px rgba(13,27,42,0.25)",
@@ -952,14 +1042,14 @@ export default function App(){
 
                 {msg&&(
                   <div style={{marginTop:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,
-                    background:msg.startsWith("✅")?C.successBg:msg.startsWith("ℹ️")?"#EFF6FF":C.errorBg,
-                    color:msg.startsWith("✅")?C.success:msg.startsWith("ℹ️")?"#1E40AF":C.error,
+                    background:msg.startsWith("✅")?DS.sageSoft:msg.startsWith("ℹ️")?"#EFF6FF":DS.rubySoft,
+                    color:msg.startsWith("✅")?DS.sage:msg.startsWith("ℹ️")?"#1E40AF":DS.ruby,
                     border:`1px solid ${msg.startsWith("✅")?"#A7F3D0":msg.startsWith("ℹ️")?"#BFDBFE":"#FECACA"}`,
                     display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                     {msg.startsWith("✅")?<CheckCircle2 size={14}/>:msg.startsWith("ℹ️")?<Zap size={14}/>:<AlertTriangle size={14}/>}
                     <span style={{flex:1}}>{msg.replace("✅ ","").replace("ℹ️ ","")}</span>
-                    {nbSans>0&&<span style={{background:C.errorBg,color:C.error,padding:"3px 9px",borderRadius:8,fontSize:11,border:"1px solid #FECACA",fontWeight:700,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}><AlertTriangle size={10}/>{nbSans} sans assignation</span>}
-                    {nbVilla>0&&<span style={{background:C.warnBg,color:C.warn,padding:"3px 9px",borderRadius:8,fontSize:11,border:`1px solid ${C.warnBorder}`,fontWeight:700,whiteSpace:"nowrap"}}>Villa &lt; 2</span>}
+                    {nbSans>0&&<span style={{background:DS.rubySoft,color:DS.ruby,padding:"3px 9px",borderRadius:8,fontSize:11,border:"1px solid #FECACA",fontWeight:700,whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}><AlertTriangle size={10}/>{nbSans} sans assignation</span>}
+                    {nbVilla>0&&<span style={{background:DS.amberSoft,color:DS.amber,padding:"3px 9px",borderRadius:8,fontSize:11,border:`1px solid ${DS.amber}`,fontWeight:700,whiteSpace:"nowrap"}}>Villa &lt; 2</span>}
                   </div>
                 )}
               </div>
@@ -968,22 +1058,22 @@ export default function App(){
                 <div className="card" style={{padding:"52px 24px",textAlign:"center"}}>
                   <div style={{
                     width:64,height:64,borderRadius:18,
-                    background:`linear-gradient(135deg, ${C.navy}14 0%, ${C.gold}18 100%)`,
+                    background:`linear-gradient(135deg, ${DS.ink}14 0%, ${DS.brand}18 100%)`,
                     display:"flex",alignItems:"center",justifyContent:"center",
                     margin:"0 auto 18px",
-                    border:`1px solid ${C.border}`,
+                    border:`1px solid ${DS.line}`,
                   }}>
-                    <CalendarDays size={28} color={C.gold}/>
+                    <CalendarDays size={28} color={DS.brand}/>
                   </div>
-                  <div style={{fontSize:16,fontWeight:600,color:C.text,marginBottom:6}}>Aucun planning chargé</div>
-                  <div style={{fontSize:13,color:C.textSoft}}>Saisissez une date et appuyez sur "Charger l'agenda Ali"</div>
+                  <div style={{fontSize:16,fontWeight:600,color:DS.ink,marginBottom:6}}>Aucun planning chargé</div>
+                  <div style={{fontSize:13,color:DS.ink3}}>Saisissez une date et appuyez sur "Charger l'agenda Ali"</div>
                 </div>
               ):(
                 // Layout responsive : 2 colonnes sur desktop, 1 colonne sur mobile
                 <div className="layout-2col" style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:14,alignItems:"start"}}>
                   <div>
-                    <div style={{fontSize:11,fontWeight:600,color:C.textSoft,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.07em",display:"flex",alignItems:"center",gap:6}}>
-                      <Zap size={11} color={C.gold}/> {chaines.length} chaîne{chaines.length>1?"s":""} · même couleur = assigner ensemble
+                    <div style={{fontSize:11,fontWeight:600,color:DS.ink3,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.07em",display:"flex",alignItems:"center",gap:6}}>
+                      <Zap size={11} color={DS.brand}/> {chaines.length} chaîne{chaines.length>1?"s":""} · même couleur = assigner ensemble
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:12}}>
                       {chaines.map((chaine,ci)=>{
@@ -997,12 +1087,12 @@ export default function App(){
                         const estCible=associerMode!==null&&associerMode!==ci&&estSolo&&!estVilla;
                         const colorIdx=estPaire?chaines.filter((c,i)=>i<ci&&c.inters.length===2).length%CHAINE_COLORS.length:-1;
                         const couleur=estPaire?CHAINE_COLORS[colorIdx]:null;
-                        const chaineBg=estSource?"#FFFBEB":estCible?`${C.navy}08`:couleur?couleur.bg:"white";
-                        const chaineBorder=estSource?C.warnBorder:estCible?C.navy:couleur?couleur.border:C.border;
+                        const chaineBg=estSource?"#FFFBEB":estCible?`${DS.ink}08`:couleur?couleur.bg:"white";
+                        const chaineBorder=estSource?DS.amber:estCible?DS.ink:couleur?couleur.border:DS.line;
                         return(
                           <div key={ci} style={{borderRadius:16,overflow:"hidden",
                             border:`${estSource||estCible?"2px":"1.5px"} solid ${chaineBorder}`,
-                            boxShadow:estCible?`0 0 0 3px ${C.navy}18`:"0 2px 10px rgba(13,27,42,0.06)",
+                            boxShadow:estCible?`0 0 0 3px ${DS.ink}18`:"0 2px 10px rgba(13,27,42,0.06)",
                             transition:"all .2s"}}>
                             {/* En-tête chaîne */}
                             <div style={{background:chaineBg,padding:"10px 14px",
@@ -1010,10 +1100,10 @@ export default function App(){
                               flexWrap:"wrap",gap:8,
                               borderBottom:`1px solid ${chaineBorder}`}}>
                               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                <span style={{fontSize:12,fontWeight:700,color:couleur?couleur.label:C.textMid}}>
+                                <span style={{fontSize:12,fontWeight:700,color:couleur?couleur.label:DS.ink2}}>
                                   {estPaire?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
                                 </span>
-                                <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
+                                <span style={{fontSize:11,color:DS.ink3,display:"flex",alignItems:"center",gap:4}}>
                                   <Clock size={10}/>{chaine.dureeTotal}min
                                   {chaine.trajetTotal>0&&<><MapPin size={9}/>{chaine.trajetTotal}min</>}
                                 </span>
@@ -1025,7 +1115,7 @@ export default function App(){
                                     title="Séparer en 2 tâches indépendantes"
                                     style={{minHeight:44,padding:"0 10px",borderRadius:8,
                                       background:"rgba(255,255,255,0.85)",
-                                      border:`1px solid ${chaineBorder}`,color:couleur?couleur.label:C.textMid,
+                                      border:`1px solid ${chaineBorder}`,color:couleur?couleur.label:DS.ink2,
                                       display:"flex",alignItems:"center",gap:5,cursor:"pointer",
                                       fontSize:11,fontWeight:600,whiteSpace:"nowrap",transition:"all .15s"}}>
                                     <X size={11}/> Séparer
@@ -1036,8 +1126,8 @@ export default function App(){
                                   estSource?(
                                     <button onClick={()=>setAssocierMode(null)}
                                       style={{minHeight:44,padding:"0 10px",borderRadius:8,
-                                        background:C.warnBg,border:`1px solid ${C.warnBorder}`,
-                                        color:C.warn,display:"flex",alignItems:"center",gap:5,
+                                        background:DS.amberSoft,border:`1px solid ${DS.amber}`,
+                                        color:DS.amber,display:"flex",alignItems:"center",gap:5,
                                         cursor:"pointer",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
                                       <X size={11}/> Annuler
                                     </button>
@@ -1047,7 +1137,7 @@ export default function App(){
                                         title="Associer à une autre tâche"
                                         style={{minHeight:44,padding:"0 10px",borderRadius:8,
                                           background:"rgba(255,255,255,0.85)",
-                                          border:`1px solid ${C.border}`,color:C.textMid,
+                                          border:`1px solid ${DS.line}`,color:DS.ink2,
                                           display:"flex",alignItems:"center",gap:5,cursor:"pointer",
                                           fontSize:11,fontWeight:600,whiteSpace:"nowrap",transition:"all .15s"}}>
                                         🔗 Associer
@@ -1059,7 +1149,7 @@ export default function App(){
                                 {estCible&&(
                                   <button onClick={()=>associerChaines(associerMode,ci)}
                                     style={{minHeight:44,padding:"0 12px",borderRadius:8,
-                                      background:C.navy,color:"white",border:"none",
+                                      background:DS.ink,color:"white",border:"none",
                                       display:"flex",alignItems:"center",gap:5,cursor:"pointer",
                                       fontSize:11,fontWeight:700,whiteSpace:"nowrap",
                                       boxShadow:"0 2px 8px rgba(13,27,42,0.3)"}}>
@@ -1068,7 +1158,7 @@ export default function App(){
                                 )}
                                 <button onClick={()=>supprimerChaine(ci)} className="btn-danger"
                                   style={{minWidth:44,minHeight:44,borderRadius:8,background:"rgba(255,255,255,0.8)",
-                                    border:`1px solid ${C.border}`,color:C.textSoft,
+                                    border:`1px solid ${DS.line}`,color:DS.ink3,
                                     display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"}}>
                                   <Trash2 size={13}/>
                                 </button>
@@ -1082,7 +1172,7 @@ export default function App(){
                                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",
                                     background:chaineBg,borderTop:`1px solid ${chaineBorder}`,borderBottom:`1px solid ${chaineBorder}`}}>
                                     <div style={{flex:1,height:1,background:chaineBorder}}/>
-                                    <span style={{fontSize:10,color:C.textSoft,fontWeight:600,display:"flex",alignItems:"center",gap:4,
+                                    <span style={{fontSize:10,color:DS.ink3,fontWeight:600,display:"flex",alignItems:"center",gap:4,
                                       overflow:"hidden",maxWidth:"70%",whiteSpace:"nowrap",textOverflow:"ellipsis"}}>
                                       <MapPin size={9} style={{flexShrink:0}}/>{trajetMin(inter.lieu||CENTRE,chaine.inters[ii+1].lieu||CENTRE)}min › {chaine.inters[ii+1].nom.replace("Appartement GH ","").replace("Appartement ","")}
                                     </span>
@@ -1099,16 +1189,16 @@ export default function App(){
                     {/* Boutons actions — mobile uniquement */}
                     <div className="mobile-only" style={{display:"none",gap:10,marginTop:14,flexDirection:"column"}}>
                       <button onClick={()=>setShowCharge(true)} className="card"
-                        style={{width:"100%",padding:"14px 16px",border:`1px solid ${C.border}`,
-                          borderRadius:12,fontSize:14,fontWeight:600,color:C.text,
+                        style={{width:"100%",padding:"14px 16px",border:`1px solid ${DS.line}`,
+                          borderRadius:12,fontSize:14,fontWeight:600,color:DS.ink,
                           display:"flex",alignItems:"center",justifyContent:"center",gap:8,minHeight:50,cursor:"pointer",background:"white"}}>
-                        <Users size={16} color={C.gold}/>
+                        <Users size={16} color={DS.brand}/>
                         Charge du jour
-                        {conflits.length>0&&<span style={{background:C.errorBg,color:C.error,padding:"2px 8px",borderRadius:8,fontSize:12,border:"1px solid #FECACA",fontWeight:700}}>{conflits.length} conflit{conflits.length>1?"s":""}</span>}
+                        {conflits.length>0&&<span style={{background:DS.rubySoft,color:DS.ruby,padding:"2px 8px",borderRadius:8,fontSize:12,border:"1px solid #FECACA",fontWeight:700}}>{conflits.length} conflit{conflits.length>1?"s":""}</span>}
                       </button>
                       <button onClick={genWA} className="btn-primary"
                         style={{width:"100%",padding:"14px 16px",
-                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                           color:"white",border:"none",
                           borderRadius:12,fontSize:14,fontWeight:600,minHeight:50,
                           display:"flex",alignItems:"center",justifyContent:"center",gap:8,
@@ -1123,20 +1213,20 @@ export default function App(){
 
                     {/* Charge du jour */}
                     <div className="card" style={{padding:16}}>
-                      <div style={{fontSize:11,fontWeight:700,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-                        <Users size={12} color={C.gold}/> Charge du jour
+                      <div style={{fontSize:11,fontWeight:700,color:DS.ink3,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                        <Users size={12} color={DS.brand}/> Charge du jour
                       </div>
                       {equipe.filter(e=>e.actif!==false).map(e=>{const t=ch[e.nom]||[];return(
                         <div key={e.nom} style={{marginBottom:8}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",borderRadius:10,background:e.bg,border:`1px solid ${e.coul}20`}}>
                             <span style={{fontWeight:600,fontSize:12,color:e.coul}}>{e.emoji} {e.nom}</span>
                             <span style={{fontSize:11,fontWeight:700,
-                              color:t.length>=3?"#DC2626":t.length>=2?"#D97706":t.length>=1?C.success:C.textSoft}}>
+                              color:t.length>=3?"#DC2626":t.length>=2?"#D97706":t.length>=1?DS.sage:DS.ink3}}>
                               {t.length>0?`${t.length} mission${t.length>1?"s":""}`:"—"}
                             </span>
                           </div>
                           {t.length>0&&<div style={{paddingLeft:10,marginTop:3}}>{t.map((x,i)=>(
-                            <div key={i} style={{fontSize:10,color:C.textSoft,display:"flex",alignItems:"center",gap:4,paddingBottom:1}}>
+                            <div key={i} style={{fontSize:10,color:DS.ink3,display:"flex",alignItems:"center",gap:4,paddingBottom:1}}>
                               <ChevronRight size={9} color={e.coul}/>{toWA(x.heureDebut)} {x.nom.replace("Appartement GH ","").replace("Appartement ","")}
                             </div>
                           ))}</div>}
@@ -1146,26 +1236,26 @@ export default function App(){
 
                     {/* Conflits */}
                     {conflits.length>0
-                      ?<div style={{background:C.errorBg,borderRadius:12,padding:"12px 14px",border:"1px solid #FECACA"}}>
-                        <div style={{fontSize:11,fontWeight:700,color:C.error,marginBottom:6,display:"flex",alignItems:"center",gap:5,textTransform:"uppercase",letterSpacing:"0.06em"}}>
+                      ?<div style={{background:DS.rubySoft,borderRadius:12,padding:"12px 14px",border:"1px solid #FECACA"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:DS.ruby,marginBottom:6,display:"flex",alignItems:"center",gap:5,textTransform:"uppercase",letterSpacing:"0.06em"}}>
                           <AlertTriangle size={12}/> Conflits ({conflits.length})
                         </div>
-                        {conflits.map((cf,i)=><div key={i} style={{fontSize:11,color:C.error,paddingBottom:2}}>{cf}</div>)}
+                        {conflits.map((cf,i)=><div key={i} style={{fontSize:11,color:DS.ruby,paddingBottom:2}}>{cf}</div>)}
                       </div>
-                      :<div className="card" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:8,background:C.successBg,border:`1px solid #A7F3D0`}}>
-                        <CheckCircle2 size={14} color={C.success}/>
-                        <span style={{fontSize:12,fontWeight:600,color:C.success}}>Aucun conflit</span>
+                      :<div className="card" style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:8,background:DS.sageSoft,border:`1px solid #A7F3D0`}}>
+                        <CheckCircle2 size={14} color={DS.sage}/>
+                        <span style={{fontSize:12,fontWeight:600,color:DS.sage}}>Aucun conflit</span>
                       </div>
                     }
 
                     {/* WhatsApp */}
                     <div className="card" style={{padding:16}}>
-                      <div style={{fontSize:11,fontWeight:700,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-                        <Send size={12} color={C.gold}/> WhatsApp
+                      <div style={{fontSize:11,fontWeight:700,color:DS.ink3,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                        <Send size={12} color={DS.brand}/> WhatsApp
                       </div>
                       <button onClick={genWA} className="btn-primary"
                         style={{width:"100%",padding:11,border:"none",borderRadius:10,fontSize:13,fontWeight:600,
-                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                           color:"white",marginBottom:8,minHeight:44,cursor:"pointer",
                           display:"flex",alignItems:"center",justifyContent:"center",gap:7,
                           boxShadow:"0 4px 12px rgba(13,27,42,0.2)"}}>
@@ -1173,12 +1263,12 @@ export default function App(){
                       </button>
                       {waText&&<>
                         <textarea readOnly value={waText} onClick={e=>{e.target.select();e.target.setSelectionRange(0,99999);}}
-                          style={{width:"100%",background:"#FAFAF8",borderRadius:9,padding:10,fontFamily:"monospace",fontSize:10,lineHeight:1.7,border:`1px solid ${C.border}`,height:140,resize:"none",boxSizing:"border-box",color:C.text,outline:"none",marginBottom:8}}/>
+                          style={{width:"100%",background:"#FAFAF8",borderRadius:9,padding:10,fontFamily:"monospace",fontSize:10,lineHeight:1.7,border:`1px solid ${DS.line}`,height:140,resize:"none",boxSizing:"border-box",color:DS.ink,outline:"none",marginBottom:8}}/>
                         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                           <button onClick={copier}
                             style={{padding:"10px",borderRadius:9,fontSize:12,fontWeight:600,cursor:"pointer",
-                              background:copied?C.successBg:"#F4F2EE",color:copied?C.success:C.textMid,
-                              border:`1px solid ${copied?"#A7F3D0":C.border}`,minHeight:42,
+                              background:copied?DS.sageSoft:"#F4F2EE",color:copied?DS.sage:DS.ink2,
+                              border:`1px solid ${copied?"#A7F3D0":DS.line}`,minHeight:42,
                               display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
                             {copied?<Check size={14}/>:<Copy size={14}/>} {copied?"Copié !":"Copier"}
                           </button>
@@ -1201,16 +1291,16 @@ export default function App(){
           {onglet==="historique"&&(
             <div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <Clock size={16} color={C.gold}/>
-                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Historique des plannings</span>
+                <Clock size={16} color={DS.brand}/>
+                <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Historique des plannings</span>
               </div>
-              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>Plannings générés et sauvegardés automatiquement. Cliquez sur un jour pour le consulter ou le restaurer.</div>
+              <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>Plannings générés et sauvegardés automatiquement. Cliquez sur un jour pour le consulter ou le restaurer.</div>
 
               {historique.length===0?(
                 <div className="card" style={{padding:"48px 24px",textAlign:"center"}}>
                   <div style={{fontSize:40,marginBottom:12}}>📅</div>
-                  <div style={{fontSize:15,fontWeight:600,color:C.text,marginBottom:6}}>Aucun historique</div>
-                  <div style={{fontSize:13,color:C.textSoft}}>Les plannings générés apparaîtront ici automatiquement</div>
+                  <div style={{fontSize:15,fontWeight:600,color:DS.ink,marginBottom:6}}>Aucun historique</div>
+                  <div style={{fontSize:13,color:DS.ink3}}>Les plannings générés apparaîtront ici automatiquement</div>
                 </div>
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1229,26 +1319,26 @@ export default function App(){
                           }}>
                           {/* Indicateur jour */}
                           <div style={{width:46,height:46,borderRadius:12,flexShrink:0,
-                            background:`linear-gradient(135deg, ${C.navy}12 0%, ${C.gold}18 100%)`,
-                            border:`1px solid ${C.border}`,
+                            background:`linear-gradient(135deg, ${DS.ink}12 0%, ${DS.brand}18 100%)`,
+                            border:`1px solid ${DS.line}`,
                             display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                            <span style={{fontSize:16,fontWeight:800,color:C.navy,lineHeight:1}}>
+                            <span style={{fontSize:16,fontWeight:800,color:DS.ink,lineHeight:1}}>
                               {new Date(h.date).getDate()}
                             </span>
-                            <span style={{fontSize:9,fontWeight:600,color:C.textSoft,textTransform:"uppercase",letterSpacing:"0.04em"}}>
+                            <span style={{fontSize:9,fontWeight:600,color:DS.ink3,textTransform:"uppercase",letterSpacing:"0.04em"}}>
                               {new Date(h.date).toLocaleDateString("fr-FR",{month:"short"})}
                             </span>
                           </div>
                           <div style={{flex:1,minWidth:0}}>
-                            <div style={{fontWeight:700,fontSize:14,color:C.text,marginBottom:2,textTransform:"capitalize",
+                            <div style={{fontWeight:700,fontSize:14,color:DS.ink,marginBottom:2,textTransform:"capitalize",
                               overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {h.dateLabel||h.date}
                             </div>
                             <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                              <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
-                                <Zap size={10} color={C.gold}/>{h.nbChaines} chaîne{h.nbChaines>1?"s":""}
+                              <span style={{fontSize:11,color:DS.ink3,display:"flex",alignItems:"center",gap:4}}>
+                                <Zap size={10} color={DS.brand}/>{h.nbChaines} chaîne{h.nbChaines>1?"s":""}
                               </span>
-                              <span style={{fontSize:11,color:C.textSoft}}>
+                              <span style={{fontSize:11,color:DS.ink3}}>
                                 · {new Date(h.savedAt).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
                               </span>
                             </div>
@@ -1258,7 +1348,7 @@ export default function App(){
                                   const emp=EQUIPE.find(e=>e.nom===a);
                                   return(
                                     <span key={a} style={{fontSize:10,fontWeight:600,padding:"1px 7px",borderRadius:20,
-                                      background:emp?.bg||"#f1f5f9",color:emp?.coul||C.textMid,border:`1px solid ${emp?.coul||C.border}22`}}>
+                                      background:emp?.bg||"#f1f5f9",color:emp?.coul||DS.ink2,border:`1px solid ${emp?.coul||DS.line}22`}}>
                                       {emp?.emoji||"👤"} {a}
                                     </span>
                                   );
@@ -1267,24 +1357,24 @@ export default function App(){
                             )}
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
-                            <ChevronRight size={16} color={C.textSoft}
+                            <ChevronRight size={16} color={DS.ink3}
                               style={{transform:isOpen?"rotate(90deg)":"rotate(0deg)",transition:"transform .2s"}}/>
                           </div>
                         </div>
 
                         {/* Détail développé */}
                         {isOpen&&h.chaines&&(
-                          <div style={{borderTop:`1px solid ${C.border}`,padding:"12px 16px",
-                            background:C.bg,display:"flex",flexDirection:"column",gap:8}}>
+                          <div style={{borderTop:`1px solid ${DS.line}`,padding:"12px 16px",
+                            background:DS.paper,display:"flex",flexDirection:"column",gap:8}}>
                             {h.chaines.map((chaine,ci)=>(
-                              <div key={ci} style={{background:"white",borderRadius:10,border:`1px solid ${C.border}`,overflow:"hidden"}}>
-                                <div style={{padding:"8px 12px",background:`${C.navy}06`,
-                                  borderBottom:`1px solid ${C.border}`,
+                              <div key={ci} style={{background:"white",borderRadius:10,border:`1px solid ${DS.line}`,overflow:"hidden"}}>
+                                <div style={{padding:"8px 12px",background:`${DS.ink}06`,
+                                  borderBottom:`1px solid ${DS.line}`,
                                   display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                  <span style={{fontSize:12,fontWeight:700,color:C.textMid}}>
+                                  <span style={{fontSize:12,fontWeight:700,color:DS.ink2}}>
                                     {chaine.inters.length===2?`✦ Chaîne ${ci+1}`:`· Solo ${ci+1}`}
                                   </span>
-                                  <span style={{fontSize:11,color:C.textSoft,display:"flex",alignItems:"center",gap:4}}>
+                                  <span style={{fontSize:11,color:DS.ink3,display:"flex",alignItems:"center",gap:4}}>
                                     <Clock size={9}/>{chaine.inters[0]?.heureDebut||""}
                                     {chaine.inters.length>1&&<> → {chaine.inters[chaine.inters.length-1]?.heureFin}</>}
                                   </span>
@@ -1293,16 +1383,16 @@ export default function App(){
                                   <div key={ii} style={{padding:"8px 12px",borderBottom:ii<chaine.inters.length-1?`1px solid #f1f5f9`:"none"}}>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
                                       <div style={{flex:1,minWidth:0}}>
-                                        <div style={{fontWeight:600,fontSize:13,color:C.text,
+                                        <div style={{fontWeight:600,fontSize:13,color:DS.ink,
                                           overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                                           {TYPE_IC[inter.type]||"🔵"} {inter.nom}
                                         </div>
-                                        <div style={{fontSize:11,color:C.textSoft,marginTop:2}}>
+                                        <div style={{fontSize:11,color:DS.ink3,marginTop:2}}>
                                           {inter.heureDebut} · {inter.d}min{inter.lieu?.q&&` · ${inter.lieu.q}`}
                                         </div>
                                       </div>
                                       {(inter.employes||[]).length>0&&(
-                                        <div style={{fontSize:11,fontWeight:600,color:C.textMid,flexShrink:0,marginLeft:8}}>
+                                        <div style={{fontSize:11,fontWeight:600,color:DS.ink2,flexShrink:0,marginLeft:8}}>
                                           {(inter.employes||[]).join(", ")}
                                         </div>
                                       )}
@@ -1320,8 +1410,8 @@ export default function App(){
                   {/* Voir plus */}
                   {historique.length>histVisible&&(
                     <button onClick={()=>setHistVisible(p=>p+15)}
-                      style={{padding:"13px",border:`1.5px dashed ${C.border}`,borderRadius:12,
-                        background:"transparent",color:C.textMid,fontSize:13,fontWeight:600,
+                      style={{padding:"13px",border:`1.5px dashed ${DS.line}`,borderRadius:12,
+                        background:"transparent",color:DS.ink2,fontSize:13,fontWeight:600,
                         cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,minHeight:48}}
                       className="btn-ghost">
                       <ChevronRight size={14} style={{transform:"rotate(90deg)"}}/>
@@ -1338,12 +1428,12 @@ export default function App(){
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <Home size={16} color={C.gold}/>
-                  <span style={{fontSize:15,fontWeight:700,color:C.text}}>{lieux.length} logements</span>
+                  <Home size={16} color={DS.brand}/>
+                  <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>{lieux.length} logements</span>
                 </div>
                 <button onClick={()=>setWizard(true)} className="btn-primary"
                   style={{padding:"10px 18px",
-                    background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                    background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                     color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,minHeight:42,
                     display:"flex",alignItems:"center",gap:6,cursor:"pointer",
                     boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
@@ -1354,16 +1444,16 @@ export default function App(){
               <div style={{position:"relative",marginBottom:14}}>
                 <input value={searchLieux} onChange={e=>setSearchLieux(e.target.value)}
                   placeholder="Rechercher par nom, quartier, client, type…"
-                  style={{width:"100%",padding:"11px 14px 11px 40px",border:`1.5px solid ${C.border}`,borderRadius:10,
-                    fontSize:14,outline:"none",background:"white",color:C.text,fontFamily:"inherit",
+                  style={{width:"100%",padding:"11px 14px 11px 40px",border:`1.5px solid ${DS.line}`,borderRadius:10,
+                    fontSize:14,outline:"none",background:"white",color:DS.ink,fontFamily:"inherit",
                     boxSizing:"border-box",minHeight:46}}/>
-                <MapPin size={15} color={C.textSoft} style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}/>
+                <MapPin size={15} color={DS.ink3} style={{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",pointerEvents:"none"}}/>
                 {searchLieux&&<button onClick={()=>setSearchLieux("")}
                   style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-                    background:"none",border:"none",color:C.textSoft,cursor:"pointer",fontSize:16,padding:4,lineHeight:1}}>✕</button>}
+                    background:"none",border:"none",color:DS.ink3,cursor:"pointer",fontSize:16,padding:4,lineHeight:1}}>✕</button>}
               </div>
-              {msg&&<div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,background:C.successBg,color:C.success,border:"1px solid #A7F3D0",display:"flex",alignItems:"center",gap:7}}><CheckCircle2 size={14}/>{msg.replace("✅ ","").replace("🗑 ","")}</div>}
-              {searchLieux&&<div style={{fontSize:12,color:C.textSoft,marginBottom:10}}>{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length} résultat{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length>1?"s":""}</div>}
+              {msg&&<div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:500,background:DS.sageSoft,color:DS.sage,border:"1px solid #A7F3D0",display:"flex",alignItems:"center",gap:7}}><CheckCircle2 size={14}/>{msg.replace("✅ ","").replace("🗑 ","")}</div>}
+              {searchLieux&&<div style={{fontSize:12,color:DS.ink3,marginBottom:10}}>{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length} résultat{lieux.filter(l=>{const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).length>1?"s":""}</div>}
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {lieux.filter(l=>{if(!searchLieux)return true;const q=searchLieux.toLowerCase();return l.nom.toLowerCase().includes(q)||l.q?.toLowerCase().includes(q)||l.cli?.toLowerCase().includes(q)||l.type.toLowerCase().includes(q);}).map(l=>{
                   const isEdit=editLieu?.id===l.id;
@@ -1452,24 +1542,24 @@ export default function App(){
                         {(isEdit||l.adresse)&&(()=>{
                           const isMap=l.adresse&&/maps\.google|goo\.gl\/maps|maps\.app\.goo/i.test(l.adresse);
                           return(
-                            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+                            <div style={{marginTop:10,paddingTop:10,borderTop:`1px solid ${DS.line}`}}>
                               <div className="section-label" style={{marginBottom:5}}>Adresse</div>
                               {isEdit
                                 ?<input value={editLieu.adresse||""} onChange={e=>setEditLieu(p=>({...p,adresse:e.target.value}))}
                                   placeholder="Adresse texte ou lien Google Maps"
-                                  style={{width:"100%",padding:"7px 10px",border:`1px solid ${C.border}`,borderRadius:8,
+                                  style={{width:"100%",padding:"7px 10px",border:`1px solid ${DS.line}`,borderRadius:8,
                                     fontSize:13,outline:"none",boxSizing:"border-box",minHeight:40,
-                                    background:"#FAFAF8",fontFamily:"inherit",color:C.text}}/>
+                                    background:"#FAFAF8",fontFamily:"inherit",color:DS.ink}}/>
                                 :(isMap
                                   ?<a href={l.adresse} target="_blank" rel="noopener noreferrer"
                                     style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:13,
-                                      color:C.navyMid,fontWeight:500,textDecoration:"none",
-                                      padding:"5px 10px",borderRadius:8,background:`${C.navy}08`,
-                                      border:`1px solid ${C.navy}18`}}>
-                                    <MapPin size={13} color={C.gold}/> Voir sur Google Maps
+                                      color:DS.ink2,fontWeight:500,textDecoration:"none",
+                                      padding:"5px 10px",borderRadius:8,background:`${DS.ink}08`,
+                                      border:`1px solid ${DS.ink}18`}}>
+                                    <MapPin size={13} color={DS.brand}/> Voir sur Google Maps
                                   </a>
-                                  :<span style={{fontSize:13,color:C.textMid,display:"flex",alignItems:"center",gap:5}}>
-                                    <MapPin size={13} color={C.gold}/>{l.adresse}
+                                  :<span style={{fontSize:13,color:DS.ink2,display:"flex",alignItems:"center",gap:5}}>
+                                    <MapPin size={13} color={DS.brand}/>{l.adresse}
                                   </span>
                                 )
                               }
@@ -1488,17 +1578,17 @@ export default function App(){
           {onglet==="extras"&&(
             <div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <UserPlus size={16} color={C.gold}/>
-                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Extras mémorisés</span>
+                <UserPlus size={16} color={DS.brand}/>
+                <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Extras mémorisés</span>
               </div>
-              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>Restent en mémoire jusqu'à suppression. Disponibles dans tous les plannings.</div>
+              <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>Restent en mémoire jusqu'à suppression. Disponibles dans tous les plannings.</div>
               <div style={{display:"flex",gap:8,marginBottom:16}}>
                 <input value={newExtra} onChange={e=>setNewExtra(e.target.value)} onKeyDown={e=>e.key==="Enter"&&ajouterExtra()}
                   placeholder="Prénom de l'extra"
-                  style={{flex:1,padding:"12px 14px",border:`1.5px solid ${C.border}`,borderRadius:10,fontSize:14,outline:"none",minHeight:48,background:"#FAFAF8",color:C.text,fontFamily:"inherit"}}/>
+                  style={{flex:1,padding:"12px 14px",border:`1.5px solid ${DS.line}`,borderRadius:10,fontSize:14,outline:"none",minHeight:48,background:"#FAFAF8",color:DS.ink,fontFamily:"inherit"}}/>
                 <button onClick={ajouterExtra} className="btn-primary"
                   style={{padding:"12px 18px",
-                    background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                    background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                     color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:48,
                     display:"flex",alignItems:"center",gap:6,cursor:"pointer",
                     boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
@@ -1506,7 +1596,7 @@ export default function App(){
                 </button>
               </div>
               {extras.length===0
-                ?<div className="card" style={{padding:"32px",textAlign:"center",color:C.textSoft,border:`1px dashed ${C.border}`}}>
+                ?<div className="card" style={{padding:"32px",textAlign:"center",color:DS.ink3,border:`1px dashed ${DS.line}`}}>
                   Tapez un prénom et appuyez sur Entrée ou + Ajouter
                 </div>
                 :<div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -1514,17 +1604,17 @@ export default function App(){
                     <div key={ex.id} className="card" style={{padding:"12px 16px",
                       display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:36,height:36,borderRadius:"50%",background:`${C.navy}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                          <UserPlus size={15} color={C.navyMid}/>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:`${DS.ink}12`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <UserPlus size={15} color={DS.ink2}/>
                         </div>
                         <div>
-                          <div style={{fontWeight:600,fontSize:14,color:C.text}}>{ex.nom}</div>
-                          <div style={{fontSize:11,color:C.textSoft,marginTop:1}}>Enregistré le {new Date(ex.createdAt).toLocaleDateString("fr-FR")}</div>
+                          <div style={{fontWeight:600,fontSize:14,color:DS.ink}}>{ex.nom}</div>
+                          <div style={{fontSize:11,color:DS.ink3,marginTop:1}}>Enregistré le {new Date(ex.createdAt).toLocaleDateString("fr-FR")}</div>
                         </div>
                       </div>
                       <button onClick={()=>supprimerExtra(ex.id)} className="btn-danger"
-                        style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${C.border}`,background:"white",
-                          color:C.textSoft,fontSize:13,fontWeight:500,minHeight:38,display:"flex",alignItems:"center",gap:5,cursor:"pointer",transition:"all .15s"}}>
+                        style={{padding:"8px 12px",borderRadius:8,border:`1px solid ${DS.line}`,background:"white",
+                          color:DS.ink3,fontSize:13,fontWeight:500,minHeight:38,display:"flex",alignItems:"center",gap:5,cursor:"pointer",transition:"all .15s"}}>
                         <Trash2 size={13}/> Retirer
                       </button>
                     </div>
@@ -1539,25 +1629,25 @@ export default function App(){
           {onglet==="equipe"&&(
             <div>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                <Users size={16} color={C.gold}/>
-                <span style={{fontSize:15,fontWeight:700,color:C.text}}>Équipe fixe</span>
+                <Users size={16} color={DS.brand}/>
+                <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Équipe fixe</span>
               </div>
-              <div style={{fontSize:12,color:C.textSoft,marginBottom:16}}>
+              <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>
                 Les employées listées ici apparaissent dans les assignations de chaque intervention.
-                {user.role!=="admin"&&<span style={{color:C.textSoft}}> Seul l'admin peut ajouter ou supprimer.</span>}
+                {user.role!=="admin"&&<span style={{color:DS.ink3}}> Seul l'admin peut ajouter ou supprimer.</span>}
               </div>
 
               {/* Ajouter employée — admin seulement */}
               {user.role==="admin"&&(
                 <div className="card" style={{padding:"16px",marginBottom:14}}>
-                  <div style={{fontSize:13,fontWeight:600,color:C.text,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
-                    <Plus size={14} color={C.gold}/> Ajouter une employée
+                  <div style={{fontSize:13,fontWeight:600,color:DS.ink,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+                    <Plus size={14} color={DS.brand}/> Ajouter une employée
                   </div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
                     <div>
                       <label className="section-label" style={{display:"block",marginBottom:6}}>Emoji</label>
                       <select value={newEmp.emoji} onChange={e=>setNewEmp(p=>({...p,emoji:e.target.value}))}
-                        style={{padding:"10px 12px",border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:18,minHeight:48,minWidth:70,background:"#FAFAF8"}}>
+                        style={{padding:"10px 12px",border:`1.5px solid ${DS.line}`,borderRadius:9,fontSize:18,minHeight:48,minWidth:70,background:"#FAFAF8"}}>
                         {["👩","👩‍🦱","👩‍🦳","👩‍🦰","👨","👨‍🦱","👨‍🦳","👨‍🦰","🧑","👤"].map(em=><option key={em} value={em}>{em}</option>)}
                       </select>
                     </div>
@@ -1566,12 +1656,12 @@ export default function App(){
                       <input value={newEmp.nom} onChange={e=>setNewEmp(p=>({...p,nom:e.target.value}))}
                         onKeyDown={e=>e.key==="Enter"&&ajouterEmp()}
                         placeholder="ex: Rachida"
-                        style={{width:"100%",padding:"12px 14px",border:`1.5px solid ${C.border}`,borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48,background:"#FAFAF8",color:C.text,fontFamily:"inherit"}}/>
+                        style={{width:"100%",padding:"12px 14px",border:`1.5px solid ${DS.line}`,borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48,background:"#FAFAF8",color:DS.ink,fontFamily:"inherit"}}/>
                     </div>
                     <div style={{paddingTop:24}}>
                       <button onClick={ajouterEmp} className="btn-primary"
                         style={{padding:"12px 18px",
-                          background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,
+                          background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
                           color:"white",border:"none",
                           borderRadius:9,fontSize:14,fontWeight:600,minHeight:48,whiteSpace:"nowrap",
                           cursor:"pointer",display:"flex",alignItems:"center",gap:6,
@@ -1581,8 +1671,8 @@ export default function App(){
                     </div>
                   </div>
                   {empMsg&&<div style={{padding:"9px 12px",borderRadius:9,fontSize:12,fontWeight:500,
-                    background:empMsg.startsWith("✅")?C.successBg:C.errorBg,
-                    color:empMsg.startsWith("✅")?C.success:C.error,
+                    background:empMsg.startsWith("✅")?DS.sageSoft:DS.rubySoft,
+                    color:empMsg.startsWith("✅")?DS.sage:DS.ruby,
                     border:`1px solid ${empMsg.startsWith("✅")?"#A7F3D0":"#FECACA"}`,
                     display:"flex",alignItems:"center",gap:6}}>
                     {empMsg.startsWith("✅")?<CheckCircle2 size={13}/>:<AlertTriangle size={13}/>}
@@ -1596,7 +1686,7 @@ export default function App(){
                 {equipe.map(emp=>(
                   <div key={emp.id} className="card" style={{
                     padding:"12px 16px",
-                    borderLeft:`3px solid ${emp.actif!==false?emp.coul:C.border}`,
+                    borderLeft:`3px solid ${emp.actif!==false?emp.coul:DS.line}`,
                     opacity:emp.actif===false?.5:1,transition:"opacity .2s"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -1606,11 +1696,11 @@ export default function App(){
                           {emp.emoji}
                         </div>
                         <div>
-                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:C.textSoft}}>{emp.nom}</div>
-                          <div style={{fontSize:11,color:C.textSoft,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
+                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3}}>{emp.nom}</div>
+                          <div style={{fontSize:11,color:DS.ink3,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
                             {emp.actif===false
                               ?<><X size={10}/>Inactive</>
-                              :<><CheckCircle2 size={10} color={C.success}/>Active</>}
+                              :<><CheckCircle2 size={10} color={DS.sage}/>Active</>}
                           </div>
                         </div>
                       </div>
@@ -1619,14 +1709,14 @@ export default function App(){
                         <div style={{display:"flex",gap:6,flexShrink:0}}>
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
                             style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
-                              border:`1px solid ${emp.actif!==false?C.border:"#A7F3D0"}`,
-                              background:emp.actif!==false?"#FAFAF8":C.successBg,
-                              color:emp.actif!==false?C.textMid:C.success,transition:"all .15s"}}>
+                              border:`1px solid ${emp.actif!==false?DS.line:"#A7F3D0"}`,
+                              background:emp.actif!==false?"#FAFAF8":DS.sageSoft,
+                              color:emp.actif!==false?DS.ink2:DS.sage,transition:"all .15s"}}>
                             {emp.actif!==false?"Désactiver":"Activer"}
                           </button>
                           <button onClick={()=>supprimerEmp(emp.id)} className="btn-danger"
-                            style={{padding:"7px 11px",borderRadius:8,border:`1px solid ${C.border}`,
-                              background:"white",color:C.textSoft,fontSize:13,minHeight:38,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center"}}>
+                            style={{padding:"7px 11px",borderRadius:8,border:`1px solid ${DS.line}`,
+                              background:"white",color:DS.ink3,fontSize:13,minHeight:38,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center"}}>
                             <Trash2 size={13}/>
                           </button>
                         </div>
@@ -1668,7 +1758,7 @@ export default function App(){
                     </div>
                   ))}
                   <button onClick={creerUser} className="btn-primary"
-                    style={{padding:"14px",background:`linear-gradient(135deg, ${C.navy} 0%, ${C.navyMid} 100%)`,color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
+                    style={{padding:"14px",background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
                     Créer l'accès
                   </button>
                 </div>
@@ -1696,7 +1786,7 @@ export default function App(){
         {/* ── NAVIGATION BAS — mobile uniquement ─────────── */}
         <nav className="nav-bottom" style={{
           position:"fixed",bottom:0,left:0,right:0,zIndex:100,
-          background:C.navy,
+          background:DS.ink,
           borderTop:"1px solid rgba(201,168,76,0.2)",
           display:"flex",alignItems:"stretch",
           paddingBottom:"env(safe-area-inset-bottom,0px)",
@@ -1710,9 +1800,9 @@ export default function App(){
                 style={{
                   flex:1,padding:"10px 4px 8px",background:"none",border:"none",
                   display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                  color:active?C.gold:"rgba(255,255,255,0.38)",
+                  color:active?DS.brand:"rgba(255,255,255,0.38)",
                   cursor:"pointer",minHeight:56,
-                  borderTop:active?`2px solid ${C.gold}`:"2px solid transparent",
+                  borderTop:active?`2px solid ${DS.brand}`:"2px solid transparent",
                   transition:"all .15s",
                 }}>
                 {NavIcons[k]||<Star size={20}/>}
