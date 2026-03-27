@@ -712,6 +712,9 @@ export default function App(){
   ]);
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
+  // ── Jours off des employées ────────────────────────────────
+  const[empJoursOff,setEmpJoursOff]=useState({});       // Format: {emp_1: ["2026-03-28", "2026-03-29"]}
+  const[daysOffModal,setDaysOffModal]=useState(null);   // Format: {empId, startDate, endDate}
 
   // Vérification du token JWT au montage : si valide, reconnecte l'utilisateur sans re-login
   useEffect(()=>{
@@ -1104,7 +1107,7 @@ export default function App(){
                     <CalendarDays size={28} color={DS.brand}/>
                   </div>
                   <div style={{fontSize:16,fontWeight:600,color:DS.ink,marginBottom:6}}>Aucun planning chargé</div>
-                  <div style={{fontSize:13,color:DS.ink3}}>Saisissez une date et appuyez sur "Charger l'agenda Ali"</div>
+                  <div style={{fontSize:13,color:DS.ink3}}>Saisissez une date et appuyez sur "Charger l'agenda Kleaning"</div>
                 </div>
               ):(
                 // Layout responsive : 2 colonnes sur desktop, 1 colonne sur mobile
@@ -1812,7 +1815,7 @@ export default function App(){
                       </div>
                       <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>@{u.username} · {new Date(u.createdAt).toLocaleDateString("fr-FR")}</div>
                     </div>
-                    {u.id!==user.id&&<button onClick={()=>supprimerUser(u.id)}
+                    {u.id!==user.id&&u.role!=="admin"&&<button onClick={()=>supprimerUser(u.id)}
                       style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button>}
                   </div>
                 ))}
