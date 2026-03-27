@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DS_LOGIN, DS } from "./constants";
 
 // ── SVG : Motif géométrique marocain (zellige) ─────────────────
 const MoroccanPattern = () => (
@@ -7,10 +8,10 @@ const MoroccanPattern = () => (
       <pattern id="zellige" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
         {/* Étoile à 8 branches marocaine */}
         <polygon points="40,4 46,28 68,16 56,36 76,40 56,44 68,64 46,52 40,76 34,52 12,64 24,44 4,40 24,36 12,16 34,28"
-          fill="none" stroke="#C9A84C" strokeWidth="1.2"/>
+          fill="none" stroke="${DS_LOGIN.gold}" strokeWidth="1.2"/>
         <polygon points="40,14 44,28 56,22 50,34 62,40 50,46 56,58 44,52 40,66 36,52 24,58 30,46 18,40 30,34 24,22 36,28"
-          fill="none" stroke="#C9A84C" strokeWidth="0.6"/>
-        <circle cx="40" cy="40" r="6" fill="none" stroke="#C9A84C" strokeWidth="0.8"/>
+          fill="none" stroke="${DS_LOGIN.gold}" strokeWidth="0.6"/>
+        <circle cx="40" cy="40" r="6" fill="none" stroke="${DS_LOGIN.gold}" strokeWidth="0.8"/>
       </pattern>
     </defs>
     <rect width="100%" height="100%" fill="url(#zellige)"/>
@@ -23,54 +24,54 @@ const MarrakechSkyline = () => (
     style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%", opacity: 0.35 }}>
     {/* Ciel étoilé */}
     {[60,140,200,290,350,420,500,580,640,720].map((x, i) => (
-      <circle key={i} cx={x} cy={[30,15,40,20,35,10,25,38,18,28][i]} r="1.5" fill="#C9A84C" opacity="0.8"/>
+      <circle key={i} cx={x} cy={[30,15,40,20,35,10,25,38,18,28][i]} r="1.5" fill="${DS_LOGIN.gold}" opacity="0.8"/>
     ))}
     {/* Lune */}
-    <circle cx="700" cy="30" r="18" fill="#F5E6C8" opacity="0.6"/>
-    <circle cx="710" cy="24" r="14" fill="#1A2E42" opacity="0.9"/>
+    <circle cx="700" cy="30" r="18" fill="${DS_LOGIN.beige}" opacity="0.6"/>
+    <circle cx="710" cy="24" r="14" fill="${DS_LOGIN.darkNavy}" opacity="0.9"/>
 
     {/* Palmiers gauche */}
-    <rect x="30" y="110" width="5" height="80" fill="#1A3550"/>
-    <ellipse cx="32" cy="105" rx="18" ry="10" fill="#1A3550" transform="rotate(-20 32 105)"/>
-    <ellipse cx="32" cy="105" rx="18" ry="10" fill="#1A3550" transform="rotate(20 32 105)"/>
-    <ellipse cx="32" cy="105" rx="18" ry="10" fill="#1A3550" transform="rotate(0 32 105)"/>
+    <rect x="30" y="110" width="5" height="80" fill="${DS_LOGIN.navyMid}"/>
+    <ellipse cx="32" cy="105" rx="18" ry="10" fill="${DS_LOGIN.navyMid}" transform="rotate(-20 32 105)"/>
+    <ellipse cx="32" cy="105" rx="18" ry="10" fill="${DS_LOGIN.navyMid}" transform="rotate(20 32 105)"/>
+    <ellipse cx="32" cy="105" rx="18" ry="10" fill="${DS_LOGIN.navyMid}" transform="rotate(0 32 105)"/>
 
     {/* Minaret de la Koutoubia (centre) */}
-    <rect x="370" y="20" width="60" height="160" fill="#1A2E42"/>
-    <rect x="360" y="90" width="80" height="20" fill="#162638"/>
-    <rect x="355" y="140" width="90" height="40" fill="#1A2E42"/>
+    <rect x="370" y="20" width="60" height="160" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="360" y="90" width="80" height="20" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="355" y="140" width="90" height="40" fill="${DS_LOGIN.darkNavy}"/>
     {/* Détails minaret */}
-    <rect x="375" y="30" width="50" height="12" fill="#162638" opacity="0.5"/>
-    <rect x="375" y="50" width="50" height="12" fill="#162638" opacity="0.5"/>
-    <rect x="375" y="70" width="50" height="12" fill="#162638" opacity="0.5"/>
+    <rect x="375" y="30" width="50" height="12" fill="${DS_LOGIN.darkNavy}" opacity="0.5"/>
+    <rect x="375" y="50" width="50" height="12" fill="${DS_LOGIN.darkNavy}" opacity="0.5"/>
+    <rect x="375" y="70" width="50" height="12" fill="${DS_LOGIN.darkNavy}" opacity="0.5"/>
     {/* Sommet minaret */}
-    <polygon points="400,5 380,22 420,22" fill="#C9A84C"/>
-    <rect x="396" y="0" width="8" height="12" fill="#C9A84C"/>
-    <circle cx="400" cy="0" r="4" fill="#C9A84C"/>
+    <polygon points="400,5 380,22 420,22" fill="${DS_LOGIN.gold}"/>
+    <rect x="396" y="0" width="8" height="12" fill="${DS_LOGIN.gold}"/>
+    <circle cx="400" cy="0" r="4" fill="${DS_LOGIN.gold}"/>
 
     {/* Maisons médina gauche */}
-    <rect x="100" y="100" width="80" height="90" fill="#1A2E42"/>
-    <rect x="90" y="120" width="40" height="70" fill="#152234"/>
-    <rect x="160" y="130" width="50" height="60" fill="#1A3550"/>
+    <rect x="100" y="100" width="80" height="90" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="90" y="120" width="40" height="70" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="160" y="130" width="50" height="60" fill="${DS_LOGIN.navyMid}"/>
     {/* Arches */}
-    <path d="M 120 190 Q 130 160 140 190" fill="#0D1B2A"/>
-    <path d="M 170 190 Q 180 168 190 190" fill="#0D1B2A"/>
+    <path d="M 120 190 Q 130 160 140 190" fill="${DS_LOGIN.darkNavy}"/>
+    <path d="M 170 190 Q 180 168 190 190" fill="${DS_LOGIN.darkNavy}"/>
 
     {/* Maisons médina droite */}
-    <rect x="560" y="110" width="70" height="80" fill="#1A2E42"/>
-    <rect x="610" y="95" width="50" height="95" fill="#152234"/>
-    <rect x="650" y="120" width="60" height="70" fill="#1A3550"/>
-    <path d="M 575 190 Q 585 165 595 190" fill="#0D1B2A"/>
-    <path d="M 620 190 Q 630 162 640 190" fill="#0D1B2A"/>
+    <rect x="560" y="110" width="70" height="80" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="610" y="95" width="50" height="95" fill="${DS_LOGIN.darkNavy}"/>
+    <rect x="650" y="120" width="60" height="70" fill="${DS_LOGIN.navyMid}"/>
+    <path d="M 575 190 Q 585 165 595 190" fill="${DS_LOGIN.darkNavy}"/>
+    <path d="M 620 190 Q 630 162 640 190" fill="${DS_LOGIN.darkNavy}"/>
 
     {/* Palmiers droite */}
-    <rect x="763" y="115" width="5" height="75" fill="#1A3550"/>
-    <ellipse cx="765" cy="110" rx="18" ry="10" fill="#1A3550" transform="rotate(-15 765 110)"/>
-    <ellipse cx="765" cy="110" rx="18" ry="10" fill="#1A3550" transform="rotate(25 765 110)"/>
-    <ellipse cx="765" cy="110" rx="18" ry="10" fill="#1A3550"/>
+    <rect x="763" y="115" width="5" height="75" fill="${DS_LOGIN.navyMid}"/>
+    <ellipse cx="765" cy="110" rx="18" ry="10" fill="${DS_LOGIN.navyMid}" transform="rotate(-15 765 110)"/>
+    <ellipse cx="765" cy="110" rx="18" ry="10" fill="${DS_LOGIN.navyMid}" transform="rotate(25 765 110)"/>
+    <ellipse cx="765" cy="110" rx="18" ry="10" fill="${DS_LOGIN.navyMid}"/>
 
     {/* Sol */}
-    <rect x="0" y="185" width="800" height="15" fill="#0D1B2A"/>
+    <rect x="0" y="185" width="800" height="15" fill="${DS_LOGIN.darkNavy}"/>
   </svg>
 );
 
@@ -109,7 +110,7 @@ export default function Login({ onLogin }) {
       <div className="login-visual" style={{
         flex: "0 0 55%",
         position: "relative",
-        background: "linear-gradient(155deg, #0D1B2A 0%, #1A3550 40%, #0F2236 70%, #0D1B2A 100%)",
+        background: "linear-gradient(155deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 40%, ${DS_LOGIN.darkNavy} 70%, ${DS_LOGIN.darkNavy} 100%)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
@@ -136,18 +137,18 @@ export default function Login({ onLogin }) {
             background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.4)",
             borderRadius: 100, padding: "6px 14px", marginBottom: 20,
           }}>
-            <span style={{ color: "#C9A84C", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            <span style={{ color: "${DS_LOGIN.gold}", fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" }}>
               ✦ Marrakech
             </span>
           </div>
           <h1 style={{
             margin: "0 0 12px", fontSize: 42, fontWeight: 700, lineHeight: 1.1,
             fontFamily: "'Cormorant Garamond', Georgia, serif",
-            color: "#F5ECD7",
+            color: "${DS_LOGIN.cream}",
             letterSpacing: "-0.5px",
           }}>
             L'excellence<br />
-            <span style={{ color: "#C9A84C" }}>du service</span>
+            <span style={{ color: "${DS_LOGIN.gold}" }}>du service</span>
           </h1>
           <p style={{ margin: 0, fontSize: 15, color: "rgba(245,236,215,0.6)", lineHeight: 1.6, maxWidth: 320 }}>
             Gestion intelligente du planning de nettoyage pour les propriétés de Marrakech.
@@ -158,7 +159,7 @@ export default function Login({ onLogin }) {
       {/* ── CÔTÉ DROIT : Formulaire de connexion ── */}
       <div style={{
         flex: 1,
-        background: "#F7F5F0",
+        background: "#f8f7f4",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -169,7 +170,7 @@ export default function Login({ onLogin }) {
         {/* Motif léger en arrière-plan sur mobile */}
         <div className="login-bg-mobile" style={{
           position: "absolute", inset: 0, overflow: "hidden",
-          background: "linear-gradient(155deg, #0D1B2A 0%, #1A3550 100%)",
+          background: "linear-gradient(155deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 100%)",
           display: "none",
         }}>
           <MoroccanPattern />
@@ -214,7 +215,7 @@ export default function Login({ onLogin }) {
               </label>
               <div style={{ position: "relative" }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: focusUser ? "#C9A84C" : "#94a3b8", transition: "color .15s" }}>
+                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: focusUser ? "${DS_LOGIN.gold}" : "#94a3b8", transition: "color .15s" }}>
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
                 </svg>
@@ -226,11 +227,11 @@ export default function Login({ onLogin }) {
                   onBlur={() => setFocusUser(false)}
                   style={{
                     width: "100%", padding: "13px 14px 13px 42px",
-                    border: `1.5px solid ${focusUser ? "#C9A84C" : "#E8E0D5"}`,
+                    border: `1.5px solid ${focusUser ? "${DS_LOGIN.gold}" : "${DS.line}"}`,
                     borderRadius: 12, fontSize: 14, outline: "none",
                     boxSizing: "border-box", minHeight: 50,
                     background: focusUser ? "#FFFDF7" : "#FAFAF8",
-                    color: "#0D1B2A", fontFamily: "inherit",
+                    color: "${DS_LOGIN.darkNavy}", fontFamily: "inherit",
                     transition: "border-color .15s, background .15s",
                   }}
                 />
@@ -248,7 +249,7 @@ export default function Login({ onLogin }) {
               </label>
               <div style={{ position: "relative" }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: focusPass ? "#C9A84C" : "#94a3b8", transition: "color .15s" }}>
+                  style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: focusPass ? "${DS_LOGIN.gold}" : "#94a3b8", transition: "color .15s" }}>
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
@@ -260,11 +261,11 @@ export default function Login({ onLogin }) {
                   onBlur={() => setFocusPass(false)}
                   style={{
                     width: "100%", padding: "13px 14px 13px 42px",
-                    border: `1.5px solid ${focusPass ? "#C9A84C" : "#E8E0D5"}`,
+                    border: `1.5px solid ${focusPass ? "${DS_LOGIN.gold}" : "${DS.line}"}`,
                     borderRadius: 12, fontSize: 14, outline: "none",
                     boxSizing: "border-box", minHeight: 50,
                     background: focusPass ? "#FFFDF7" : "#FAFAF8",
-                    color: "#0D1B2A", fontFamily: "inherit",
+                    color: "${DS_LOGIN.darkNavy}", fontFamily: "inherit",
                     transition: "border-color .15s, background .15s",
                   }}
                 />
@@ -274,7 +275,7 @@ export default function Login({ onLogin }) {
             {/* Erreur */}
             {error && (
               <div style={{
-                background: "#FEF2F2", color: "#B91C1C",
+                background: "#FEF2F2", color: "${DS.ruby}",
                 border: "1px solid #FECACA",
                 borderRadius: 10, padding: "10px 14px",
                 fontSize: 13, fontWeight: 500,
@@ -282,9 +283,9 @@ export default function Login({ onLogin }) {
                 display: "flex", alignItems: "center", gap: 8, justifyContent: "center",
               }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#B91C1C" strokeWidth="2"/>
-                  <line x1="12" y1="8" x2="12" y2="12" stroke="#B91C1C" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16" stroke="#B91C1C" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="12" r="10" stroke="${DS.ruby}" strokeWidth="2"/>
+                  <line x1="12" y1="8" x2="12" y2="12" stroke="${DS.ruby}" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16" stroke="${DS.ruby}" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 {error}
               </div>
@@ -297,7 +298,7 @@ export default function Login({ onLogin }) {
                 width: "100%", padding: "15px",
                 background: loading
                   ? "#94a3b8"
-                  : "linear-gradient(135deg, #0D1B2A 0%, #1A3550 100%)",
+                  : "linear-gradient(135deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 100%)",
                 color: "white",
                 border: "none", borderRadius: 14, fontSize: 15, fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer",
