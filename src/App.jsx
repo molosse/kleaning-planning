@@ -17,8 +17,19 @@ import {
 
 // ═══════════════════════════════════════════════════════════════
 // KLEANING — APP MOBILE-FIRST v6
-// Design : utilitarian + épuré, optimisé tactile
-// Breakpoints : mobile < 640px, tablet 640-1024px, desktop > 1024px
+// ═══════════════════════════════════════════════════════════════
+// Design : utilitarian + épuré, optimisé mobile/tactile
+// Breakpoints: mobile < 640px | tablet 640-1024px | desktop > 1024px
+//
+// DESIGN SYSTEM:Tous les styles utilisent le design system centralisé (DS) importé
+// de ./constants/colors.js. Pour modifier les couleurs → Éditer src/constants/colors.js
+// - DS.brand (#c84b1f) : Couleur primaire (marque)
+// - DS.ink : Texte sombre (#0f1117)
+// - DS.paper : Fond clair (#f8f7f4)
+// - DS.sage/amber/cobalt/ruby : Couleurs de statuts
+//
+// ACCESSIBILITÉ: Tous les touch targets (boutons, inputs) = min 44px pour mobile
+// MOBILE-FIRST: Media queries à 640px pour responsive design
 // ═══════════════════════════════════════════════════════════════
 
 // ── CSS GLOBAL ────────────────────────────────────────────────
@@ -582,7 +593,7 @@ function Wizard({onSave,onClose}){
               <button key={v} onClick={()=>setData(p=>({...p,d:String(v)}))}
                 style={{padding:"8px 14px",borderRadius:8,border:`2px solid ${data.d===String(v)?"#3b82f6":"#e2e8f0"}`,
                   fontSize:13,fontWeight:600,background:data.d===String(v)?"#eff6ff":"white",
-                  color:data.d===String(v)?"#3b82f6":"#64748b",minHeight:40}}>
+                  color:data.d===String(v)?"#3b82f6":"#64748b",minHeight:44}}>
                 {v}min
               </button>
             ))}
@@ -907,7 +918,9 @@ export default function App(){
               </div>
             </div>
 
-            {/* Tabs desktop */}
+            {/* ── NAVIGATION DESKTOP — onglets horizontaux ──────────────
+                Masqué sur mobile (<640px), affiché sur tablet/desktop
+                Utilise DS_LOGIN.gold (#C9A84C) pour l'accent actif (thème Marrakech) */}
             <div className="nav-top-tabs" style={{display:"flex",gap:2,alignItems:"center"}}>
               {TABS.map(([k,ic,l])=>{
                 const active=onglet===k;
@@ -940,7 +953,10 @@ export default function App(){
           </div>
         </div>
 
-        {/* ── CONTENU ─────────────────────────────────────── */}
+        {/* ── CONTENU PRINCIPAL —————────────────────────────────
+            Layout responsive : 100% wide sur mobile, max-width sur desktop
+            Tous les changements de couleur utilisent DS tokens (marque/statuts)
+            ────────────────────────────────────────────────────── */}
         <div style={{maxWidth:1080,margin:"0 auto",padding:"14px 14px"}}>
 
           {/* ═══ PLANNING ═══════════════════════════════════ */}
@@ -1440,7 +1456,7 @@ export default function App(){
                             {isEdit
                               ?<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                                 <input value={editLieu.d} onChange={e=>setEditLieu(p=>({...p,d:parseInt(e.target.value)||90}))} type="number"
-                                  style={{width:60,padding:"6px 8px",border:"2px solid #3b82f6",borderRadius:7,fontSize:13,fontWeight:700,color:"#3b82f6",outline:"none",textAlign:"center",minHeight:40}}/>
+                                  style={{width:60,padding:"6px 8px",border:"2px solid #3b82f6",borderRadius:7,fontSize:13,fontWeight:700,color:"#3b82f6",outline:"none",textAlign:"center",minHeight:44}}/>
                                 {[60,90,120,180,240].map(v=><button key={v} onClick={()=>setEditLieu(p=>({...p,d:v}))}
                                   style={{padding:"5px 10px",borderRadius:7,border:`1.5px solid ${editLieu.d===v?"#3b82f6":"#e2e8f0"}`,fontSize:11,
                                     background:editLieu.d===v?"#eff6ff":"white",color:editLieu.d===v?"#3b82f6":"#64748b",
@@ -1453,7 +1469,7 @@ export default function App(){
                             <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Code</div>
                             {isEdit
                               ?<input value={editLieu.code||""} onChange={e=>setEditLieu(p=>({...p,code:e.target.value}))}
-                                style={{padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,width:100,outline:"none",minHeight:40}}/>
+                                style={{padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,width:100,outline:"none",minHeight:44}}/>
                               :<span style={{fontSize:13,color:"#475569",fontWeight:600}}>🔑 {l.code}</span>
                             }
                           </div>}
@@ -1461,7 +1477,7 @@ export default function App(){
                             <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Notes</div>
                             {isEdit
                               ?<input value={editLieu.notes||""} onChange={e=>setEditLieu(p=>({...p,notes:e.target.value}))}
-                                style={{width:"100%",padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,outline:"none",boxSizing:"border-box",minHeight:40}}/>
+                                style={{width:"100%",padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,outline:"none",boxSizing:"border-box",minHeight:44}}/>
                               :<span style={{fontSize:12,color:"#64748b"}}>{l.notes}</span>
                             }
                           </div>}
@@ -1704,7 +1720,7 @@ export default function App(){
                       <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>@{u.username} · {new Date(u.createdAt).toLocaleDateString("fr-FR")}</div>
                     </div>
                     {u.id!==user.id&&<button onClick={()=>supprimerUser(u.id)}
-                      style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:40}}>🗑</button>}
+                      style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button>}
                   </div>
                 ))}
               </div>
@@ -1712,7 +1728,14 @@ export default function App(){
           )}
         </div>
 
-        {/* ── NAVIGATION BAS — mobile uniquement ─────────── */}
+        {/* ── NAVIGATION BAS — Interface mobile (<640px) ──────
+            Navigation fixe en bas : 5 onglets + bouton déconnexion
+            - Affichée UNIQUEMENT sur mobile via media query (@media max-width:640px)
+            - minHeight:56px pour touch target accessible (44px min + padding)
+            - borderTop utilise DS.brand (#c84b1f) pour l'onglet actif
+            - Safe-area-inset-bottom pour notches iOS en bas
+            - Position:fixed pour rester visible au scroll
+            ──────────────────────────────────────────────────── */}
         <nav className="nav-bottom" style={{
           position:"fixed",bottom:0,left:0,right:0,zIndex:100,
           background:DS.ink,
@@ -1752,7 +1775,13 @@ export default function App(){
           </button>
         </nav>
 
-        {/* ── BOTTOM SHEETS MOBILE ────────────────────────── */}
+        {/* ── BOTTOM SHEETS MOBILES ═══════════════════════════
+            Composants drawer mobiles : montent du bas avec animation slideUp
+            Utilisés pour afficher des infos détaillées sur petit écran
+            - Masqués sur desktop via showCharge/showWA
+            - Padding: safe-area-inset pour notches iOS en bas
+            - Animation slideUp (.25s) et fond semi-transparent
+            ──────────────────────────────────────────────────── */}
 
         {/* Charge du jour */}
         <BottomSheet visible={showCharge} onClose={()=>setShowCharge(false)} title="👥 Charge du jour">

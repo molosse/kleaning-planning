@@ -11,6 +11,64 @@ Kleaning Planning est une application web full-stack pour la gestion de la plani
 - Intégrer les calendriers Google
 - Tracker les services extra
 
+## 🎨 Design System & Mobile-First
+
+### Système de Conception Centralisé
+Toutes les couleurs et styles utilisent le **Design System Intervention & Travaux** centralisé dans `src/constants/colors.js`:
+
+**Tokens de Couleurs (DS object):**
+- **Marque** : `DS.brand` (#c84b1f) - Couleur primaire pour les boutons, accents et logo
+- **Statuts sémantiques** :
+  - `DS.sage` (#3a6b54) - Succès, complété, validé (vert)
+  - `DS.amber` (#b5620a) - Alerte, en attente, avertissement (orange)
+  - `DS.cobalt` (#1e4fa8) - Information, actif, en cours (bleu)
+  - `DS.ruby` (#b5172d) - Danger, litige, erreur (rouge)
+- **Neutres** :
+  - `DS.ink` (#0f1117) - Texte primaire (très sombre)
+  - `DS.paper` (#f8f7f4) - Fond principal (beige clair)
+  - `DS.line` (#e2e0da) - Bordures et séparateurs
+
+**Pour modifier les couleurs de la marque** → Éditez `src/constants/colors.js` ligne 24 (`DS.brand`). Cela affectera tous les boutons CTA, accents et highlights.
+
+**Palette login** (thème Marrakech distinctif):
+- Utilise `DS_LOGIN` pour l'écran de connexion
+- Fond : Bleu très sombre (#0D1B2A), Accent : Or (#C9A84C)
+- Modifiez dans `src/constants/colors.js` pour changer le branding de la page login
+
+### Responsive Design & Breakpoints
+
+L'application est **mobile-first** avec breakpoints Tailwind-compatibles:
+
+| Breakpoint | Résolution | Comportement |
+|-----------|-----------|------------|
+| Mobile | < 640px | Navigation inférieure, layout 1-colonne, modaux full-screen |
+| Tablet | 640-1024px | Transition vers 2-colonnes, navigation à onglets |
+| Desktop | > 1024px | Layout complet 2-colonnes, sidebar persistante |
+
+**Touch Targets & Accessibilité:**
+- Minimum 44px × 44px pour tous les éléments interactifs (conforme WCAG)
+- Safe-area-inset pour gestion des encoches iPhone (notch)
+- Momentum scrolling activé sur iOS/Android
+
+### Architecture des Composants
+
+**Composants Mobiles Stratégiques:**
+- **BottomSheet** (ligne 310-330) : Drawer modal qui monte du bas, utilisé pour afficher la charge du jour et WhatsApp sur mobile
+- **Navigation inférieure** (ligne 101-108) : 5 onglets en bas sur mobile, tabs en haut sur desktop
+- **Wizard** (ligne 522-620) : Formulaire multi-étapes pour ajouter des logements, optimisé tactile
+- **Planning** : Layout responsif avec overflow-x sur mobile pour le défilement horizontal des interventions
+
+### Icônes Personnalisées
+
+L'app utilise des icônes SVG custom (`src/icons/index.jsx`) conçues pour le design system:
+- **LocationIcon** - Localisation, lieux
+- **TimeIcon** - Horaires, durée
+- **PropertyIcon** - Types de logements
+- **TeamIcon** - Équipe, employés
+- **DeleteIcon** - Actions de suppression
+
+Tous supportent les props `size`, `color`, `strokeWidth` pour l'intégration cohérente.
+
 ## 🚀 Démarrage rapide
 
 ### Prérequis
@@ -112,6 +170,25 @@ kleaning-planning/
 ├── package.json            # Dépendances et scripts
 └── README.md              # Ce fichier
 ```
+
+## ⚙️ Navigateurs Supportés
+
+Kleaning Planning supporte les navigateurs modernes avec ES2020+:
+
+| Navigateur | Version Min | Notes |
+|-----------|-----------|-------|
+| Chrome/Edge | 90+ | Support complet, testing principal |
+| Firefox | 88+ | Support complet |
+| Safari iOS | 14+ | Optimisé pour notche/safe-area |
+| Safari macOS | 14+ | Support complet |
+| Android Browser | 90+ | Support complet |
+| Samsung Internet | 14+ | Supporté |
+
+**Fonctionnalités spéciales:**
+- `safe-area-inset-*` CSS pour les encoches iPhone
+- `-webkit-overflow-scrolling: touch` pour le momentum scrolling iOS
+- Viewports minimum: 320px (mobile), 640px (tablet)
+- Pas de support IE11 (ES2020 requis)
 
 ## 🛠️ Technologies utilisées
 
