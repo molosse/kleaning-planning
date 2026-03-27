@@ -13,6 +13,7 @@ import {
   DS, DS_LOGIN, CHAINE_COLORS,
   EQUIPE, EQUIPE_FALLBACK,
   TYPE_IC, CLIENT_IC, TYPES, CENTRE,
+  QUARTIERS,
 } from "./constants";
 
 // ═══════════════════════════════════════════════════════════════
@@ -527,11 +528,12 @@ const WQ=[
   {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
   {id:"type",    label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
   {id:"cli",     label:"Client / Propriétaire",     placeholder:"ex: GetHost, Atlas",      req:false},
-  {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true},
+  {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true,datalist:QUARTIERS},
   {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: 12 Rue Ibn Khaldoun ou https://maps.google.com/?q=...",req:false},
   {id:"lat",     label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
   {id:"lng",     label:"Longitude GPS",             placeholder:"ex: -8.018080",           req:true},
   {id:"d",       label:"Durée intervention (min)",  placeholder:"ex: 90",                  req:true},
+  {id:"heureFin",label:"Heure limite du jour (opt)",placeholder:"ex: 16h00 ou 17h00",      req:false,opts:["16h00","17h00","18h00","19h00","20h00"]},
   {id:"code",    label:"Code d'accès",              placeholder:"ex: 262626#",             req:false},
   {id:"notes",   label:"Notes accès",               placeholder:"ex: 5ème étage",          req:false},
 ];
@@ -541,9 +543,12 @@ function Wizard({onSave,onClose}){
   const next=()=>{
     if(q.req&&!data[q.id]){setErr("Champ obligatoire");return;}setErr("");
     if(step<WQ.length-1)setStep(s=>s+1);
-    else onSave({nom:data.nom,type:data.type||"Appartement GH",cli:data.cli||"Particulier",
-      q:data.q||"Guéliz",adresse:data.adresse||"",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
-      d:parseInt(data.d)||90,code:data.code||"",notes:data.notes||""});
+    else {
+      const heureFin = data.heureFin ? parseInt(data.heureFin)*60 : null;
+      onSave({nom:data.nom,type:data.type||"Appartement GH",cli:data.cli||"Particulier",
+        q:data.q||"Guéliz",adresse:data.adresse||"",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
+        d:parseInt(data.d)||90,heureFin:heureFin,code:data.code||"",notes:data.notes||""});
+    }
   };
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3000,
@@ -579,6 +584,16 @@ function Wizard({onSave,onClose}){
             <option value="">Sélectionner...</option>
             {q.opts.map(o=><option key={o}>{o}</option>)}
           </select>
+          :q.datalist
+          ?<>
+            <input list={`list-${q.id}`} value={data[q.id]||""} onChange={e=>setData(p=>({...p,[q.id]:e.target.value}))}
+              placeholder={q.placeholder} autoFocus onKeyDown={e=>e.key==="Enter"&&next()}
+              style={{width:"100%",padding:"13px 14px",border:`2px solid ${err?"#dc2626":"#e2e8f0"}`,
+                borderRadius:10,fontSize:15,outline:"none",minHeight:50}}/>
+            <datalist id={`list-${q.id}`}>
+              {q.datalist.map(item=><option key={item}>{item}</option>)}
+            </datalist>
+          </>
           :<input value={data[q.id]||""} onChange={e=>setData(p=>({...p,[q.id]:e.target.value}))}
             placeholder={q.placeholder} autoFocus onKeyDown={e=>e.key==="Enter"&&next()}
             style={{width:"100%",padding:"13px 14px",border:`2px solid ${err?"#dc2626":"#e2e8f0"}`,
@@ -613,6 +628,35 @@ function Wizard({onSave,onClose}){
         {!q.req&&<button onClick={()=>{setErr("");setStep(s=>s+1);}}
           style={{width:"100%",marginTop:10,padding:10,background:"none",border:"none",
             color:"#94a3b8",fontSize:13}}>Passer cette étape →</button>}
+      </div>
+    </div>
+  );
+}
+
+// ── CONFIRMATION DIALOG ──────────────────────────────────────
+// Modal de confirmation pour suppression de données
+// Prévient les suppressions accidentelles avec "Êtes-vous sûr?"
+function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
+  if(!visible)return null;
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3500,
+      display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:380,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out"}}>
+        <h3 style={{margin:"0 0 8px",fontSize:18,fontWeight:700,color:"#0f172a"}}>{title}</h3>
+        <p style={{margin:"0 0 20px",fontSize:14,color:"#64748b",lineHeight:1.5}}>{message}</p>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onCancel}
+            style={{flex:1,padding:12,background:"#f1f5f9",border:"1px solid #e2e8f0",
+              borderRadius:10,fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer"}}>
+            Annuler
+          </button>
+          <button onClick={onConfirm}
+            style={{flex:1,padding:12,background:"#dc2626",border:"none",
+              borderRadius:10,fontSize:13,fontWeight:600,color:"white",cursor:"pointer"}}>
+            {confirmText||"Supprimer"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -657,6 +701,8 @@ export default function App(){
   const[editLieu,setEditLieu]=useState(null);           // Logement en cours d'édition inline (null = aucun)
   const[showWA,setShowWA]=useState(false);              // BottomSheet WhatsApp sur mobile
   const[showCharge,setShowCharge]=useState(false);      // BottomSheet charge du jour sur mobile
+  // ── Confirmation Dialog pour suppressions ──────────────
+  const[confirmDialog,setConfirmDialog]=useState({visible:false,title:"",message:"",onConfirm:null});
   // ── Équipe fixe (chargée depuis API, avec fallback) ────────
   const[equipe,setEquipe]=useState([
     {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true},
@@ -706,10 +752,11 @@ export default function App(){
 
   // Modifie un champ d'une intervention spécifique (ci=index chaîne, ii=index intervention)
   // Cas spéciaux :
-  //   - "employes" → synchronise les 2 tâches si chaîne pairée
+  //   - "employes" → synchronise les 2 tâches si chaîne pairée (même équipe)
+  //   - "heureDebut"/"heureFin" → TOUJOURS indépendants, pas de sync même en chaîne pairée
   //   - "heureDebut" sur non-Bureau → recalcule heureFin = heureDebut + durée
   //   - "heureDebut" sur Bureau → met à jour uniquement heureDebut (heureFin reste libre)
-  //   - "heureFin" → met à jour heureFin + fin numérique (Bureaux : saisie libre)
+  // NOTE: Liberté totale sur les horaires - aucune contrainte inter-chaîne
   const changeInChaine=(ci,ii,f,v)=>{
     setChaines(p=>{
       const upd=[...p];
@@ -746,7 +793,19 @@ export default function App(){
   };
 
   // Supprime une chaîne du planning courant (icône poubelle)
-  const supprimerChaine=ci=>{setChaines(p=>p.filter((_,i)=>i!==ci));setWaText("");};
+  // Demande confirmation avant suppression
+  const supprimerChaine=ci=>{
+    setConfirmDialog({
+      visible:true,
+      title:"Supprimer la chaîne?",
+      message:"Cette chaîne sera retirée du planning. L'action ne peut pas être annulée.",
+      onConfirm:()=>{
+        setChaines(p=>p.filter((_,i)=>i!==ci));
+        setWaText("");
+        setConfirmDialog({visible:false,title:"",message:"",onConfirm:null});
+      }
+    });
+  };
 
   // Fusionne deux chaînes solo en une chaîne pairée
   // - Trie par heure de début pour mettre la plus tôt en première position
@@ -841,8 +900,16 @@ export default function App(){
   };
   const supprimerEmp=async(id)=>{
     const e=equipe.find(x=>x.id===id);
-    const data=await apiCall(`/api/equipe/${id}`,"DELETE");
-    if(data.message){setEquipe(p=>p.filter(x=>x.id!==id));setEmpMsg(`🗑 "${e?.nom}" retirée`);}
+    setConfirmDialog({
+      visible:true,
+      title:`Retirer ${e?.nom}?`,
+      message:`L'employée "${e?.nom}" sera retirée de l'équipe. Cette action ne peut pas être annulée.`,
+      onConfirm:async()=>{
+        const data=await apiCall(`/api/equipe/${id}`,"DELETE");
+        if(data.message){setEquipe(p=>p.filter(x=>x.id!==id));setEmpMsg(`🗑 "${e?.nom}" retirée`);}
+        setConfirmDialog({visible:false,title:"",message:"",onConfirm:null});
+      }
+    });
   };
   const toggleEmpActif=async(id,actif)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{actif});
@@ -859,13 +926,38 @@ export default function App(){
   // ajouterLieu : appelé depuis le Wizard après validation du formulaire multi-étapes
   // modifierLieu : met à jour un logement existant (édition inline dans l'onglet Logements)
   const ajouterLieu=async(lieu)=>{const data=await apiCall("/api/lieux","POST",lieu);if(data.logement){setLieux(p=>[...p,data.logement]);setWizard(false);setMsg(`✅ "${data.logement.nom}" ajouté`);}};
-  const supprimerLieu=async(id)=>{const l=lieux.find(x=>x.id===id);await apiCall(`/api/lieux/${id}`,"DELETE");setLieux(p=>p.filter(x=>x.id!==id));setMsg(`🗑 "${l?.nom}" supprimé`);};
+  const supprimerLieu=async(id)=>{
+    const l=lieux.find(x=>x.id===id);
+    setConfirmDialog({
+      visible:true,
+      title:`Supprimer ${l?.nom}?`,
+      message:`Le logement "${l?.nom}" sera supprimé définitivement. Cette action ne peut pas être annulée.`,
+      onConfirm:async()=>{
+        await apiCall(`/api/lieux/${id}`,"DELETE");
+        setLieux(p=>p.filter(x=>x.id!==id));
+        setMsg(`🗑 "${l?.nom}" supprimé`);
+        setConfirmDialog({visible:false,title:"",message:"",onConfirm:null});
+      }
+    });
+  };
   const modifierLieu=async(id,data)=>{const res=await apiCall(`/api/lieux/${id}`,"PUT",data);if(res.logement){setLieux(p=>p.map(l=>l.id===id?res.logement:l));setEditLieu(null);setMsg("✅ Mis à jour");}};
   // ── UTILISATEURS (admin seulement) ─────────────────────────
   // Gestion des comptes d'accès à l'application (data/users.json)
   // Seul l'admin peut créer ou supprimer des accès — l'onglet "Comptes" est masqué pour les non-admins
   const creerUser=async()=>{const data=await apiCall("/api/users","POST",newUser);if(data.user){setUsers(p=>[...p,data.user]);setNewUser({username:"",password:"",displayName:""});setUserMsg(`✅ "${data.user.displayName}" créé`);}else setUserMsg(data.message||"Erreur");};
-  const supprimerUser=async(id)=>{const data=await apiCall(`/api/users/${id}`,"DELETE");if(data.message){setUsers(p=>p.filter(u=>u.id!==id));setUserMsg(data.message);}};
+  const supprimerUser=async(id)=>{
+    const u=users.find(x=>x.id===id);
+    setConfirmDialog({
+      visible:true,
+      title:`Supprimer ${u?.displayName}?`,
+      message:`L'utilisateur "${u?.displayName}" (@${u?.username}) sera supprimé définitivement. Cette action ne peut pas être annulée.`,
+      onConfirm:async()=>{
+        const data=await apiCall(`/api/users/${id}`,"DELETE");
+        if(data.message){setUsers(p=>p.filter(x=>x.id!==id));setUserMsg(data.message);}
+        setConfirmDialog({visible:false,title:"",message:"",onConfirm:null});
+      }
+    });
+  };
   // Déconnexion : supprime le JWT du sessionStorage et réinitialise l'état user
   const logout=()=>{sessionStorage.removeItem("kleaning_token");setUser(null);};
 
@@ -909,12 +1001,13 @@ export default function App(){
         }}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",maxWidth:1080,margin:"0 auto",height:58}}>
 
-            {/* Logo */}
+            {/* Logo & App Title */}
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <img src="/logo.png" alt="KleanBnB"
                 style={{height:36,width:"auto",objectFit:"contain",filter:"brightness(0) invert(1)",opacity:0.92}}/>
-              <div style={{color:"rgba(201,168,76,0.7)",fontSize:10,lineHeight:1.2,fontWeight:500,whiteSpace:"nowrap"}}>
-                {user.displayName}
+              <div style={{display:"flex",flexDirection:"column",fontSize:10,lineHeight:1.2,fontWeight:500,whiteSpace:"nowrap"}}>
+                <div style={{color:"rgba(201,168,76,0.9)",fontSize:11,fontWeight:700}}>planning Kleaning</div>
+                <div style={{color:"rgba(201,168,76,0.6)",fontSize:9}}>{user.displayName}</div>
               </div>
             </div>
 
@@ -1825,6 +1918,15 @@ export default function App(){
             </div>
           </>}
         </BottomSheet>
+
+        {/* Confirmation Dialog pour aux suppressions */}
+        <ConfirmDialog
+          visible={confirmDialog.visible}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={()=>setConfirmDialog({visible:false,title:"",message:"",onConfirm:null})}
+        />
 
       </div>
     </>
