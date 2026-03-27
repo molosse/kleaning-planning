@@ -980,7 +980,7 @@ export default function App(){
   // Structure : une ligne par employée, avec ses interventions dans l'ordre chronologique
   // Format : "🟢 _Nom apt_ 12h30 : *Amina*, \n\n🟢 _Nom apt 2_ 14h00 : *Majda*, \n\n"
   // Les interventions non assignées sont regroupées sous "**" (à assigner)
-  // Un double saut de ligne entre chaque ligne pour la lisibilité
+  // Chaque intervention sur sa propre ligne pour meilleure lisibilité
   const genWA=()=>{
     const[d,m,y]=dateQ.split("/");
     const label=new Date(`${y}-${m}-${d}`).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -990,7 +990,7 @@ export default function App(){
     Object.entries(parEmp).sort(([,a],[,b])=>hToMin(a[0].heureDebut)-hToMin(b[0].heureDebut)).forEach(([emp,inters])=>{
       const sorted=[...inters].sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));
       const isBur=t=>t==="Bureau"||t==="Cabinet médical";
-      const taches=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (bla linge)":""}`).join(", ");
+      const taches=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (linge)":""}`).join(",\n");
       txt+=`${taches} : ${emp==="__none__"?"**":`*${emp}*`},\n\n`;
     });
     txt=txt.trimEnd().replace(/,$/,"");setWaText(txt);setCopied(false);setWaSent(false);setShowWA(true);
