@@ -662,6 +662,113 @@ function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
   );
 }
 
+// ── DAYS OFF MODAL ────────────────────────────────────────────
+// Modal pour gérer les jours off des employées
+// Permet sélection de plage de dates (du/au) qui s'expanse en dates individuelles
+function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
+  const[startDate,setStartDate]=useState("");
+  const[endDate,setEndDate]=useState("");
+  const[datesList,setDatesList]=useState(initialDates||[]);
+
+  // Initialise la modale avec les dates existantes
+  useEffect(()=>{setDatesList(initialDates||[]);setStartDate("");setEndDate("");},[visible,initialDates]);
+
+  if(!visible)return null;
+
+  // Ajoute une date individuelle
+  const addDate=()=>{if(!startDate)return;if(!datesList.includes(startDate)){setDatesList(p=>[...p,startDate].sort());setStartDate("");}};
+
+  // Supprime une date
+  const removeDate=(d)=>{setDatesList(p=>p.filter(x=>x!==d));};
+
+  // Expanse une plage de dates (du/au)
+  const expandDateRange=()=>{
+    if(!startDate||!endDate)return;
+    const start=new Date(startDate);
+    const end=new Date(endDate);
+    const expanded=[];
+    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+      const dateStr=d.toISOString().split("T")[0];
+      if(!datesList.includes(dateStr))expanded.push(dateStr);
+    }
+    if(expanded.length>0){setDatesList(p=>[...p,...expanded].sort());setStartDate("");setEndDate("");}
+  };
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3500,
+      display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:420,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out",maxHeight:"80vh",overflow:"auto"}}>
+        <h3 style={{margin:"0 0 12px",fontSize:18,fontWeight:700,color:"#0f172a"}}>📅 Jours off - {empName}</h3>
+        <p style={{margin:"0 0 16px",fontSize:13,color:"#64748b"}}>Indiquez les dates où l'employée sera absente</p>
+
+        {/* Ajouter plage de dates */}
+        <div style={{marginBottom:14,padding:"12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#166534",marginBottom:8}}>Plage de dates (du/au)</div>
+          <div style={{display:"flex",gap:8,marginBottom:8}}>
+            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+              style={{flex:1,padding:"8px 10px",border:"1px solid #dcfce7",borderRadius:6,fontSize:12}}/>
+            <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+              style={{flex:1,padding:"8px 10px",border:"1px solid #dcfce7",borderRadius:6,fontSize:12}}/>
+          </div>
+          <button onClick={expandDateRange}
+            style={{width:"100%",padding:"8px",background:"#059669",color:"white",border:"none",borderRadius:6,
+              fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+            + Ajouter plage
+          </button>
+        </div>
+
+        {/* Ajouter date individuelle */}
+        <div style={{marginBottom:14,padding:"12px",background:"#eff6ff",borderRadius:10,border:"1px solid #bfdbfe"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#1e40af",marginBottom:8}}>Ou ajouter une date</div>
+          <div style={{display:"flex",gap:8}}>
+            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+              style={{flex:1,padding:"8px 10px",border:"1px solid #93c5fd",borderRadius:6,fontSize:12}}/>
+            <button onClick={addDate}
+              style={{padding:"8px 12px",background:"#3b82f6",color:"white",border:"none",borderRadius:6,
+                fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+              Ajouter
+            </button>
+          </div>
+        </div>
+
+        {/* Liste des dates */}
+        {datesList.length>0&&(
+          <div style={{marginBottom:14,padding:"12px",background:"#fafaf8",borderRadius:10,border:"1px solid #e7e5e4"}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#274c5b",marginBottom:8}}>Dates sélectionnées ({datesList.length})</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,maxHeight:150,overflow:"auto"}}>
+              {datesList.map(d=>(
+                <div key={d} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 8px",background:"white",
+                  borderRadius:6,border:"1px solid #d1d5db",fontSize:12,color:"#374151"}}>
+                  {d}
+                  <button onClick={()=>removeDate(d)}
+                    style={{background:"none",border:"none",color:"#9ca3af",cursor:"pointer",fontSize:11,fontWeight:700}}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Boutons */}
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onCancel}
+            style={{flex:1,padding:12,background:"#f1f5f9",border:"1px solid #e2e8f0",
+              borderRadius:10,fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer",transition:"all .15s"}}>
+            Annuler
+          </button>
+          <button onClick={()=>onSave(datesList)}
+            style={{flex:1,padding:12,background:"#059669",border:"none",
+              borderRadius:10,fontSize:13,fontWeight:600,color:"white",cursor:"pointer",transition:"all .15s"}}>
+            Enregistrer ({datesList.length})
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── APP PRINCIPALE ────────────────────────────────────────────
 // Point d'entrée de l'application. Gère :
 //   - L'authentification (user = null → écran Login)
@@ -726,6 +833,14 @@ export default function App(){
   useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();chargerHistorique();if(user.role==="admin")chargerUsers();}},[user]);
   // Rafraîchit l'historique à chaque visite de l'onglet Historique
   useEffect(()=>{if(onglet==="historique")chargerHistorique();},[onglet]);
+
+  // Initialise les jours off à partir des données de l'équipe
+  useEffect(()=>{
+    const jours={};
+    equipe.forEach(emp=>{if(emp.joursOff&&emp.joursOff.length>0)jours[emp.id]=emp.joursOff;});
+    setEmpJoursOff(jours);
+  },[equipe]);
+
 
   // Chargement des données persistées depuis l'API (fichiers JSON côté serveur)
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
@@ -917,6 +1032,18 @@ export default function App(){
   const toggleEmpActif=async(id,actif)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{actif});
     if(data.employe)setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
+  };
+
+  // Sauvegarde les jours off d'une employée
+  // Envoie au backend : PUT /api/equipe/:id avec {joursOff: [...dates]}
+  const saveDaysOff=async(empId,dates)=>{
+    const data=await apiCall(`/api/equipe/${empId}`,"PUT",{joursOff:dates});
+    if(data.employe){
+      setEquipe(p=>p.map(x=>x.id===empId?data.employe:x));
+      setEmpJoursOff(p=>({...p,[empId]:dates}));
+      setDaysOffModal(null);
+      setEmpMsg(`✅ Jours off mis à jour pour`,setTimeout(()=>setEmpMsg(""),3000));
+    }
   };
 
   // ── EXTRAS ─────────────────────────────────────────────────
@@ -1737,7 +1864,14 @@ export default function App(){
                           {emp.emoji}
                         </div>
                         <div>
-                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3}}>{emp.nom}</div>
+                          <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3,display:"flex",alignItems:"center",gap:8}}>
+                            {emp.nom}
+                            {empJoursOff[emp.id]&&empJoursOff[emp.id].length>0&&(
+                              <span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:6,fontWeight:600}}>
+                                📅 {empJoursOff[emp.id].length}
+                              </span>
+                            )}
+                          </div>
                           <div style={{fontSize:11,color:DS.ink3,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
                             {emp.actif===false
                               ?<><X size={10}/>Inactive</>
@@ -1748,6 +1882,12 @@ export default function App(){
 
                       {user.role==="admin"&&(
                         <div style={{display:"flex",gap:6,flexShrink:0}}>
+                          <button onClick={()=>setDaysOffModal({empId:emp.id,startDate:"",endDate:"",datesList:[]})}
+                            style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
+                              border:`1px solid ${DS.line}`,
+                              background:"white",color:DS.ink3,transition:"all .15s",display:"flex",alignItems:"center",gap:4}}>
+                            📅 Jours
+                          </button>
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
                             style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
                               border:`1px solid ${emp.actif!==false?DS.line:"#A7F3D0"}`,
@@ -1930,6 +2070,16 @@ export default function App(){
           onConfirm={confirmDialog.onConfirm}
           onCancel={()=>setConfirmDialog({visible:false,title:"",message:"",onConfirm:null})}
         />
+
+        {/* Modal Jours Off */}
+        {daysOffModal&&<DaysOffModal
+          visible={true}
+          empId={daysOffModal.empId}
+          empName={equipe.find(e=>e.id===daysOffModal.empId)?.nom||""}
+          initialDates={empJoursOff[daysOffModal.empId]||[]}
+          onSave={(dates)=>saveDaysOff(daysOffModal.empId,dates)}
+          onCancel={()=>setDaysOffModal(null)}
+        />}
 
       </div>
     </>
