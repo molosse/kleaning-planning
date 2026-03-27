@@ -192,7 +192,7 @@ export default function Login({ onLogin }) {
               src="/logo.png"
               alt="KleanBnB"
               style={{
-                width: 160,
+                width: 192,
                 height: "auto",
                 objectFit: "contain",
                 marginBottom: 8,
