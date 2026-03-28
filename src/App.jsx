@@ -338,7 +338,7 @@ function BottomSheet({visible,onClose,title,children}){
 // La position (top/left) est calculée depuis getBoundingClientRect() du bouton déclencheur
 // Affiche : les membres de l'équipe disponibles (actifs non encore assignés) + les extras mémorisés
 // Affiche aussi une section "Retirer" pour désassigner quelqu'un
-function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef}){
+function SelEmp({employes,extras,equipe:equipeS,selectedWeekday,onAdd,onRemove,onClose,anchorRef}){
   const allE=extras.map(e=>({nom:e.nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"}));
   const dispo=[...(equipeS||EQUIPE_FALLBACK).filter(e=>!employes.includes(e.nom)&&e.actif!==false),...allE.filter(e=>!employes.includes(e.nom))];
 
@@ -370,7 +370,15 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
               style={{width:"100%",padding:"10px 10px",borderRadius:8,border:"none",cursor:"pointer",
                 textAlign:"left",fontSize:14,fontWeight:600,marginBottom:3,
                 background:e.bg,color:e.coul,display:"flex",alignItems:"center",gap:8,minHeight:44}}>
-              <span style={{width:26,height:26,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span> {e.nom}
+              <span style={{width:26,height:26,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span>
+              <span style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                {e.nom}
+                {isEmployeeOffForDay(e,selectedWeekday)&&(
+                  <span style={{fontSize:10,background:DS.rubySoft,color:DS.ruby,padding:"1px 6px",borderRadius:8,fontWeight:700,border:"1px solid #FECACA"}}>
+                    OFF aujourd'hui
+                  </span>
+                )}
+              </span>
             </button>
           ))}
         </>
@@ -378,12 +386,17 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
       {employes.length>0&&<>
         <div style={{height:1,background:"#f1f5f9",margin:"8px 0"}}/>
         <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",marginBottom:6,letterSpacing:"0.05em"}}>Retirer</div>
-        {employes.map(nom=>{const e=EQUIPE.find(x=>x.nom===nom)||{nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"};return(
+        {employes.map(nom=>{const e=(equipeS||EQUIPE_FALLBACK).find(x=>x.nom===nom)||{nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"};return(
           <button key={nom} onClick={()=>{onRemove(nom);onClose();}}
             style={{width:"100%",padding:"10px 10px",borderRadius:8,border:"1px solid #fca5a5",cursor:"pointer",
               textAlign:"left",fontSize:14,fontWeight:600,marginBottom:3,
               background:"#fef2f2",color:"#dc2626",display:"flex",alignItems:"center",gap:8,minHeight:44}}>
             ✕ {nom}
+            {isEmployeeOffForDay(e,selectedWeekday)&&(
+              <span style={{fontSize:10,background:"white",color:"#b91c1c",padding:"1px 6px",borderRadius:8,fontWeight:700,border:"1px solid #fecaca"}}>
+                OFF
+              </span>
+            )}
           </button>
         );})}
       </>}
@@ -398,7 +411,7 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
 // Permet : modifier l'heure (début/fin pour Bureaux), toggler "bla linge", assigner/retirer des employées
 // Props : interv = données de l'intervention, onChange = callback (field, value)
 // chaineBg/chaineBorder = couleurs héritées de la chaîne parente pour cohérence visuelle
-function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
+function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,chaineBorder}){
   const[openSel,setOpenSel]=useState(false);
   const[editHr,setEditHr]=useState(false);
   const ep=(equipeP||EQUIPE_FALLBACK).find(e=>e.nom===(interv.employes||[])[0]);
@@ -474,12 +487,19 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
         <span style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em",flexShrink:0}}>Assignées</span>
 
         {(interv.employes||[]).map(nom=>{
-          const e=EQUIPE.find(x=>x.nom===nom)||{nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"};
+          const e=(equipeP||EQUIPE_FALLBACK).find(x=>x.nom===nom)||{nom,coul:"#64748b",bg:"#f1f5f9",emoji:"👤"};
+          const isOff=isEmployeeOffForDay(e,selectedWeekday);
           return(
             <span key={nom} style={{padding:"5px 10px",borderRadius:20,fontSize:13,fontWeight:700,
               background:e.bg,color:e.coul,border:`1.5px solid ${e.coul}40`,
               display:"flex",alignItems:"center",gap:4}}>
-              <span style={{width:20,height:20,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span> {e.nom}
+              <span style={{width:20,height:20,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span>
+              {e.nom}
+              {isOff&&(
+                <span style={{fontSize:10,background:DS.rubySoft,color:DS.ruby,padding:"1px 6px",borderRadius:8,fontWeight:700,border:"1px solid #FECACA"}}>
+                  OFF
+                </span>
+              )}
               <button onClick={()=>onChange("employes",(interv.employes||[]).filter(x=>x!==nom))}
                 style={{background:"none",border:"none",color:e.coul,fontSize:14,padding:"0 0 0 2px",
                   opacity:.5,lineHeight:1,minWidth:20,minHeight:20,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
@@ -512,6 +532,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
           }
           {openSel&&(
             <SelEmp employes={interv.employes||[]} extras={extras} equipe={equipeP||EQUIPE_FALLBACK}
+              selectedWeekday={selectedWeekday}
               anchorRef={btnRef}
               onAdd={n=>{if(!(interv.employes||[]).includes(n))onChange("employes",[...(interv.employes||[]),n]);}}
               onRemove={n=>onChange("employes",(interv.employes||[]).filter(x=>x!==n))}
@@ -670,11 +691,16 @@ function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
 // ── JOURS OFF (HEBDO) ───────────────────────────────────────
 // Normalise les jours off en tableau d'index 0..6 (dimanche..samedi)
 function normalizeWeekdays(joursOff){
-  if(Array.isArray(joursOff))return [...new Set(joursOff.filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
+  if(Array.isArray(joursOff))return [...new Set(joursOff.map(d=>Number(d)).filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
   if(joursOff&&typeof joursOff==="object"&&Array.isArray(joursOff.recurringWeekdays)){
-    return [...new Set(joursOff.recurringWeekdays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
+    return [...new Set(joursOff.recurringWeekdays.map(d=>Number(d)).filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
   }
   return [];
+}
+
+function isEmployeeOffForDay(emp,weekday){
+  if(!emp||!Number.isInteger(weekday)||weekday<0||weekday>6)return false;
+  return normalizeWeekdays(emp.joursOff).includes(weekday);
 }
 
 function DaysOffWeekModal({visible,empName,initialWeekdays,onSave,onCancel}){
@@ -776,7 +802,7 @@ export default function App(){
   // ── UI modaux / formulaires ────────────────────────────────
   const[wizard,setWizard]=useState(false);              // Afficher le wizard ajout logement
   const[newExtra,setNewExtra]=useState("");             // Champ saisie extra
-  const[newUser,setNewUser]=useState({username:"",password:"",displayName:""}); // Formulaire création compte
+  const[newUser,setNewUser]=useState({username:"",password:"",displayName:"",role:"user"}); // Formulaire création compte
   const[userMsg,setUserMsg]=useState("");               // Retour création/suppression utilisateur
   const[editLieu,setEditLieu]=useState(null);           // Logement en cours d'édition inline (null = aucun)
   const[showWA,setShowWA]=useState(false);              // BottomSheet WhatsApp sur mobile
@@ -793,6 +819,11 @@ export default function App(){
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
   const[daysOffEmpId,setDaysOffEmpId]=useState(null);    // Modale jours off hebdo {id employée}
+  const selectedWeekday=(()=>{
+    const[d,m,y]=dateQ.split("/");
+    const dt=new Date(`${y}-${m}-${d}T00:00:00`);
+    return Number.isNaN(dt.getTime())?new Date().getDay():dt.getDay();
+  })();
 
   // Vérification du token JWT au montage : si valide, reconnecte l'utilisateur sans re-login
   useEffect(()=>{
@@ -1039,7 +1070,7 @@ export default function App(){
   // ── UTILISATEURS (admin seulement) ─────────────────────────
   // Gestion des comptes d'accès à l'application (data/users.json)
   // Seul l'admin peut créer ou supprimer des accès — l'onglet "Comptes" est masqué pour les non-admins
-  const creerUser=async()=>{const data=await apiCall("/api/users","POST",newUser);if(data.user){setUsers(p=>[...p,data.user]);setNewUser({username:"",password:"",displayName:""});setUserMsg(`✅ "${data.user.displayName}" créé`);}else setUserMsg(data.message||"Erreur");};
+  const creerUser=async()=>{const data=await apiCall("/api/users","POST",newUser);if(data.user){setUsers(p=>[...p,data.user]);setNewUser({username:"",password:"",displayName:"",role:"user"});setUserMsg(`✅ "${data.user.displayName}" créé`);}else setUserMsg(data.message||"Erreur");};
   const supprimerUser=async(id)=>{
     const u=users.find(x=>x.id===id);
     setConfirmDialog({
@@ -1300,7 +1331,7 @@ export default function App(){
                             {/* Interventions */}
                             {chaine.inters.map((inter,ii)=>(
                               <div key={inter.id}>
-                                <Carte interv={inter} extras={extras} equipe={equipe} onChange={(f,v)=>changeInChaine(ci,ii,f,v)} chaineBg={chaineBg} chaineBorder={chaineBorder}/>
+                                <Carte interv={inter} extras={extras} equipe={equipe} selectedWeekday={selectedWeekday} onChange={(f,v)=>changeInChaine(ci,ii,f,v)} chaineBg={chaineBg} chaineBorder={chaineBorder}/>
                                 {ii<chaine.inters.length-1&&(
                                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",
                                     background:chaineBg,borderTop:`1px solid ${chaineBorder}`,borderBottom:`1px solid ${chaineBorder}`}}>
@@ -1564,15 +1595,23 @@ export default function App(){
                   <PropertyIcon size={16} color={DS.brand}/>
                   <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>{lieux.length} logements</span>
                 </div>
-                <button onClick={()=>setWizard(true)} className="btn-primary"
-                  style={{padding:"10px 18px",
-                    background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
-                    color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,minHeight:42,
-                    display:"flex",alignItems:"center",gap:6,cursor:"pointer",
-                    boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
-                  <Plus size={14}/> Ajouter
-                </button>
+                {user.role==="admin"&&(
+                  <button onClick={()=>setWizard(true)} className="btn-primary"
+                    style={{padding:"10px 18px",
+                      background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
+                      color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,minHeight:42,
+                      display:"flex",alignItems:"center",gap:6,cursor:"pointer",
+                      boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
+                    <Plus size={14}/> Ajouter
+                  </button>
+                )}
               </div>
+              {user.role!=="admin"&&(
+                <div style={{marginBottom:12,padding:"10px 14px",borderRadius:10,fontSize:12,fontWeight:500,
+                  background:"#EFF6FF",color:"#1E40AF",border:"1px solid #BFDBFE"}}>
+                  Mode utilisateur: consultation des logements uniquement.
+                </div>
+              )}
               {/* Barre de recherche */}
               <div style={{position:"relative",marginBottom:14}}>
                 <input value={searchLieux} onChange={e=>setSearchLieux(e.target.value)}
@@ -1624,22 +1663,24 @@ export default function App(){
                               }
                             </div>
                           </div>
-                          <div style={{display:"flex",gap:6,flexShrink:0}}>
-                            {!isEdit
-                              ?<><button onClick={()=>setEditLieu({...l})}
-                                  style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
-                                    background:"#f8fafc",color:"#475569",fontSize:13,minHeight:44}}>✏️</button>
-                                <button onClick={()=>supprimerLieu(l.id)}
-                                  style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",
-                                    background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button></>
-                              :<><button onClick={()=>modifierLieu(l.id,editLieu)}
-                                  style={{padding:"8px 12px",borderRadius:8,border:"none",background:"#059669",
-                                    color:"white",fontSize:13,fontWeight:700,minHeight:44}}>✓</button>
-                                <button onClick={()=>setEditLieu(null)}
-                                  style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
-                                    background:"#f8fafc",color:"#64748b",fontSize:13,minHeight:44}}>✕</button></>
-                            }
-                          </div>
+                          {user.role==="admin"&&(
+                            <div style={{display:"flex",gap:6,flexShrink:0}}>
+                              {!isEdit
+                                ?<><button onClick={()=>setEditLieu({...l})}
+                                    style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
+                                      background:"#f8fafc",color:"#475569",fontSize:13,minHeight:44}}>✏️</button>
+                                  <button onClick={()=>supprimerLieu(l.id)}
+                                    style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",
+                                      background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button></>
+                                :<><button onClick={()=>modifierLieu(l.id,editLieu)}
+                                    style={{padding:"8px 12px",borderRadius:8,border:"none",background:"#059669",
+                                      color:"white",fontSize:13,fontWeight:700,minHeight:44}}>✓</button>
+                                  <button onClick={()=>setEditLieu(null)}
+                                    style={{padding:"8px 12px",borderRadius:8,border:"1px solid #e2e8f0",
+                                      background:"#f8fafc",color:"#64748b",fontSize:13,minHeight:44}}>✕</button></>
+                              }
+                            </div>
+                          )}
                         </div>
 
                         {/* Durée + Code + Notes */}
@@ -1772,7 +1813,7 @@ export default function App(){
               </div>
               <div style={{fontSize:12,color:DS.ink3,marginBottom:16}}>
                 Les employées listées ici apparaissent dans les assignations de chaque intervention.
-                {user.role!=="admin"&&<span style={{color:DS.ink3}}> Seul l'admin peut ajouter ou supprimer.</span>}
+                {user.role!=="admin"&&<span style={{color:DS.ink3}}> Vous pouvez gérer les jours off uniquement.</span>}
               </div>
 
               {/* Ajouter employée — admin seulement */}
@@ -1836,6 +1877,11 @@ export default function App(){
                         <div>
                           <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3,display:"flex",alignItems:"center",gap:8}}>
                             {emp.nom}
+                            {isEmployeeOffForDay(emp,selectedWeekday)&&(
+                              <span style={{fontSize:10,background:DS.rubySoft,color:DS.ruby,padding:"2px 8px",borderRadius:8,fontWeight:700,border:"1px solid #FECACA"}}>
+                                OFF aujourd'hui
+                              </span>
+                            )}
                             {normalizeWeekdays(emp.joursOff).length>0&&(
                               <span style={{fontSize:10,background:DS.brandSoft,color:DS.brand,padding:"2px 8px",borderRadius:8,fontWeight:700,border:`1px solid ${DS.brandMid}`}}>
                                 OFF {normalizeWeekdays(emp.joursOff).map(d=>["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][d]).join(",")}
@@ -1850,14 +1896,15 @@ export default function App(){
                         </div>
                       </div>
 
-                      {user.role==="admin"&&(
-                        <div style={{display:"flex",gap:6,flexShrink:0}}>
-                          <button onClick={()=>setDaysOffEmpId(emp.id)}
-                            style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
-                              border:`1px solid ${DS.line}`,
-                              background:"white",color:DS.ink2,transition:"all .15s"}}>
-                            Off
-                          </button>
+                      <div style={{display:"flex",gap:6,flexShrink:0}}>
+                        <button onClick={()=>setDaysOffEmpId(emp.id)}
+                          style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
+                            border:`1px solid ${DS.line}`,
+                            background:"white",color:DS.ink2,transition:"all .15s"}}>
+                          Off
+                        </button>
+                        {user.role==="admin"&&(
+                          <>
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
                             style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
                               border:`1px solid ${emp.actif!==false?DS.line:"#A7F3D0"}`,
@@ -1870,8 +1917,9 @@ export default function App(){
                               background:"white",color:DS.ink3,fontSize:13,minHeight:38,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center"}}>
                             <DeleteIcon size={13}/>
                           </button>
-                        </div>
-                      )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1901,13 +1949,21 @@ export default function App(){
               <div style={{background:"white",borderRadius:12,padding:"14px 16px",border:"1px solid #e2e8f0",marginBottom:14}}>
                 <div style={{fontSize:13,fontWeight:700,color:"#0f172a",marginBottom:12}}>+ Créer un accès</div>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {[["Identifiant","username","ex: amina",false],["Mot de passe","password","ex: Kleaning2024",true],["Prénom affiché","displayName","ex: Amina",false]].map(([label,key,ph,isPwd])=>(
+                  {[ ["Identifiant","username","ex: amina",false],["Mot de passe","password","ex: Kleaning2024",true],["Prénom affiché","displayName","ex: Amina",false] ].map(([label,key,ph,isPwd])=>(
                     <div key={key}>
                       <label style={{fontSize:12,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>{label}</label>
                       <input type={isPwd?"password":"text"} value={newUser[key]} onChange={e=>setNewUser(p=>({...p,[key]:e.target.value}))}
                         placeholder={ph} style={{width:"100%",padding:"12px 14px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48}}/>
                     </div>
                   ))}
+                  <div>
+                    <label style={{fontSize:12,fontWeight:600,color:"#374151",display:"block",marginBottom:5}}>Niveau d'accès</label>
+                    <select value={newUser.role} onChange={e=>setNewUser(p=>({...p,role:e.target.value}))}
+                      style={{width:"100%",padding:"12px 14px",border:"1.5px solid #e2e8f0",borderRadius:9,fontSize:14,outline:"none",boxSizing:"border-box",minHeight:48,background:"white"}}>
+                      <option value="user">Utilisateur</option>
+                      <option value="admin">Administrateur</option>
+                    </select>
+                  </div>
                   <button onClick={creerUser} className="btn-primary"
                     style={{padding:"14px",background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,minHeight:50,cursor:"pointer",fontFamily:"inherit",boxShadow:"0 3px 10px rgba(13,27,42,0.2)"}}>
                     Créer l'accès

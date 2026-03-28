@@ -205,6 +205,9 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   const username    = sanitize(req.body.username, 50);
   const password    = req.body.password; // Ne pas sanitizer le mdp (perd les caractères spéciaux)
   const displayName = sanitize(req.body.displayName, 100);
+  const roleInput   = sanitize(req.body.role, 20).toLowerCase();
+  const roleMap     = { admin: "admin", administrateur: "admin", user: "user", utilisateur: "user" };
+  const role        = roleMap[roleInput] || "user";
 
   if (!username || !password || !displayName) {
     return res.status(400).json({ message: "username, password et displayName sont requis" });
@@ -230,7 +233,7 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
     username,
     hash,         // ✅ Stocké mais jamais renvoyé (safeUser filtre)
     displayName,
-    role:        "user",
+    role,
     createdAt:   new Date().toISOString()
   };
 
@@ -332,7 +335,7 @@ app.get("/api/lieux", auth, (req, res) => {
   res.json({ lieux: readDB("lieux.json") });
 });
 
-app.post("/api/lieux", auth, (req, res) => {
+app.post("/api/lieux", auth, adminOnly, (req, res) => {
   const nom  = sanitize(req.body.nom, 200);
   const type = sanitize(req.body.type, 50);
   const cli  = sanitize(req.body.cli, 100);
@@ -358,7 +361,7 @@ app.post("/api/lieux", auth, (req, res) => {
   res.status(201).json({ logement: l, message: "Logement ajouté" });
 });
 
-app.put("/api/lieux/:id", auth, (req, res) => {
+app.put("/api/lieux/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
@@ -383,7 +386,7 @@ app.put("/api/lieux/:id", auth, (req, res) => {
   res.json({ logement: lieux[idx], message: "Logement mis à jour" });
 });
 
-app.delete("/api/lieux/:id", auth, (req, res) => {
+app.delete("/api/lieux/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
@@ -588,8 +591,8 @@ app.post("/api/equipe", auth, adminOnly, (req, res) => {
   res.status(201).json({ employe: emp, message: `"${nom}" ajoutée à l'équipe` });
 });
 
-// PUT /api/equipe/:id — modifier (nom, emoji, couleur, actif, joursOff)
-app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
+// PUT /api/equipe/:id — modifier (admin) + joursOff (admin/user)
+app.put("/api/equipe/:id", auth, (req, res) => {
   const id = req.params.id;
 
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
@@ -600,12 +603,21 @@ app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   if (idx === -1) return res.status(404).json({ message: "Employée non trouvée" });
 
   const { nom, emoji, coul, bg, actif, joursOff } = req.body;
+  const isAdmin = req.user?.role === "admin";
+  const keys = Object.keys(req.body || {});
+  const onlyJoursOff = keys.length > 0 && keys.every((k) => k === "joursOff");
 
-  if (nom)             equipe[idx].nom   = sanitize(nom, 60);
-  if (emoji)           equipe[idx].emoji = sanitize(emoji, 5);
-  if (/^#[0-9a-fA-F]{6}$/.test(coul || "")) equipe[idx].coul = coul;
-  if (/^#[0-9a-fA-F]{6}$/.test(bg   || "")) equipe[idx].bg   = bg;
-  if (actif !== undefined) equipe[idx].actif = !!actif;
+  if (!isAdmin && !onlyJoursOff) {
+    return res.status(403).json({ message: "Accès réservé à l'administrateur" });
+  }
+
+  if (isAdmin) {
+    if (nom)             equipe[idx].nom   = sanitize(nom, 60);
+    if (emoji)           equipe[idx].emoji = sanitize(emoji, 5);
+    if (/^#[0-9a-fA-F]{6}$/.test(coul || "")) equipe[idx].coul = coul;
+    if (/^#[0-9a-fA-F]{6}$/.test(bg   || "")) equipe[idx].bg   = bg;
+    if (actif !== undefined) equipe[idx].actif = !!actif;
+  }
 
   // Persiste joursOff : tableau [0..6] (dimanche..samedi)
   if (joursOff !== undefined) {
