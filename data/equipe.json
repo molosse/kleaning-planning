@@ -5,7 +5,11 @@
     "emoji": "👩‍🦱",
     "coul": "#c84b1f",
     "bg": "#fdf1ec",
-    "actif": true
+    "actif": true,
+    "joursOff": [
+      6
+    ],
+    "updatedAt": "2026-03-28T14:15:43.268Z"
   },
   {
     "id": "emp_2",
@@ -29,6 +33,14 @@
     "emoji": "👩‍🦰",
     "coul": "#b5620a",
     "bg": "#fdf3e7",
-    "actif": true
+    "actif": true,
+    "joursOff": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "updatedAt": "2026-03-28T14:16:02.230Z"
   }
 ]

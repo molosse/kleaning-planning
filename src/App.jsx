@@ -942,8 +942,8 @@ export default function App(){
   // Génère le texte WhatsApp formaté du planning du jour
   // Structure : une ligne par employée, avec ses interventions dans l'ordre chronologique
   // Format : "🟢 _Nom apt_ 12h30 : *Amina*, \n\n🟢 _Nom apt 2_ 14h00 : *Majda*, \n\n"
-  // Les interventions non assignées sont regroupées sous "**" (à assigner)
-  // Chaque intervention sur sa propre ligne pour meilleure lisibilité
+  // Les interventions non assignées sont suffixées avec ": **,"
+  // Chaque intervention est séparée par une ligne vide pour meilleure lisibilité
   const genWA=()=>{
     const[d,m,y]=dateQ.split("/");
     const label=new Date(`${y}-${m}-${d}`).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
@@ -953,10 +953,15 @@ export default function App(){
     Object.entries(parEmp).sort(([,a],[,b])=>hToMin(a[0].heureDebut)-hToMin(b[0].heureDebut)).forEach(([emp,inters])=>{
       const sorted=[...inters].sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));
       const isBur=t=>t==="Bureau"||t==="Cabinet médical";
-      const taches=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (linge)":""}`).join(",\n");
-      txt+=`${taches} : ${emp==="__none__"?"**":`*${emp}*`},\n\n`;
+      const lignes=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (linge)":""}`);
+      if(emp==="__none__"){
+        txt+=`${lignes.map(l=>`${l} : **,`).join("\n\n")}\n\n`;
+        return;
+      }
+      const taches=lignes.join(",\n");
+      txt+=`${taches} : *${emp}*,\n\n`;
     });
-    txt=txt.trimEnd().replace(/,$/,"");setWaText(txt);setCopied(false);setWaSent(false);setShowWA(true);
+    txt=txt.trimEnd();setWaText(txt);setCopied(false);setWaSent(false);setShowWA(true);
     // Sauvegarde du planning avec les agents assignés
     const[dd,mm,yy]=dateQ.split("/");
     const date=`${yy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
