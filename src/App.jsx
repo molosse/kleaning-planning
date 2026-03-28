@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Login from "./Login.jsx";
-import { LocationIcon, TimeIcon, PropertyIcon, TeamIcon, DeleteIcon } from "./icons/index.jsx";
+import { LocationIcon, TimeIcon, PropertyIcon, TeamIcon, DeleteIcon, NettoyageIcon, LogementIcon, MissionIcon } from "./icons/index.jsx";
 import {
   CalendarDays, UserPlus, Settings,
   RefreshCw, Send, Copy, Check,  ChevronRight,
@@ -308,6 +308,9 @@ function apiCall(path,method="GET",body=null){
   return fetch(path,{method,headers:{"Content-Type":"application/json","Authorization":`Bearer ${token}`},...(body?{body:JSON.stringify(body)}:{})}).then(r=>r.json());
 }
 
+// Initiales pour avatars employées (ex: "Majda" → "MA", "Marie Durand" → "MD")
+const inits=nom=>(nom||"?").split(/\s+/).map(p=>(p[0]||"")).join("").slice(0,2).toUpperCase()||"?";
+
 // ── BOTTOM SHEET (mobile) — drawer qui monte du bas ──────────
 // Composant générique : fond semi-transparent + panel blanc animé depuis le bas
 // Utilisé pour afficher la charge du jour et le planning WhatsApp sur mobile
@@ -367,7 +370,7 @@ function SelEmp({employes,extras,equipe:equipeS,onAdd,onRemove,onClose,anchorRef
               style={{width:"100%",padding:"10px 10px",borderRadius:8,border:"none",cursor:"pointer",
                 textAlign:"left",fontSize:14,fontWeight:600,marginBottom:3,
                 background:e.bg,color:e.coul,display:"flex",alignItems:"center",gap:8,minHeight:44}}>
-              <span style={{fontSize:18}}>{e.emoji}</span> {e.nom}
+              <span style={{width:26,height:26,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span> {e.nom}
             </button>
           ))}
         </>
@@ -402,7 +405,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
   const isBureau=interv.type==="Bureau"||interv.cli==="Cabinet médical";
   const isVilla=interv.type==="Villa";
   const villaManque=isVilla&&(interv.employes||[]).length<2;
-  const ic=CLIENT_IC[interv.cli]||TYPE_IC[interv.type]||"🔵";
+  const{IC:TypeIC,color:typeColor,bg:typeBg}=getTypeInfo(interv.type,interv.cli);
   const HEURES=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"];
   const btnRef=useRef();
 
@@ -442,7 +445,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
         {/* Icône + Nom */}
         <div style={{minWidth:0,flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
-            <span style={{fontSize:16,flexShrink:0}}>{ic}</span>
+            <span style={{width:26,height:26,borderRadius:6,background:typeBg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><TypeIC size={14} color={typeColor}/></span>
             <div style={{fontWeight:700,fontSize:14,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.2}}>{interv.nom}</div>
           </div>
           <div style={{fontSize:11,color:"#64748b",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -476,7 +479,7 @@ function Carte({interv,extras,equipe:equipeP,onChange,chaineBg,chaineBorder}){
             <span key={nom} style={{padding:"5px 10px",borderRadius:20,fontSize:13,fontWeight:700,
               background:e.bg,color:e.coul,border:`1.5px solid ${e.coul}40`,
               display:"flex",alignItems:"center",gap:4}}>
-              <span style={{fontSize:16}}>{e.emoji}</span> {e.nom}
+              <span style={{width:20,height:20,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span> {e.nom}
               <button onClick={()=>onChange("employes",(interv.employes||[]).filter(x=>x!==nom))}
                 style={{background:"none",border:"none",color:e.coul,fontSize:14,padding:"0 0 0 2px",
                   opacity:.5,lineHeight:1,minWidth:20,minHeight:20,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
@@ -664,159 +667,15 @@ function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
   );
 }
 
-// ── DAYS OFF MODAL ────────────────────────────────────────────
-// Modal pour gérer les jours off des employées
-// Supporte DEUX systèmes : dates spécifiques + jours de semaine récurrents
-function DaysOffModal({visible,empId,empName,initialDates,onSave,onCancel}){
-  // Extraire les données initiales (support ancien et nouveau format)
-  const specificDatesInit=initialDates?.specificDates||initialDates||[];
-  const recurringWeekdaysInit=initialDates?.recurringWeekdays||[];
-
-  const[startDate,setStartDate]=useState("");
-  const[endDate,setEndDate]=useState("");
-  const[datesList,setDatesList]=useState(specificDatesInit);
-  const[weekdays,setWeekdays]=useState(recurringWeekdaysInit);
-
-  // Initialise la modale avec les données existantes
-  useEffect(()=>{
-    const specDates=initialDates?.specificDates||initialDates||[];
-    const recWeekdays=initialDates?.recurringWeekdays||[];
-    setDatesList(specDates);
-    setWeekdays(recWeekdays);
-    setStartDate("");
-    setEndDate("");
-  },[visible,initialDates]);
-
-  if(!visible)return null;
-
-  // Noms des jours en français
-  const dayNames=["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
-  const dayShort=["DIM","LUN","MAR","MER","JEU","VEN","SAM"];
-
-  // Toggle un jour de semaine
-  const toggleWeekday=(day)=>{
-    if(weekdays.includes(day)){
-      setWeekdays(p=>p.filter(x=>x!==day));
-    }else{
-      setWeekdays(p=>[...p,day].sort());
-    }
-  };
-
-  // Ajoute une date individuelle
-  const addDate=()=>{if(!startDate)return;if(!datesList.includes(startDate)){setDatesList(p=>[...p,startDate].sort());setStartDate("");}};
-
-  // Supprime une date
-  const removeDate=(d)=>{setDatesList(p=>p.filter(x=>x!==d));};
-
-  // Expanse une plage de dates (du/au)
-  const expandDateRange=()=>{
-    if(!startDate||!endDate)return;
-    const start=new Date(startDate);
-    const end=new Date(endDate);
-    const expanded=[];
-    for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
-      const dateStr=d.toISOString().split("T")[0];
-      if(!datesList.includes(dateStr))expanded.push(dateStr);
-    }
-    if(expanded.length>0){setDatesList(p=>[...p,...expanded].sort());setStartDate("");setEndDate("");}
-  };
-
-  return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3500,
-      display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:440,
-        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out",maxHeight:"85vh",overflow:"auto"}}>
-        <h3 style={{margin:"0 0 12px",fontSize:18,fontWeight:700,color:"#0f172a"}}>📅 Jours off - {empName}</h3>
-        <p style={{margin:"0 0 16px",fontSize:13,color:"#64748b"}}>Sélectionnez les jours off spécifiques et/ou les jours de semaine récurrents</p>
-
-        {/* ─ SECTION 1: Jours de semaine récurrents ─ */}
-        <div style={{marginBottom:14,padding:"12px",background:"#f0f9ff",borderRadius:10,border:"1px solid #7dd3fc"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"#0369a1",marginBottom:8}}>Jours de semaine (récurrents)</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
-            {dayShort.map((day,i)=>(
-              <button key={i} onClick={()=>toggleWeekday(i)}
-                style={{padding:"6px 8px",borderRadius:6,fontSize:11,fontWeight:600,
-                  border:`1px solid ${weekdays.includes(i)?"#0284c7":"#cbd5e1"}`,
-                  background:weekdays.includes(i)?"#0284c7":"white",
-                  color:weekdays.includes(i)?"white":"#334155",
-                  cursor:"pointer",transition:"all .15s"}}>
-                {day}
-              </button>
-            ))}
-          </div>
-          {weekdays.length>0&&(
-            <div style={{marginTop:8,fontSize:11,color:"#0369a1",fontWeight:600}}>
-              ✓ {weekdays.length} jour{weekdays.length>1?"s":""}: {weekdays.map(w=>dayNames[w]).join(", ")}
-            </div>
-          )}
-        </div>
-
-        {/* ─ SECTION 2: Plage de dates spécifiques ─ */}
-        <div style={{marginBottom:14,padding:"12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"#166534",marginBottom:8}}>Dates spécifiques (du/au)</div>
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-              style={{flex:1,padding:"8px 10px",border:"1px solid #dcfce7",borderRadius:6,fontSize:12}}/>
-            <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
-              style={{flex:1,padding:"8px 10px",border:"1px solid #dcfce7",borderRadius:6,fontSize:12}}/>
-          </div>
-          <button onClick={expandDateRange}
-            style={{width:"100%",padding:"8px",background:"#059669",color:"white",border:"none",borderRadius:6,
-              fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
-            + Ajouter plage
-          </button>
-        </div>
-
-        {/* ─ SECTION 3: Ajouter date individuelle ─ */}
-        <div style={{marginBottom:14,padding:"12px",background:"#eff6ff",borderRadius:10,border:"1px solid #bfdbfe"}}>
-          <div style={{fontSize:12,fontWeight:600,color:"#1e40af",marginBottom:8}}>Ou ajouter une date</div>
-          <div style={{display:"flex",gap:8}}>
-            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
-              style={{flex:1,padding:"8px 10px",border:"1px solid #93c5fd",borderRadius:6,fontSize:12}}/>
-            <button onClick={addDate}
-              style={{padding:"8px 12px",background:"#3b82f6",color:"white",border:"none",borderRadius:6,
-                fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
-              Ajouter
-            </button>
-          </div>
-        </div>
-
-        {/* ─ SECTION 4: Dates sélectionnées ─ */}
-        {datesList.length>0&&(
-          <div style={{marginBottom:14,padding:"12px",background:"#fafaf8",borderRadius:10,border:"1px solid #e7e5e4"}}>
-            <div style={{fontSize:12,fontWeight:600,color:"#274c5b",marginBottom:8}}>Dates sélectionnées ({datesList.length})</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,maxHeight:120,overflow:"auto"}}>
-              {datesList.map(d=>(
-                <div key={d} style={{display:"flex",alignItems:"center",gap:4,padding:"4px 8px",background:"white",
-                  borderRadius:6,border:"1px solid #d1d5db",fontSize:12,color:"#374151"}}>
-                  {d}
-                  <button onClick={()=>removeDate(d)}
-                    style={{background:"none",border:"none",color:"#9ca3af",cursor:"pointer",fontSize:11,fontWeight:700}}>
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ─ BOUTONS ─ */}
-        <div style={{display:"flex",gap:10}}>
-          <button onClick={onCancel}
-            style={{flex:1,padding:12,background:"#f1f5f9",border:"1px solid #e2e8f0",
-              borderRadius:10,fontSize:13,fontWeight:600,color:"#475569",cursor:"pointer",transition:"all .15s"}}>
-            Annuler
-          </button>
-          <button onClick={()=>onSave(datesList,weekdays)}
-            style={{flex:1,padding:12,background:"#059669",border:"none",
-              borderRadius:10,fontSize:13,fontWeight:600,color:"white",cursor:"pointer",transition:"all .15s"}}>
-            Enregistrer ({datesList.length+weekdays.length})
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ── HELPER DESIGN : Icône + couleurs par type de propriété ────
+// Mappe chaque type sur une icône SVG DS + ses couleurs DS
+const getTypeInfo=(type,cli)=>{
+  if(cli==="Cabinet médical")return{IC:MissionIcon,color:"#b5172d",bg:"#fdeef0"};
+  if(type==="Villa")return{IC:LogementIcon,color:"#1e4fa8",bg:"#edf1fb"};
+  if(type==="Riad")return{IC:LogementIcon,color:"#c84b1f",bg:"#fdf1ec"};
+  if(type==="Bureau")return{IC:MissionIcon,color:"#3d4155",bg:"#f1f0ec"};
+  return{IC:NettoyageIcon,color:"#3a6b54",bg:"#edf4f0"};
+};
 
 // ── APP PRINCIPALE ────────────────────────────────────────────
 // Point d'entrée de l'application. Gère :
@@ -868,9 +727,6 @@ export default function App(){
   ]);
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
-  // ── Jours off des employées ────────────────────────────────
-  const[empJoursOff,setEmpJoursOff]=useState({});       // Format: {emp_1: ["2026-03-28", "2026-03-29"]}
-  const[daysOffModal,setDaysOffModal]=useState(null);   // Format: {empId, startDate, endDate}
 
   // Vérification du token JWT au montage : si valide, reconnecte l'utilisateur sans re-login
   useEffect(()=>{
@@ -882,31 +738,6 @@ export default function App(){
   useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();chargerHistorique();if(user.role==="admin")chargerUsers();}},[user]);
   // Rafraîchit l'historique à chaque visite de l'onglet Historique
   useEffect(()=>{if(onglet==="historique")chargerHistorique();},[onglet]);
-
-  // Initialise les jours off à partir des données de l'équipe
-  // Support ancien format (array) et nouveau format (objet avec specificDates + recurringWeekdays)
-  useEffect(()=>{
-    const jours={};
-    equipe.forEach(emp=>{
-      if(emp.joursOff){
-        // Ancien format : array de dates
-        if(Array.isArray(emp.joursOff)){
-          if(emp.joursOff.length>0){
-            jours[emp.id]={specificDates:emp.joursOff,recurringWeekdays:[]};
-          }
-        }
-        // Nouveau format : objet {specificDates, recurringWeekdays}
-        else if(typeof emp.joursOff==='object'){
-          const hasData=(emp.joursOff.specificDates?.length>0||emp.joursOff.recurringWeekdays?.length>0);
-          if(hasData){
-            jours[emp.id]=emp.joursOff;
-          }
-        }
-      }
-    });
-    setEmpJoursOff(jours);
-  },[equipe]);
-
 
   // Chargement des données persistées depuis l'API (fichiers JSON côté serveur)
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
@@ -1098,20 +929,6 @@ export default function App(){
   const toggleEmpActif=async(id,actif)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{actif});
     if(data.employe)setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
-  };
-
-  // Sauvegarde les jours off d'une employée
-  // Supporte deux types : dates spécifiques + jours de semaine récurrents
-  // Envoie au backend : PUT /api/equipe/:id avec {joursOff: {specificDates, recurringWeekdays}}
-  const saveDaysOff=async(empId,specificDates,recurringWeekdays)=>{
-    const joursOff={specificDates,recurringWeekdays};
-    const data=await apiCall(`/api/equipe/${empId}`,"PUT",{joursOff});
-    if(data.employe){
-      setEquipe(p=>p.map(x=>x.id===empId?data.employe:x));
-      setEmpJoursOff(p=>({...p,[empId]:joursOff}));
-      setDaysOffModal(null);
-      setEmpMsg(`✅ Jours off mis à jour pour "${data.employe.nom}"`,setTimeout(()=>setEmpMsg(""),3000));
-    }
   };
 
   // ── EXTRAS ─────────────────────────────────────────────────
@@ -1455,7 +1272,7 @@ export default function App(){
                       {equipe.filter(e=>e.actif!==false).map(e=>{const t=ch[e.nom]||[];return(
                         <div key={e.nom} style={{marginBottom:8}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",borderRadius:10,background:e.bg,border:`1px solid ${e.coul}20`}}>
-                            <span style={{fontWeight:600,fontSize:12,color:e.coul}}>{e.emoji} {e.nom}</span>
+                            <span style={{display:"flex",alignItems:"center",gap:6,fontWeight:600,fontSize:12,color:e.coul}}><span style={{width:20,height:20,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span>{e.nom}</span>
                             <span style={{fontSize:11,fontWeight:700,
                               color:t.length>=3?"#DC2626":t.length>=2?"#D97706":t.length>=1?DS.sage:DS.ink3}}>
                               {t.length>0?`${t.length} mission${t.length>1?"s":""}`:"—"}
@@ -1716,8 +1533,13 @@ export default function App(){
                                 :<span style={{fontSize:11,color:"#64748b",background:"#f8fafc",padding:"3px 8px",borderRadius:8,border:"1px solid #e2e8f0"}}>{l.type}</span>
                               }
                               {isEdit
-                                ?<input value={editLieu.q} onChange={e=>setEditLieu(p=>({...p,q:e.target.value}))}
-                                  style={{padding:"5px 8px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:12,width:100,outline:"none",minHeight:36}}/>
+                                ?<>
+                                <input list="list-q-edit" value={editLieu.q} onChange={e=>setEditLieu(p=>({...p,q:e.target.value}))}
+                                  style={{padding:"5px 8px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:12,width:150,outline:"none",minHeight:36}}/>
+                                <datalist id="list-q-edit">
+                                  {QUARTIERS_WITH_DETAILS.map(q=><option key={q.name}>{q.name} — {q.category} ({q.kmCenter} km)</option>)}
+                                </datalist>
+                                </>
                                 :<span style={{fontSize:11,color:"#94a3b8"}}>📍 {l.q}</span>
                               }
                             </div>
@@ -1926,24 +1748,14 @@ export default function App(){
                     opacity:emp.actif===false?.5:1,transition:"opacity .2s"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                       <div style={{display:"flex",alignItems:"center",gap:12}}>
-                        <div style={{width:44,height:44,borderRadius:"50%",background:emp.bg,
-                          display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,
-                          border:`2px solid ${emp.coul}30`}}>
-                          {emp.emoji}
+                        <div style={{width:44,height:44,borderRadius:"50%",background:emp.coul,
+                          display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,flexShrink:0,
+                          color:"white",border:`2px solid ${emp.coul}30`}}>
+                          {inits(emp.nom)}
                         </div>
                         <div>
                           <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3,display:"flex",alignItems:"center",gap:8}}>
                             {emp.nom}
-                            {empJoursOff[emp.id]&&(()=>{
-                              // Support ancien format (array) et nouveau format (objet)
-                              const data=empJoursOff[emp.id];
-                              const totalCount=Array.isArray(data)?data.length:((data.specificDates?.length||0)+(data.recurringWeekdays?.length||0));
-                              return totalCount>0?(
-                                <span style={{fontSize:11,background:"#fef3c7",color:"#92400e",padding:"2px 8px",borderRadius:6,fontWeight:600}}>
-                                  📅 {totalCount}
-                                </span>
-                              ):null;
-                            })()}
                           </div>
                           <div style={{fontSize:11,color:DS.ink3,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
                             {emp.actif===false
@@ -1955,12 +1767,6 @@ export default function App(){
 
                       {user.role==="admin"&&(
                         <div style={{display:"flex",gap:6,flexShrink:0}}>
-                          <button onClick={()=>setDaysOffModal({empId:emp.id,startDate:"",endDate:"",datesList:[]})}
-                            style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
-                              border:`1px solid ${DS.line}`,
-                              background:"white",color:DS.ink3,transition:"all .15s",display:"flex",alignItems:"center",gap:4}}>
-                            📅 Jours
-                          </button>
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
                             style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
                               border:`1px solid ${emp.actif!==false?DS.line:"#A7F3D0"}`,
@@ -2097,7 +1903,7 @@ export default function App(){
           {EQUIPE.map(e=>{const t=ch[e.nom]||[];return(
             <div key={e.nom} style={{marginBottom:10}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",borderRadius:10,background:e.bg}}>
-                <span style={{fontWeight:700,fontSize:14,color:e.coul}}>{e.emoji} {e.nom}</span>
+                <span style={{display:"flex",alignItems:"center",gap:8,fontWeight:700,fontSize:14,color:e.coul}}><span style={{width:24,height:24,borderRadius:"50%",background:e.coul,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"white",flexShrink:0}}>{inits(e.nom)}</span>{e.nom}</span>
                 <span style={{fontSize:13,fontWeight:700,color:t.length>=3?"#ef4444":t.length>=2?"#f97316":t.length>=1?"#059669":"#94a3b8"}}>{t.length>0?`${t.length} mission${t.length>1?"s":""}`:"—"}</span>
               </div>
               {t.length>0&&<div style={{paddingLeft:12,marginTop:4}}>{t.map((x,i)=><div key={i} style={{fontSize:12,color:"#94a3b8",paddingBottom:2}}>{toWA(x.heureDebut)} · {x.nom.replace("Appartement GH ","").replace("Appartement ","")}</div>)}</div>}
@@ -2144,15 +1950,6 @@ export default function App(){
           onCancel={()=>setConfirmDialog({visible:false,title:"",message:"",onConfirm:null})}
         />
 
-        {/* Modal Jours Off */}
-        {daysOffModal&&<DaysOffModal
-          visible={true}
-          empId={daysOffModal.empId}
-          empName={equipe.find(e=>e.id===daysOffModal.empId)?.nom||""}
-          initialDates={empJoursOff[daysOffModal.empId]||{specificDates:[],recurringWeekdays:[]}}
-          onSave={(specificDates,recurringWeekdays)=>saveDaysOff(daysOffModal.empId,specificDates,recurringWeekdays)}
-          onCancel={()=>setDaysOffModal(null)}
-        />}
 
       </div>
     </>

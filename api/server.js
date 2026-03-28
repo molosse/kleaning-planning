@@ -591,6 +591,8 @@ app.post("/api/equipe", auth, adminOnly, (req, res) => {
 // PUT /api/equipe/:id — modifier (nom, emoji, couleur, actif, joursOff)
 app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
+  console.log("📨 PUT /api/equipe/:id - ID:", id, "Body:", req.body);
+
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
   let equipe = readDB("equipe.json");
@@ -599,21 +601,28 @@ app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   if (idx === -1) return res.status(404).json({ message: "Employée non trouvée" });
 
   const { nom, emoji, coul, bg, actif, joursOff } = req.body;
+
   if (nom)             equipe[idx].nom   = sanitize(nom, 60);
   if (emoji)           equipe[idx].emoji = sanitize(emoji, 5);
   if (/^#[0-9a-fA-F]{6}$/.test(coul || "")) equipe[idx].coul = coul;
   if (/^#[0-9a-fA-F]{6}$/.test(bg   || "")) equipe[idx].bg   = bg;
   if (actif !== undefined) equipe[idx].actif = !!actif;
+
   // Persiste joursOff : objet avec specificDates et recurringWeekdays
   if (joursOff !== undefined && typeof joursOff === 'object') {
+    console.log("✅ Assignation joursOff:", joursOff);
     equipe[idx].joursOff = {
       specificDates: Array.isArray(joursOff.specificDates) ? joursOff.specificDates : [],
       recurringWeekdays: Array.isArray(joursOff.recurringWeekdays) ? joursOff.recurringWeekdays : []
     };
+  }else{
+    console.log("⚠️ joursOff non assigné - joursOff:", joursOff);
   }
+
   equipe[idx].updatedAt = new Date().toISOString();
 
   writeDB("equipe.json", equipe);
+  console.log("✅ Réponse API:", { employe: equipe[idx], message: "Mis à jour" });
   res.json({ employe: equipe[idx], message: "Mis à jour" });
 });
 

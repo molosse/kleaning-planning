@@ -59,16 +59,15 @@ export const DS_LOGIN = {
 };
 
 // ── COULEURS CHAÎNES : Identification visuelle des paires d'interventions ──
-// Chaque chaîne (2 interventions liées) reçoit une couleur unique
-// 8 variations pour cycling à travers de multiples chaînes
-// NOTE: Modifier pour changer l'apparence visuelle des associations
+// Palette alignée sur le Design System — tons mués professionels
+// Utilise exclusivement les tokens DS (sauge, cobalt, brique, ambre, ruby, neutre)
 export const CHAINE_COLORS = [
-  {bg:"#fef9c3",border:"#fbbf24",label:"#92400e"},  // 1. Jaune
-  {bg:"#d1fae5",border:"#34d399",label:"#065f46"},  // 2. Vert
-  {bg:"#dbeafe",border:"#60a5fa",label:"#1e40af"},  // 3. Bleu
-  {bg:"#ede9fe",border:"#a78bfa",label:"#5b21b6"},  // 4. Violet
-  {bg:"#ffedd5",border:"#fb923c",label:"#9a3412"},  // 5. Orange
-  {bg:"#fce7f3",border:"#f472b6",label:"#9d174d"},  // 6. Rose
-  {bg:"#e0f2fe",border:"#38bdf8",label:"#075985"},  // 7. Cyan
-  {bg:"#dcfce7",border:"#4ade80",label:"#14532d"},  // 8. Citron vert
+  {bg:"#edf4f0",border:"#9ec4b0",label:"#3a6b54"},  // 1. Sauge
+  {bg:"#edf1fb",border:"#93b0e0",label:"#1e4fa8"},  // 2. Cobalt
+  {bg:"#fdf1ec",border:"#f5c5b0",label:"#c84b1f"},  // 3. Brique
+  {bg:"#fdf3e7",border:"#e8b080",label:"#b5620a"},  // 4. Ambre
+  {bg:"#fdeef0",border:"#e8a0a8",label:"#b5172d"},  // 5. Ruby
+  {bg:"#f1f0ec",border:"#c8c5bc",label:"#3d4155"},  // 6. Neutre
+  {bg:"#e8f0f6",border:"#7090d0",label:"#163a80"},  // 7. Cobalt foncé
+  {bg:"#f0f7f3",border:"#7db89a",label:"#2d5742"},  // 8. Sauge foncé
 ];

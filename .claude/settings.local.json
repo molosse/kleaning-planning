@@ -3,7 +3,8 @@
     "allow": [
       "Bash(.node/node ./node_modules/vite/bin/vite.js build)",
       "Bash(cmd.exe /c \"npm run dev\")",
-      "Bash(cmd.exe /c \"netstat -an | findstr \"\"3001 5173\"\"\")"
+      "Bash(cmd.exe /c \"netstat -an | findstr \"\"3001 5173\"\"\")",
+      "WebFetch(domain:planning.kleaning.ma)"
     ]
   }
 }
