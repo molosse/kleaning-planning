@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Kleaning Planning - Casoar Services Marrakech",
   "scripts": {
-    "start": "npm install --production && NODE_ENV=production node api/server.js",
+    "start": "npm install --omit=dev --legacy-peer-deps && NODE_ENV=production node api/server.js",
     "dev": "node api/server.js",
     "build": "vite build",
     "setup": "node scripts/setup.js"
