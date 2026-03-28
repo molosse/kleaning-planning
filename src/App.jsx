@@ -667,6 +667,71 @@ function ConfirmDialog({visible,title,message,confirmText,onConfirm,onCancel}){
   );
 }
 
+// ── JOURS OFF (HEBDO) ───────────────────────────────────────
+// Normalise les jours off en tableau d'index 0..6 (dimanche..samedi)
+function normalizeWeekdays(joursOff){
+  if(Array.isArray(joursOff))return [...new Set(joursOff.filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
+  if(joursOff&&typeof joursOff==="object"&&Array.isArray(joursOff.recurringWeekdays)){
+    return [...new Set(joursOff.recurringWeekdays.filter(d=>Number.isInteger(d)&&d>=0&&d<=6))].sort((a,b)=>a-b);
+  }
+  return [];
+}
+
+function DaysOffWeekModal({visible,empName,initialWeekdays,onSave,onCancel}){
+  const dayShort=["DIM","LUN","MAR","MER","JEU","VEN","SAM"];
+  const[weekdays,setWeekdays]=useState(initialWeekdays||[]);
+
+  useEffect(()=>{setWeekdays(initialWeekdays||[]);},[visible,initialWeekdays]);
+  if(!visible)return null;
+
+  const toggleWeekday=(day)=>{
+    setWeekdays(p=>p.includes(day)?p.filter(x=>x!==day):[...p,day].sort((a,b)=>a-b));
+  };
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:3500,
+      display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:"white",borderRadius:16,padding:24,maxWidth:440,width:"calc(100% - 24px)",
+        boxShadow:"0 20px 60px rgba(0,0,0,0.3)",animation:"fadeIn .25s ease-out"}}>
+        <h3 style={{margin:"0 0 8px",fontSize:18,fontWeight:700,color:DS.ink}}>Jours off - {empName}</h3>
+        <p style={{margin:"0 0 14px",fontSize:13,color:DS.ink3}}>Selectionnez les jours de semaine off (sans date)</p>
+
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:12}}>
+          {dayShort.map((day,i)=>{
+            const active=weekdays.includes(i);
+            return(
+              <button key={i} onClick={()=>toggleWeekday(i)}
+                style={{padding:"8px 8px",borderRadius:8,fontSize:11,fontWeight:700,minHeight:40,
+                  border:`1px solid ${active?DS.brand:DS.line}`,
+                  background:active?DS.brandSoft:"white",
+                  color:active?DS.brand:DS.ink2,cursor:"pointer",transition:"all .15s"}}>
+                {day}
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{fontSize:12,color:DS.ink3,marginBottom:14}}>
+          {weekdays.length===0?"Aucun jour off defini":`${weekdays.length} jour${weekdays.length>1?"s":""} off`}
+        </div>
+
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onCancel}
+            style={{flex:1,padding:12,background:DS.paper2,border:`1px solid ${DS.line}`,
+              borderRadius:10,fontSize:13,fontWeight:600,color:DS.ink2,cursor:"pointer"}}>
+            Annuler
+          </button>
+          <button onClick={()=>onSave(weekdays)}
+            style={{flex:1,padding:12,background:DS.brand,border:"none",
+              borderRadius:10,fontSize:13,fontWeight:600,color:"white",cursor:"pointer"}}>
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── HELPER DESIGN : Icône + couleurs par type de propriété ────
 // Mappe chaque type sur une icône SVG DS + ses couleurs DS
 const getTypeInfo=(type,cli)=>{
@@ -727,6 +792,7 @@ export default function App(){
   ]);
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
+  const[daysOffEmpId,setDaysOffEmpId]=useState(null);    // Modale jours off hebdo {id employée}
 
   // Vérification du token JWT au montage : si valide, reconnecte l'utilisateur sans re-login
   useEffect(()=>{
@@ -929,6 +995,15 @@ export default function App(){
   const toggleEmpActif=async(id,actif)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{actif});
     if(data.employe)setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
+  };
+  const saveEmpDaysOff=async(id,weekdays)=>{
+    const data=await apiCall(`/api/equipe/${id}`,"PUT",{joursOff:weekdays});
+    if(data.employe){
+      setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
+      setEmpMsg(`✅ Jours off mis a jour pour "${data.employe.nom}"`);
+      setTimeout(()=>setEmpMsg(""),3000);
+      setDaysOffEmpId(null);
+    }else setEmpMsg(data.message||"Erreur");
   };
 
   // ── EXTRAS ─────────────────────────────────────────────────
@@ -1756,6 +1831,11 @@ export default function App(){
                         <div>
                           <div style={{fontWeight:700,fontSize:15,color:emp.actif!==false?emp.coul:DS.ink3,display:"flex",alignItems:"center",gap:8}}>
                             {emp.nom}
+                            {normalizeWeekdays(emp.joursOff).length>0&&(
+                              <span style={{fontSize:10,background:DS.brandSoft,color:DS.brand,padding:"2px 8px",borderRadius:8,fontWeight:700,border:`1px solid ${DS.brandMid}`}}>
+                                OFF {normalizeWeekdays(emp.joursOff).map(d=>["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][d]).join(",")}
+                              </span>
+                            )}
                           </div>
                           <div style={{fontSize:11,color:DS.ink3,marginTop:2,display:"flex",alignItems:"center",gap:4}}>
                             {emp.actif===false
@@ -1767,6 +1847,12 @@ export default function App(){
 
                       {user.role==="admin"&&(
                         <div style={{display:"flex",gap:6,flexShrink:0}}>
+                          <button onClick={()=>setDaysOffEmpId(emp.id)}
+                            style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
+                              border:`1px solid ${DS.line}`,
+                              background:"white",color:DS.ink2,transition:"all .15s"}}>
+                            Off
+                          </button>
                           <button onClick={()=>toggleEmpActif(emp.id,emp.actif===false)}
                             style={{padding:"7px 11px",borderRadius:8,fontSize:11,fontWeight:600,minHeight:38,cursor:"pointer",
                               border:`1px solid ${emp.actif!==false?DS.line:"#A7F3D0"}`,
@@ -1949,6 +2035,14 @@ export default function App(){
           onConfirm={confirmDialog.onConfirm}
           onCancel={()=>setConfirmDialog({visible:false,title:"",message:"",onConfirm:null})}
         />
+
+        {daysOffEmpId&&<DaysOffWeekModal
+          visible={true}
+          empName={equipe.find(e=>e.id===daysOffEmpId)?.nom||""}
+          initialWeekdays={normalizeWeekdays(equipe.find(e=>e.id===daysOffEmpId)?.joursOff)}
+          onSave={weekdays=>saveEmpDaysOff(daysOffEmpId,weekdays)}
+          onCancel={()=>setDaysOffEmpId(null)}
+        />}
 
 
       </div>

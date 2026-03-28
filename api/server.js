@@ -591,7 +591,6 @@ app.post("/api/equipe", auth, adminOnly, (req, res) => {
 // PUT /api/equipe/:id — modifier (nom, emoji, couleur, actif, joursOff)
 app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
-  console.log("📨 PUT /api/equipe/:id - ID:", id, "Body:", req.body);
 
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
@@ -608,21 +607,27 @@ app.put("/api/equipe/:id", auth, adminOnly, (req, res) => {
   if (/^#[0-9a-fA-F]{6}$/.test(bg   || "")) equipe[idx].bg   = bg;
   if (actif !== undefined) equipe[idx].actif = !!actif;
 
-  // Persiste joursOff : objet avec specificDates et recurringWeekdays
-  if (joursOff !== undefined && typeof joursOff === 'object') {
-    console.log("✅ Assignation joursOff:", joursOff);
-    equipe[idx].joursOff = {
-      specificDates: Array.isArray(joursOff.specificDates) ? joursOff.specificDates : [],
-      recurringWeekdays: Array.isArray(joursOff.recurringWeekdays) ? joursOff.recurringWeekdays : []
-    };
-  }else{
-    console.log("⚠️ joursOff non assigné - joursOff:", joursOff);
+  // Persiste joursOff : tableau [0..6] (dimanche..samedi)
+  if (joursOff !== undefined) {
+    let normalized = [];
+
+    if (Array.isArray(joursOff)) {
+      normalized = joursOff;
+    } else if (joursOff && typeof joursOff === "object" && Array.isArray(joursOff.recurringWeekdays)) {
+      // Compatibilité avec ancien format objet
+      normalized = joursOff.recurringWeekdays;
+    }
+
+    equipe[idx].joursOff = [...new Set(
+      normalized
+        .map((d) => Number(d))
+        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+    )].sort((a, b) => a - b);
   }
 
   equipe[idx].updatedAt = new Date().toISOString();
 
   writeDB("equipe.json", equipe);
-  console.log("✅ Réponse API:", { employe: equipe[idx], message: "Mis à jour" });
   res.json({ employe: equipe[idx], message: "Mis à jour" });
 });
 
