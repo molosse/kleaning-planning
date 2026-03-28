@@ -1,0 +1,525 @@
+[
+  {
+    "date": "2026-03-29",
+    "dateLabel": "dimanche 29 mars",
+    "savedAt": "2026-03-28T14:46:15.215Z",
+    "chaines": [
+      {
+        "inters": [
+          {
+            "id": "fl0m6pgidf5bgtp85nneeplbik",
+            "nom": "GH villa  Arbia  + 13 serviettes piscine",
+            "type": "Villa",
+            "cli": "GetHost",
+            "lieu": null,
+            "d": 240,
+            "debut": 720,
+            "fin": 960,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "16:00"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 240
+      },
+      {
+        "inters": [
+          {
+            "id": "6874b6tduv9h89tjuamb9buor0",
+            "nom": "GH lotus (1ch double 1ch twin)",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_016",
+              "nom": "Appartement GH Lotus",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Guéliz",
+              "lat": 31.6345823,
+              "lng": -8.0105514,
+              "d": 120,
+              "code": "1506",
+              "notes": "Rés Jenan El Ali, Bât 1, 4ème ét, n°19",
+              "updatedAt": "2026-03-27T23:20:34.002Z"
+            },
+            "d": 120,
+            "debut": 720,
+            "fin": 840,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "14:00"
+          },
+          {
+            "id": "h15psrl82icffa76d4om3t6nbk",
+            "nom": "Studio Harti Ménage 1ch 2 pax linge kleaning 10h00",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": null,
+            "d": 90,
+            "debut": 845,
+            "fin": 935,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "14:05",
+            "heureFin": "15:35"
+          }
+        ],
+        "trajetTotal": 3,
+        "dureeTotal": 215
+      },
+      {
+        "inters": [
+          {
+            "id": "71hfkl0u0enaqmiruffscudsig",
+            "nom": "GH sunset",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_017",
+              "nom": "Appartement GH Sunset",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Semlalia/Guéliz",
+              "lat": 31.6395,
+              "lng": -8.0195,
+              "d": 90,
+              "code": "",
+              "notes": "Ménara Garden"
+            },
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          },
+          {
+            "id": "tldn23ofgsia6fhobunln38kqg",
+            "nom": "Appartement GH Noria 3",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_005",
+              "nom": "Appartement GH Noria 3",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Route Casa/Noria",
+              "lat": 31.679724,
+              "lng": -8.0240919,
+              "d": 90,
+              "code": "221093#",
+              "notes": "Logement n°5 RdC"
+            },
+            "d": 90,
+            "debut": 825,
+            "fin": 915,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "13:45",
+            "heureFin": "15:15"
+          }
+        ],
+        "trajetTotal": 11,
+        "dureeTotal": 195
+      },
+      {
+        "inters": [
+          {
+            "id": "fb1frbrsam2pcp9oeu2e3euk6c",
+            "nom": "Appartement GH Lys Prestigia",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_007",
+              "nom": "Appartement GH Lys Prestigia",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Agdal",
+              "lat": 31.573823,
+              "lng": -8.014371,
+              "d": 90,
+              "code": "262626#",
+              "notes": "Imm 13, RdC n°1"
+            },
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 90
+      }
+    ]
+  },
+  {
+    "date": "2026-03-28",
+    "dateLabel": "samedi 28 mars",
+    "savedAt": "2026-03-27T22:34:09.870Z",
+    "chaines": [
+      {
+        "inters": [
+          {
+            "id": "b0dcutq2g2qvhomsiuvhvod1jm_20260328",
+            "nom": "Bureau Alami",
+            "type": "Bureau",
+            "cli": "Alami Ecom",
+            "lieu": {
+              "id": "l_002",
+              "nom": "Bureau Alami",
+              "type": "Bureau",
+              "cli": "Alami Ecom",
+              "q": "Hivernage",
+              "lat": 31.6461,
+              "lng": -8.063276,
+              "d": 180,
+              "code": "",
+              "notes": "10h30 après cabinet médical",
+              "updatedAt": "2026-03-24T17:15:55.605Z"
+            },
+            "d": 180,
+            "debut": 630,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "10:30",
+            "heureFin": "13:30"
+          },
+          {
+            "id": "gmac6njelur4pmb2bepg53c4bk_20260328",
+            "nom": "SPA",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": null,
+            "d": 90,
+            "debut": 825,
+            "fin": 915,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "13:45",
+            "heureFin": "15:15"
+          }
+        ],
+        "trajetTotal": 12,
+        "dureeTotal": 285
+      },
+      {
+        "inters": [
+          {
+            "id": "apeb245uv0bmubfrq7ebff867c",
+            "nom": "Appartement GH Duplex Elara",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_009",
+              "nom": "Appartement GH Duplex Elara",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Semlalia/Guéliz",
+              "lat": 31.646927,
+              "lng": -8.016572,
+              "d": 120,
+              "code": "262626#",
+              "notes": "Rés Nour Prestige, Imm F, apt 5"
+            },
+            "d": 120,
+            "debut": 720,
+            "fin": 840,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "14:00"
+          },
+          {
+            "id": "0fmkrf1cicjfq62rldjlatn6f4",
+            "nom": "Appartement Marrakea Nathalie",
+            "type": "Appartement",
+            "cli": "Particulier",
+            "lieu": {
+              "id": "l_012",
+              "nom": "Appartement Marrakea Nathalie",
+              "type": "Appartement",
+              "cli": "Particulier",
+              "q": "Semlalia/Guéliz",
+              "lat": 31.645992,
+              "lng": -8.011817,
+              "d": 90,
+              "code": "123456789#",
+              "notes": "Jnan Nizar, 2ème ét, n°11"
+            },
+            "d": 90,
+            "debut": 845,
+            "fin": 935,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "14:05",
+            "heureFin": "15:35"
+          }
+        ],
+        "trajetTotal": 4,
+        "dureeTotal": 215
+      },
+      {
+        "inters": [
+          {
+            "id": "6bm3paut0vcj47rveumtl2qhvk",
+            "nom": "GH studio l’Amira 2 + linge canapé 2 pax",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_013",
+              "nom": "Appartement GH Amira",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Semlalia/Guéliz",
+              "lat": 31.6308832,
+              "lng": -8.00729,
+              "d": 90,
+              "code": "060909#",
+              "notes": "53 Rue Abou Bakr Seddiq, porte 13"
+            },
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 90
+      },
+      {
+        "inters": [
+          {
+            "id": "kpk1gal7htjs31vke9vopmqubs",
+            "nom": "GH ménage appartement Darna (victor hugo )",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_029",
+              "nom": "Appartement GH Darna",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Guéliz/Victor Hugo",
+              "lat": 31.6419631,
+              "lng": -8.0214148,
+              "d": 90,
+              "code": "262626#",
+              "notes": ""
+            },
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 90
+      }
+    ]
+  },
+  {
+    "date": "2026-03-26",
+    "dateLabel": "jeudi 26 mars",
+    "savedAt": "2026-03-25T03:09:30.739Z",
+    "chaines": [
+      {
+        "inters": [
+          {
+            "id": "1imucnledb2cj3v5cfrfcmd774_20260326",
+            "nom": "Cabinet médical",
+            "type": "Bureau",
+            "cli": "Cabinet médical",
+            "lieu": {
+              "id": "l_001",
+              "nom": "Cabinet médical",
+              "type": "Bureau",
+              "cli": "Cabinet médical",
+              "q": "Guéliz",
+              "lat": 31.629,
+              "lng": -8.01,
+              "d": 120,
+              "code": "",
+              "notes": "8h00 récurrent",
+              "updatedAt": "2026-03-25T00:23:15.045Z"
+            },
+            "d": 120,
+            "debut": 480,
+            "fin": 600,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "08:00",
+            "heureFin": "10:00"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 120
+      },
+      {
+        "inters": [
+          {
+            "id": "tnuhn8aageoa505avt8sk3fp8f_20260326",
+            "nom": "Bureau escales signature (9:30 a 17:30)",
+            "type": "Bureau",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_002",
+              "nom": "Bureau Alami",
+              "type": "Bureau",
+              "cli": "Alami Ecom",
+              "q": "Hivernage",
+              "lat": 31.6461,
+              "lng": -8.063276,
+              "d": 180,
+              "code": "",
+              "notes": "10h30 après cabinet médical",
+              "updatedAt": "2026-03-24T17:15:55.605Z"
+            },
+            "d": 180,
+            "debut": 570,
+            "fin": 750,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "09:30",
+            "heureFin": "12:30"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 180
+      },
+      {
+        "inters": [
+          {
+            "id": "1fgb63tuahcm8mn2e6grvikqpc",
+            "nom": "GH villa  Arbia  + 13 serviettes piscine",
+            "type": "Villa",
+            "cli": "GetHost",
+            "lieu": null,
+            "d": 240,
+            "debut": 720,
+            "fin": 960,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "16:00"
+          }
+        ],
+        "trajetTotal": 0,
+        "dureeTotal": 240
+      },
+      {
+        "inters": [
+          {
+            "id": "396gg6m02djc3jpjj4rglp94vs",
+            "nom": "GH le Sahara 2 personnes studio + deux douches",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": null,
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          },
+          {
+            "id": "rpl5v0lgqpvjt6gjpnhq2pd8q0",
+            "nom": "GH lotus (1ch double 1ch twin)",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_016",
+              "nom": "Appartement GH Lotus",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Guéliz",
+              "lat": 31.6345823,
+              "lng": -8.0105514,
+              "d": 90,
+              "code": "1506",
+              "notes": "Rés Jenan El Ali, Bât 1, 4ème ét, n°19"
+            },
+            "d": 90,
+            "debut": 815,
+            "fin": 905,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "13:35",
+            "heureFin": "15:05"
+          }
+        ],
+        "trajetTotal": 3,
+        "dureeTotal": 185
+      },
+      {
+        "inters": [
+          {
+            "id": "6t0p1rll21qpbpaok2sb17dmlg",
+            "nom": "Appartement GH Noria 3",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_005",
+              "nom": "Appartement GH Noria 3",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Route Casa/Noria",
+              "lat": 31.679724,
+              "lng": -8.0240919,
+              "d": 90,
+              "code": "221093#",
+              "notes": "Logement n°5 RdC"
+            },
+            "d": 90,
+            "debut": 720,
+            "fin": 810,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "12:00",
+            "heureFin": "13:30"
+          },
+          {
+            "id": "c27lvmg9ch8pitr2ftqeudutcs",
+            "nom": "GH studio l’Amira peintre 1800 HT",
+            "type": "Appartement GH",
+            "cli": "GetHost",
+            "lieu": {
+              "id": "l_013",
+              "nom": "Appartement GH Amira",
+              "type": "Appartement GH",
+              "cli": "GetHost",
+              "q": "Semlalia/Guéliz",
+              "lat": 31.6308832,
+              "lng": -8.00729,
+              "d": 90,
+              "code": "060909#",
+              "notes": "53 Rue Abou Bakr Seddiq, porte 13"
+            },
+            "d": 90,
+            "debut": 825,
+            "fin": 915,
+            "employes": [],
+            "bla_linge": false,
+            "heureDebut": "13:45",
+            "heureFin": "15:15"
+          }
+        ],
+        "trajetTotal": 13,
+        "dureeTotal": 195
+      }
+    ]
+  }
+]

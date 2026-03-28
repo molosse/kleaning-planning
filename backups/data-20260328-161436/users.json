@@ -1,0 +1,19 @@
+[
+  {
+    "id": "u_1234567890",
+    "username": "administrateur",
+    "displayName": "Administrateur",
+    "hash": "$2a$12$8fKUDZM1yrvogAXvHpjne.oc5FOORySbFi/M5oXrPKi8PGf0kFXGO",
+    "role": "admin",
+    "createdAt": "2026-03-24T00:00:00Z"
+  },
+  {
+    "id": "u_1743171840000",
+    "username": "ibtissam",
+    "displayName": "Ibtissam",
+    "hash": "$2a$12$Zu2Jdea7GXivyqO3Pt85TuOZBZLrUK31kR4rksH0cMI4A6tsxAiKC",
+    "role": "user",
+    "createdAt": "2026-03-28T15:04:00.000Z",
+    "updatedAt": "2026-03-28T15:07:14.506Z"
+  }
+]

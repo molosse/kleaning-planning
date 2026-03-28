@@ -804,6 +804,10 @@ export default function App(){
   const[newExtra,setNewExtra]=useState("");             // Champ saisie extra
   const[newUser,setNewUser]=useState({username:"",password:"",displayName:"",role:"user"}); // Formulaire création compte
   const[userMsg,setUserMsg]=useState("");               // Retour création/suppression utilisateur
+  const[editUserId,setEditUserId]=useState(null);         // ID du compte utilisateur en édition (nom/identifiant)
+  const[editUserForm,setEditUserForm]=useState({username:"",displayName:""}); // Formulaire édition compte utilisateur
+  const[pwdUserId,setPwdUserId]=useState(null);           // ID du compte dont on modifie le mot de passe (user/admin)
+  const[pwdValue,setPwdValue]=useState("");              // Nouveau mot de passe saisi
   const[editLieu,setEditLieu]=useState(null);           // Logement en cours d'édition inline (null = aucun)
   const[showWA,setShowWA]=useState(false);              // BottomSheet WhatsApp sur mobile
   const[showCharge,setShowCharge]=useState(false);      // BottomSheet charge du jour sur mobile
@@ -1071,6 +1075,30 @@ export default function App(){
   // Gestion des comptes d'accès à l'application (data/users.json)
   // Seul l'admin peut créer ou supprimer des accès — l'onglet "Comptes" est masqué pour les non-admins
   const creerUser=async()=>{const data=await apiCall("/api/users","POST",newUser);if(data.user){setUsers(p=>[...p,data.user]);setNewUser({username:"",password:"",displayName:"",role:"user"});setUserMsg(`✅ "${data.user.displayName}" créé`);}else setUserMsg(data.message||"Erreur");};
+  // Ouvre l'édition inline du profil utilisateur (nom + identifiant)
+  const ouvrirEditionUser=(u)=>{setEditUserId(u.id);setEditUserForm({username:u.username||"",displayName:u.displayName||""});};
+  // Sauvegarde l'édition du profil utilisateur via /api/users/:id
+  const sauverEditionUser=async(id)=>{
+    const payload={username:editUserForm.username.trim(),displayName:editUserForm.displayName.trim()};
+    const data=await apiCall(`/api/users/${id}`,"PUT",payload);
+    if(data.user){
+      setUsers(p=>p.map(x=>x.id===id?data.user:x));
+      setUserMsg(data.message||"✅ Profil utilisateur mis à jour");
+      setEditUserId(null);
+      setEditUserForm({username:"",displayName:""});
+    }else setUserMsg(data.message||"Erreur");
+  };
+  // Change le mot de passe d'un compte via /api/users/:id/password
+  const changerPasswordUser=async(id)=>{
+    const pwd=pwdValue.trim();
+    if(!pwd){setUserMsg("Mot de passe requis");return;}
+    const data=await apiCall(`/api/users/${id}/password`,"PUT",{password:pwd});
+    if(data.message){
+      setUserMsg(`✅ ${data.message}`);
+      setPwdUserId(null);
+      setPwdValue("");
+    }else setUserMsg(data.message||"Erreur");
+  };
   const supprimerUser=async(id)=>{
     const u=users.find(x=>x.id===id);
     setConfirmDialog({
@@ -1975,14 +2003,52 @@ export default function App(){
                   <div key={u.id} style={{background:"white",borderRadius:10,padding:"12px 14px",border:"1px solid #e2e8f0",
                     display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                     <div>
-                      <div style={{fontWeight:600,fontSize:14,color:"#0f172a",display:"flex",alignItems:"center",gap:6}}>
-                        {u.displayName}
-                        {u.role==="admin"&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",padding:"1px 7px",borderRadius:8,fontWeight:700}}>ADMIN</span>}
-                      </div>
-                      <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>@{u.username} · {new Date(u.createdAt).toLocaleDateString("fr-FR")}</div>
+                      {editUserId===u.id&&u.role!=="admin"?(
+                        <div style={{display:"grid",gap:6,minWidth:240}}>
+                          <input value={editUserForm.displayName} onChange={e=>setEditUserForm(p=>({...p,displayName:e.target.value}))}
+                            placeholder="Nom affiché"
+                            style={{padding:"8px 10px",border:"1px solid #cbd5e1",borderRadius:8,fontSize:13,minHeight:38}}/>
+                          <input value={editUserForm.username} onChange={e=>setEditUserForm(p=>({...p,username:e.target.value}))}
+                            placeholder="Identifiant"
+                            style={{padding:"8px 10px",border:"1px solid #cbd5e1",borderRadius:8,fontSize:13,minHeight:38}}/>
+                        </div>
+                      ):(
+                        <>
+                          <div style={{fontWeight:600,fontSize:14,color:"#0f172a",display:"flex",alignItems:"center",gap:6}}>
+                            {u.displayName}
+                            {u.role==="admin"&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",padding:"1px 7px",borderRadius:8,fontWeight:700}}>ADMIN</span>}
+                          </div>
+                          <div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>@{u.username} · {new Date(u.createdAt).toLocaleDateString("fr-FR")}</div>
+                        </>
+                      )}
+                      {pwdUserId===u.id&&(
+                        <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>
+                          <input type="password" value={pwdValue} onChange={e=>setPwdValue(e.target.value)}
+                            placeholder="Nouveau mot de passe"
+                            style={{padding:"8px 10px",border:"1px solid #cbd5e1",borderRadius:8,fontSize:13,minHeight:38,minWidth:180}}/>
+                          <button onClick={()=>changerPasswordUser(u.id)}
+                            style={{padding:"8px 10px",borderRadius:8,border:"none",background:"#059669",color:"white",fontSize:12,fontWeight:700,minHeight:38}}>Enregistrer</button>
+                          <button onClick={()=>{setPwdUserId(null);setPwdValue("");}}
+                            style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",fontSize:12,minHeight:38}}>Annuler</button>
+                        </div>
+                      )}
                     </div>
-                    {u.id!==user.id&&u.role!=="admin"&&<button onClick={()=>supprimerUser(u.id)}
-                      style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:44}}>🗑</button>}
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
+                      {u.role!=="admin"&&editUserId!==u.id&&<button onClick={()=>ouvrirEditionUser(u)}
+                        style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#475569",fontSize:12,minHeight:38}}>Modifier</button>}
+                      {u.role!=="admin"&&editUserId===u.id&&<>
+                        <button onClick={()=>sauverEditionUser(u.id)}
+                          style={{padding:"8px 10px",borderRadius:8,border:"none",background:"#2563eb",color:"white",fontSize:12,fontWeight:700,minHeight:38}}>Sauver</button>
+                        <button onClick={()=>{setEditUserId(null);setEditUserForm({username:"",displayName:""});}}
+                          style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#f8fafc",color:"#64748b",fontSize:12,minHeight:38}}>Annuler</button>
+                      </>}
+                      <button onClick={()=>{setPwdUserId(u.id);setPwdValue("");}}
+                        style={{padding:"8px 10px",borderRadius:8,border:"1px solid #e2e8f0",background:"#fff",color:"#1f2937",fontSize:12,minHeight:38}}>
+                        Mot de passe
+                      </button>
+                      {u.id!==user.id&&u.role!=="admin"&&<button onClick={()=>supprimerUser(u.id)}
+                        style={{padding:"8px 12px",borderRadius:8,border:"1px solid #fca5a5",background:"#fef2f2",color:"#dc2626",fontSize:13,minHeight:38}}>🗑</button>}
+                    </div>
                   </div>
                 ))}
               </div>
