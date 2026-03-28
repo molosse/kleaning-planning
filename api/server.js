@@ -246,7 +246,47 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   });
 });
 
+app.put("/api/users/:id", auth, adminOnly, (req, res) => {
+  // Édition profil (identifiant/nom) limitée aux comptes utilisateur.
+  // Le profil d'un admin n'est pas modifiable ici pour éviter une perte d'accès accidentelle.
+  const id = req.params.id;
+  if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
+
+  const username = sanitize(req.body.username, 50);
+  const displayName = sanitize(req.body.displayName, 100);
+
+  if (!username && !displayName) {
+    return res.status(400).json({ message: "username ou displayName requis" });
+  }
+
+  const users = readDB("users.json");
+  const idx = users.findIndex(u => u.id === id);
+  if (idx === -1) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+  // Règle demandée: le nom/identifiant est modifiable pour les comptes utilisateur.
+  if (users[idx].role === "admin") {
+    return res.status(400).json({ message: "Le nom d'un administrateur n'est pas modifiable ici" });
+  }
+
+  if (username) {
+    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+      return res.status(400).json({ message: "Identifiant invalide (lettres, chiffres, . _ - uniquement)" });
+    }
+    const exists = users.find(u => u.id !== id && u.username.toLowerCase() === username.toLowerCase());
+    if (exists) return res.status(409).json({ message: "Cet identifiant est déjà utilisé" });
+    users[idx].username = username;
+  }
+
+  if (displayName) users[idx].displayName = displayName;
+
+  users[idx].updatedAt = new Date().toISOString();
+  writeDB("users.json", users);
+
+  res.json({ message: `Profil de "${users[idx].displayName}" mis à jour`, user: safeUser(users[idx]) });
+});
+
 app.put("/api/users/:id/password", auth, adminOnly, async (req, res) => {
+  // Réinitialisation mot de passe par l'admin (utilisateur ou administrateur).
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
