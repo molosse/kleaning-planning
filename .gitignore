@@ -6,7 +6,6 @@ node_modules/
 !.env.production.example
 data/users.json
 data/extras.json
-data/lieux.json
 data/historique.json
 *.log
 .DS_Store
