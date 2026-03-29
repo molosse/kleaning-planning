@@ -134,6 +134,7 @@ npm run build  # ou ouvrir http://localhost:5173
 Construire pour la production:
 ```bash
 npm run build   # Compile le frontend avec Vite
+npm install --omit=dev --legacy-peer-deps  # Installer dépendances prod (serveur)
 npm start       # Démarre le serveur en production
 ```
 
@@ -142,7 +143,7 @@ npm start       # Démarre le serveur en production
 | Commande | Description |
 |----------|-------------|
 | `npm run dev` | Démarre le serveur en développement |
-| `npm start` | Démarre le serveur en production |
+| `npm start` | Démarre le serveur en production (sans réinstaller) |
 | `npm run build` | Compile le frontend avec Vite |
 | `npm run setup` | Script de configuration initial |
 
