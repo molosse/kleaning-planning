@@ -703,6 +703,11 @@ function isEmployeeOffForDay(emp,weekday){
   return normalizeWeekdays(emp.joursOff).includes(weekday);
 }
 
+function normalizeEmployeeRecord(emp){
+  if(!emp)return emp;
+  return {...emp,actif:emp.actif!==false,joursOff:normalizeWeekdays(emp.joursOff)};
+}
+
 function DaysOffWeekModal({visible,empName,initialWeekdays,onSave,onCancel}){
   const dayShort=["DIM","LUN","MAR","MER","JEU","VEN","SAM"];
   const[weekdays,setWeekdays]=useState(initialWeekdays||[]);
@@ -815,11 +820,11 @@ export default function App(){
   const[confirmDialog,setConfirmDialog]=useState({visible:false,title:"",message:"",onConfirm:null});
   // ── Équipe fixe (chargée depuis API, avec fallback) ────────
   const[equipe,setEquipe]=useState([
-    {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true},
-    {id:"emp_2",nom:"Amina", emoji:"👩",  coul:"#059669",bg:"#d1fae5",actif:true},
-    {id:"emp_3",nom:"Touria",emoji:"👩‍🦳",coul:"#7c3aed",bg:"#ede9fe",actif:true},
-    {id:"emp_4",nom:"Imane", emoji:"👩‍🦰",coul:"#d97706",bg:"#fef3c7",actif:true},
-  ]);
+    {id:"emp_1",nom:"Majda", emoji:"👩‍🦱",coul:"#2563eb",bg:"#dbeafe",actif:true,joursOff:[]},
+    {id:"emp_2",nom:"Amina", emoji:"👩",  coul:"#059669",bg:"#d1fae5",actif:true,joursOff:[]},
+    {id:"emp_3",nom:"Touria",emoji:"👩‍🦳",coul:"#7c3aed",bg:"#ede9fe",actif:true,joursOff:[]},
+    {id:"emp_4",nom:"Imane", emoji:"👩‍🦰",coul:"#d97706",bg:"#fef3c7",actif:true,joursOff:[]},
+  ].map(normalizeEmployeeRecord));
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
   const[daysOffEmpId,setDaysOffEmpId]=useState(null);    // Modale jours off hebdo {id employée}
@@ -844,7 +849,7 @@ export default function App(){
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
   const chargerLieux=()=>apiCall("/api/lieux").then(d=>{if(d.lieux)setLieux(d.lieux);});
   const chargerUsers=()=>apiCall("/api/users").then(d=>{if(d.users)setUsers(d.users);}); // Admin seulement
-  const chargerEquipe=()=>apiCall("/api/equipe").then(d=>{if(d.equipe&&d.equipe.length)setEquipe(d.equipe);});
+  const chargerEquipe=()=>apiCall("/api/equipe").then(d=>{if(d.equipe&&d.equipe.length)setEquipe(d.equipe.map(normalizeEmployeeRecord));});
 
   // Charge le planning du jour depuis Google Calendar via l'API
   // 1. Convertit la date DD/MM/YYYY en YYYY-MM-DD pour l'API
@@ -1016,7 +1021,7 @@ export default function App(){
     const {nom,emoji}=newEmp;
     if(!nom.trim())return;
     const data=await apiCall("/api/equipe","POST",{nom:nom.trim(),emoji:emoji||"👤"});
-    if(data.employe){setEquipe(p=>[...p,data.employe]);setNewEmp({nom:"",emoji:"👤"});setEmpMsg(`✅ "${data.employe.nom}" ajoutée`);}
+    if(data.employe){setEquipe(p=>[...p,normalizeEmployeeRecord(data.employe)]);setNewEmp({nom:"",emoji:"👤"});setEmpMsg(`✅ "${data.employe.nom}" ajoutée`);}
     else setEmpMsg(data.message||"Erreur");
   };
   const supprimerEmp=async(id)=>{
@@ -1034,12 +1039,12 @@ export default function App(){
   };
   const toggleEmpActif=async(id,actif)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{actif});
-    if(data.employe)setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
+    if(data.employe)setEquipe(p=>p.map(x=>x.id===id?normalizeEmployeeRecord(data.employe):x));
   };
   const saveEmpDaysOff=async(id,weekdays)=>{
     const data=await apiCall(`/api/equipe/${id}`,"PUT",{joursOff:weekdays});
     if(data.employe){
-      setEquipe(p=>p.map(x=>x.id===id?data.employe:x));
+      setEquipe(p=>p.map(x=>x.id===id?normalizeEmployeeRecord(data.employe):x));
       setEmpMsg(`✅ Jours off mis a jour pour "${data.employe.nom}"`);
       setTimeout(()=>setEmpMsg(""),3000);
       setDaysOffEmpId(null);

@@ -596,16 +596,55 @@ module.exports = app;
 
 // Données initiales par défaut si la base est vide
 const EQUIPE_DEFAUT = [
-  { id:"emp_1", nom:"Majda",  emoji:"👩‍🦱", coul:"#2563eb", bg:"#dbeafe", actif:true },
-  { id:"emp_2", nom:"Amina",  emoji:"👩",   coul:"#059669", bg:"#d1fae5", actif:true },
-  { id:"emp_3", nom:"Touria", emoji:"👩‍🦳", coul:"#7c3aed", bg:"#ede9fe", actif:true },
-  { id:"emp_4", nom:"Imane",  emoji:"👩‍🦰", coul:"#d97706", bg:"#fef3c7", actif:true },
+  { id:"emp_1", nom:"Majda",  emoji:"👩‍🦱", coul:"#2563eb", bg:"#dbeafe", actif:true, joursOff: [] },
+  { id:"emp_2", nom:"Amina",  emoji:"👩",   coul:"#059669", bg:"#d1fae5", actif:true, joursOff: [] },
+  { id:"emp_3", nom:"Touria", emoji:"👩‍🦳", coul:"#7c3aed", bg:"#ede9fe", actif:true, joursOff: [] },
+  { id:"emp_4", nom:"Imane",  emoji:"👩‍🦰", coul:"#d97706", bg:"#fef3c7", actif:true, joursOff: [] },
 ];
+
+function normalizeDaysOff(joursOff) {
+  if (Array.isArray(joursOff)) {
+    return [...new Set(
+      joursOff
+        .map((d) => Number(d))
+        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+    )].sort((a, b) => a - b);
+  }
+
+  if (joursOff && typeof joursOff === "object" && Array.isArray(joursOff.recurringWeekdays)) {
+    return normalizeDaysOff(joursOff.recurringWeekdays);
+  }
+
+  return [];
+}
+
+function normalizeEmploye(emp = {}) {
+  return {
+    ...emp,
+    actif: emp.actif !== false,
+    joursOff: normalizeDaysOff(emp.joursOff),
+  };
+}
+
+function loadEquipe() {
+  const raw = readDB("equipe.json");
+  const equipe = raw.length ? raw : EQUIPE_DEFAUT;
+  const normalized = equipe.map(normalizeEmploye);
+  if (!raw.length || JSON.stringify(raw) !== JSON.stringify(normalized)) {
+    writeDB("equipe.json", normalized);
+  }
+  return normalized;
+}
+
+function saveEquipe(equipe) {
+  const normalized = equipe.map(normalizeEmploye);
+  writeDB("equipe.json", normalized);
+  return normalized;
+}
 
 // GET /api/equipe — liste des employées
 app.get("/api/equipe", auth, (req, res) => {
-  let equipe = readDB("equipe.json");
-  if (!equipe.length) { equipe = EQUIPE_DEFAUT; writeDB("equipe.json", equipe); }
+  const equipe = loadEquipe();
   res.json({ equipe });
 });
 
@@ -618,17 +657,16 @@ app.post("/api/equipe", auth, adminOnly, (req, res) => {
 
   if (!nom) return res.status(400).json({ message: "Le prénom est requis" });
 
-  let equipe = readDB("equipe.json");
-  if (!equipe.length) equipe = EQUIPE_DEFAUT;
+  let equipe = loadEquipe();
 
   if (equipe.find(e => e.nom.toLowerCase() === nom.toLowerCase())) {
     return res.status(409).json({ message: "Cette employée existe déjà" });
   }
 
-  const emp = { id: `emp_${Date.now()}`, nom, emoji, coul, bg, actif: true, createdAt: new Date().toISOString() };
+  const emp = { id: `emp_${Date.now()}`, nom, emoji, coul, bg, actif: true, joursOff: [], createdAt: new Date().toISOString() };
   equipe.push(emp);
-  writeDB("equipe.json", equipe);
-  res.status(201).json({ employe: emp, message: `"${nom}" ajoutée à l'équipe` });
+  equipe = saveEquipe(equipe);
+  res.status(201).json({ employe: equipe[equipe.length - 1], message: `"${nom}" ajoutée à l'équipe` });
 });
 
 // PUT /api/equipe/:id — modifier (admin) + joursOff (admin/user)
@@ -637,8 +675,7 @@ app.put("/api/equipe/:id", auth, (req, res) => {
 
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
-  let equipe = readDB("equipe.json");
-  if (!equipe.length) equipe = EQUIPE_DEFAUT;
+  let equipe = loadEquipe();
   const idx = equipe.findIndex(e => e.id === id);
   if (idx === -1) return res.status(404).json({ message: "Employée non trouvée" });
 
@@ -661,25 +698,12 @@ app.put("/api/equipe/:id", auth, (req, res) => {
 
   // Persiste joursOff : tableau [0..6] (dimanche..samedi)
   if (joursOff !== undefined) {
-    let normalized = [];
-
-    if (Array.isArray(joursOff)) {
-      normalized = joursOff;
-    } else if (joursOff && typeof joursOff === "object" && Array.isArray(joursOff.recurringWeekdays)) {
-      // Compatibilité avec ancien format objet
-      normalized = joursOff.recurringWeekdays;
-    }
-
-    equipe[idx].joursOff = [...new Set(
-      normalized
-        .map((d) => Number(d))
-        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
-    )].sort((a, b) => a - b);
+    equipe[idx].joursOff = normalizeDaysOff(joursOff);
   }
 
   equipe[idx].updatedAt = new Date().toISOString();
 
-  writeDB("equipe.json", equipe);
+  equipe = saveEquipe(equipe);
   res.json({ employe: equipe[idx], message: "Mis à jour" });
 });
 
@@ -688,11 +712,10 @@ app.delete("/api/equipe/:id", auth, adminOnly, (req, res) => {
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
-  let equipe = readDB("equipe.json");
-  if (!equipe.length) equipe = EQUIPE_DEFAUT;
+  let equipe = loadEquipe();
   const emp = equipe.find(e => e.id === id);
   if (!emp) return res.status(404).json({ message: "Employée non trouvée" });
 
-  writeDB("equipe.json", equipe.filter(e => e.id !== id));
+  saveEquipe(equipe.filter(e => e.id !== id));
   res.json({ message: `"${emp.nom}" retirée de l'équipe` });
 });

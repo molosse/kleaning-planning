@@ -17,7 +17,8 @@
     "emoji": "👩",
     "coul": "#3a6b54",
     "bg": "#edf4f0",
-    "actif": true
+    "actif": true,
+    "joursOff": []
   },
   {
     "id": "emp_3",
@@ -25,7 +26,17 @@
     "emoji": "👩‍🦳",
     "coul": "#1e4fa8",
     "bg": "#edf1fb",
-    "actif": true
+    "actif": true,
+    "joursOff": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "updatedAt": "2026-03-28T23:36:52.698Z"
   },
   {
     "id": "emp_4",
@@ -35,8 +46,11 @@
     "bg": "#fdf3e7",
     "actif": true,
     "joursOff": [
+      0,
+      1,
+      5,
       6
     ],
-    "updatedAt": "2026-03-28T15:08:33.031Z"
+    "updatedAt": "2026-03-28T23:51:54.324Z"
   }
 ]
