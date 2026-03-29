@@ -583,8 +583,8 @@ app.get("*", (req, res) => {
 
 // ── DÉMARRAGE ─────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, "127.0.0.1", () => {
-  // ✅ Écoute uniquement sur localhost — Infomaniak fait le reverse proxy
+app.listen(PORT, "0.0.0.0", () => {
+  // ✅ Écoute sur toutes les interfaces — requis pour le reverse proxy Infomaniak
   console.log(`✅ Kleaning API démarrée sur le port ${PORT}`);
 });
 
