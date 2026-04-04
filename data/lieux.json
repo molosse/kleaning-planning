@@ -10,7 +10,8 @@
     "d": 120,
     "code": "",
     "notes": "8h00 récurrent",
-    "updatedAt": "2026-03-28T23:40:39.695Z"
+    "updatedAt": "2026-04-04T17:12:21.142Z",
+    "proprietaire": "Dr"
   },
   {
     "id": "l_002",
@@ -20,15 +21,16 @@
     "q": "Hivernage",
     "lat": 31.6461,
     "lng": -8.063276,
-    "d": 180,
+    "d": 120,
     "code": "",
     "notes": "10h30 après cabinet médical",
-    "updatedAt": "2026-03-24T17:15:55.605Z"
+    "updatedAt": "2026-04-04T17:12:36.595Z",
+    "proprietaire": "Alami"
   },
   {
     "id": "l_003",
-    "nom": "Appartement MM Coralia",
-    "type": "Appartement MM",
+    "nom": "Coralia",
+    "type": "Appartement",
     "cli": "Maison Madeleines",
     "q": "Guéliz",
     "lat": 31.6345,
@@ -36,12 +38,13 @@
     "d": 120,
     "code": "",
     "notes": "11h00",
-    "updatedAt": "2026-03-27T22:58:59.817Z"
+    "updatedAt": "2026-04-04T17:12:53.619Z",
+    "proprietaire": "MM"
   },
   {
     "id": "l_004",
-    "nom": "Appartement GH La Perle",
-    "type": "Appartement GH",
+    "nom": "Perle",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Guéliz",
     "lat": 31.6308832,
@@ -49,83 +52,96 @@
     "d": 120,
     "code": "151638#",
     "notes": "Bât D, 1er ét, n°11",
-    "updatedAt": "2026-03-27T22:59:04.671Z"
+    "updatedAt": "2026-04-04T17:13:08.223Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_005",
-    "nom": "Appartement GH Noria 3",
+    "nom": "Escape",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Route Casa/Noria",
     "lat": 31.679724,
     "lng": -8.0240919,
-    "d": 90,
+    "d": 120,
     "code": "221093#",
-    "notes": "Logement n°5 RdC"
+    "notes": "Logement n°5 RdC",
+    "updatedAt": "2026-04-04T17:13:23.139Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_006",
-    "nom": "Appartement GH Nahla",
+    "nom": "Nahla",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.644094,
     "lng": -8.021478,
-    "d": 90,
+    "d": 120,
     "code": "090222#",
-    "notes": "Imm Plein Sud, 1er ét"
+    "notes": "Imm Plein Sud, 1er ét",
+    "updatedAt": "2026-04-04T17:13:28.689Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_007",
-    "nom": "Appartement GH Lys Prestigia",
+    "nom": "Lys",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Agdal",
     "lat": 31.573823,
     "lng": -8.014371,
-    "d": 90,
+    "d": 120,
     "code": "262626#",
-    "notes": "Imm 13, RdC n°1"
+    "notes": "Imm 13, RdC n°1",
+    "updatedAt": "2026-04-04T17:13:36.111Z",
+    "proprietaire": "Gh"
   },
   {
     "id": "l_008",
-    "nom": "Appartement GH Razane",
+    "nom": "Razane",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Guéliz",
     "lat": 31.630826,
     "lng": -8.030513,
-    "d": 90,
+    "d": 120,
     "code": "262626#",
-    "notes": "5ème étage, Imm Razane"
+    "notes": "5ème étage, Imm Razane",
+    "updatedAt": "2026-04-04T17:13:42.565Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_009",
-    "nom": "Appartement GH Duplex Elara",
+    "nom": "Duplex Elara",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.646927,
     "lng": -8.016572,
-    "d": 120,
+    "d": 180,
     "code": "262626#",
-    "notes": "Rés Nour Prestige, Imm F, apt 5"
+    "notes": "Rés Nour Prestige, Imm F, apt 5",
+    "updatedAt": "2026-04-04T17:13:49.410Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_010",
-    "nom": "Appartement GH Nomade Waky",
+    "nom": "Nomade",
     "type": "Appartement GH",
     "cli": "GetHost",
     "q": "Guéliz/Semlalia",
     "lat": 31.655,
     "lng": -8.01,
-    "d": 90,
+    "d": 240,
     "code": "",
-    "notes": ""
+    "notes": "",
+    "updatedAt": "2026-04-04T17:14:09.889Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_011",
-    "nom": "GH Villa Enja",
+    "nom": "Villa",
     "type": "Villa",
     "cli": "GetHost",
     "q": "Route de l'Ourika",
@@ -133,60 +149,69 @@
     "lng": -7.9636,
     "d": 240,
     "code": "",
-    "notes": "Lot 6-10 Ourika El Bouanani, Route Ourika km10"
+    "notes": "Lot 6-10 Ourika El Bouanani, Route Ourika km10",
+    "updatedAt": "2026-04-04T16:50:17.489Z"
   },
   {
     "id": "l_012",
-    "nom": "Appartement Marrakea Nathalie",
+    "nom": "Nathalie",
     "type": "Appartement",
     "cli": "Particulier",
     "q": "Semlalia/Guéliz",
     "lat": 31.645992,
     "lng": -8.011817,
-    "d": 90,
+    "d": 120,
     "code": "123456789#",
-    "notes": "Jnan Nizar, 2ème ét, n°11"
+    "notes": "Jnan Nizar, 2ème ét, n°11",
+    "updatedAt": "2026-04-04T17:14:33.643Z",
+    "proprietaire": "MRK"
   },
   {
     "id": "l_013",
-    "nom": "Appartement GH Amira",
-    "type": "Appartement GH",
+    "nom": "Amira",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.6308832,
     "lng": -8.00729,
-    "d": 90,
+    "d": 120,
     "code": "060909#",
-    "notes": "53 Rue Abou Bakr Seddiq, porte 13"
+    "notes": "53 Rue Abou Bakr Seddiq, porte 13",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:14:53.208Z"
   },
   {
     "id": "l_014",
-    "nom": "Appartement GH Almaza",
-    "type": "Appartement GH",
+    "nom": "Almaza",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.639675,
     "lng": -8.01808,
-    "d": 90,
+    "d": 120,
     "code": "262626#",
-    "notes": "5ème ét, apt 216"
+    "notes": "5ème ét, apt 216",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:15:13.230Z"
   },
   {
     "id": "l_015",
-    "nom": "Appartement GH Shérazade",
-    "type": "Appartement GH",
+    "nom": "Shérazade",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.6356857,
     "lng": -8.0123848,
-    "d": 90,
+    "d": 120,
     "code": "7400",
-    "notes": "Apt 32, 4ème étage"
+    "notes": "Apt 32, 4ème étage",
+    "proprietaire": "HSS",
+    "updatedAt": "2026-04-04T17:15:37.827Z"
   },
   {
     "id": "l_016",
-    "nom": "Appartement GH Lotus",
-    "type": "Appartement GH",
+    "nom": "Lotus",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Guéliz",
     "lat": 31.6345823,
@@ -194,43 +219,50 @@
     "d": 120,
     "code": "1506",
     "notes": "Rés Jenan El Ali, Bât 1, 4ème ét, n°19",
-    "updatedAt": "2026-03-27T23:20:34.002Z"
+    "updatedAt": "2026-04-04T17:15:54.220Z",
+    "proprietaire": "GH"
   },
   {
     "id": "l_017",
-    "nom": "Appartement GH Sunset",
-    "type": "Appartement GH",
+    "nom": "Sunset",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Semlalia/Guéliz",
     "lat": 31.6395,
     "lng": -8.0195,
-    "d": 90,
+    "d": 120,
     "code": "",
-    "notes": "Ménara Garden"
+    "notes": "Ménara Garden",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:16:14.669Z"
   },
   {
     "id": "l_018",
-    "nom": "Appartement GH Noria 2",
-    "type": "Appartement GH",
+    "nom": "Noria 2",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Agdal",
     "lat": 31.570009,
     "lng": -8.020132,
-    "d": 90,
+    "d": 120,
     "code": "312268#",
-    "notes": "Al Sharifiia"
+    "notes": "Al Sharifiia",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:16:30.712Z"
   },
   {
     "id": "l_019",
-    "nom": "Appartement GH Berbère",
-    "type": "Appartement GH",
+    "nom": "Berbère",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Route de Fès",
     "lat": 31.660293,
     "lng": -7.989971,
-    "d": 90,
+    "d": 120,
     "code": "4384806#",
-    "notes": "Imm C17, 3ème ét, porte 7"
+    "notes": "Imm C17, 3ème ét, porte 7",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:16:42.700Z"
   },
   {
     "id": "l_020",
@@ -269,42 +301,6 @@
     "notes": "Allée G7, à côté Al Andalous"
   },
   {
-    "id": "l_023",
-    "nom": "Villa Bouchra",
-    "type": "Villa",
-    "cli": "Atlas",
-    "q": "Targa",
-    "lat": 31.663856,
-    "lng": -8.069814,
-    "d": 240,
-    "code": "9876",
-    "notes": "233 Amelkis 3"
-  },
-  {
-    "id": "l_024",
-    "nom": "Villa Assia",
-    "type": "Villa",
-    "cli": "Atlas",
-    "q": "Targa",
-    "lat": 31.663856,
-    "lng": -8.069814,
-    "d": 240,
-    "code": "220906",
-    "notes": "Code porte 220906"
-  },
-  {
-    "id": "l_025",
-    "nom": "Villa Yasmine",
-    "type": "Villa",
-    "cli": "Atlas",
-    "q": "Palmeraie",
-    "lat": 31.67498,
-    "lng": -7.985713,
-    "d": 240,
-    "code": "7654",
-    "notes": "Pavillon H3, apt 1"
-  },
-  {
     "id": "l_026",
     "nom": "Appartement Clara",
     "type": "Appartement",
@@ -312,9 +308,12 @@
     "q": "Guéliz",
     "lat": 31.6345823,
     "lng": -8.0105514,
-    "d": 75,
+    "d": 240,
     "code": "",
-    "notes": "10 Rue Sourya, Rés Radi, 1er ét, apt 12"
+    "notes": "10 Rue Sourya, Rés Radi, 1er ét, apt 12",
+    "proprietaire": "CLARA",
+    "lingeProprio": true,
+    "updatedAt": "2026-04-04T17:17:17.586Z"
   },
   {
     "id": "l_027",
@@ -326,43 +325,23 @@
     "lng": -8.0151,
     "d": 120,
     "code": "311255",
-    "notes": "Bât 19, apt 9, 2ème ét"
-  },
-  {
-    "id": "l_028",
-    "nom": "Appartement Atlas Jnan Awrad",
-    "type": "Appartement",
-    "cli": "Atlas",
-    "q": "Route de Casa",
-    "lat": 31.596675,
-    "lng": -8.0134,
-    "d": 60,
-    "code": "9876",
-    "notes": "Rés Elite Garden Bat A, 1er ét, apt 9"
+    "notes": "Bât 19, apt 9, 2ème ét",
+    "proprietaire": "BLL",
+    "updatedAt": "2026-04-04T17:17:37.881Z"
   },
   {
     "id": "l_029",
-    "nom": "Appartement GH Darna",
-    "type": "Appartement GH",
+    "nom": "Darna",
+    "type": "Appartement",
     "cli": "GetHost",
     "q": "Guéliz/Victor Hugo",
     "lat": 31.6419631,
     "lng": -8.0214148,
     "d": 90,
     "code": "262626#",
-    "notes": ""
-  },
-  {
-    "id": "l_030",
-    "nom": "GH Villa Berber Premium",
-    "type": "Villa",
-    "cli": "GetHost",
-    "q": "Guéliz/Semlalia",
-    "lat": 31.655,
-    "lng": -8.012,
-    "d": 240,
-    "code": "",
-    "notes": "12h15 · 1 ch double + 1 ch 2 lits + 4 serviettes piscine"
+    "notes": "",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:17:59.102Z"
   },
   {
     "id": "l_032",
@@ -374,7 +353,9 @@
     "lng": -8.063276,
     "d": 480,
     "code": "",
-    "notes": "9:30 a 17:30"
+    "notes": "9:30 a 17:30",
+    "proprietaire": "ESCALE",
+    "updatedAt": "2026-04-04T17:19:33.734Z"
   },
   {
     "id": "l_031",
@@ -386,6 +367,8 @@
     "lng": -7.945829,
     "d": 240,
     "code": "",
-    "notes": ""
+    "notes": "",
+    "proprietaire": "GH",
+    "updatedAt": "2026-04-04T17:19:17.763Z"
   }
 ]

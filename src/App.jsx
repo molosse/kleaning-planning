@@ -12,7 +12,7 @@ import {
 import {
   DS, DS_LOGIN, CHAINE_COLORS,
   EQUIPE, EQUIPE_FALLBACK,
-  TYPE_IC, CLIENT_IC, TYPES, CENTRE,
+  TYPE_IC, CLIENT_IC, CLIENT_COLORS, TYPES, CENTRE,
   QUARTIERS, QUARTIERS_WITH_DETAILS,
 } from "./constants";
 
@@ -239,20 +239,40 @@ function matchLieu(s,lieux){
 // Transforme un événement Google Calendar brut en objet intervention structuré
 // Détermine le type (Villa, Appartement GH…), associe le lieu GPS, calcule début/fin
 // defaultH = heure de départ configurable transmise depuis l'état App
+//
+// Parsing des événements structurés (format "CLIENT ACTION PROPRIÉTÉ - détails") :
+//   - ev.propertyName = nom court de la propriété (ex: "Escape", "Villa Rosa")
+//   - ev.action = type d'intervention (ex: "Ménage", "Checkin")
+//   - ev.startTime = heure Google Calendar "HH:MM" si événement avec horaire précis
+//   - ev.nom = "Action Propriété" (ex: "Ménage Escape") — prêt pour affichage sur carte
+//
+// Pour les événements non structurés (fallback), ev.nom contient le nom complet historique
 function parseEv(ev,lieux,defaultH=12*60){
   const s=ev.summary||"";const nom=ev.nom||s;
-  const lieu=matchLieu(nom,lieux)||matchLieu(s,lieux);
+  // Matching lieu : utilise propertyName (nom court) en priorité pour un match plus précis
+  // puis fallback sur le nom complet (qui peut contenir l'action comme "Ménage Escape")
+  const lieu=(ev.propertyName&&matchLieu(ev.propertyName,lieux))||matchLieu(nom,lieux)||matchLieu(s,lieux);
   // Détection Villa : priorité au lieu trouvé, sinon par le nom de l'événement
   const typeParNom=/\bvilla\b/i.test(nom)||/\bvilla\b/i.test(s)?"Villa":null;
   const t=lieu?.type||typeParNom||ev.type||"Appartement GH";
   // Si type Villa mais lieu non trouvé (ou lieu non-villa), chercher parmi les villas uniquement
   const villaLieux=lieux.filter(l=>l.type==="Villa");
   const lieuVilla=t==="Villa"&&lieu?.type!=="Villa"
-    ?(matchLieu(nom,villaLieux)||matchLieu(s,villaLieux))
+    ?(matchLieu(ev.propertyName||nom,villaLieux)||matchLieu(s,villaLieux))
     :null;
   const lieuFinal=lieuVilla||lieu;
-  const d=lieuFinal?.d||(t==="Villa"?240:90);const debut=hDefaut(nom,defaultH);const fin=hFin(nom,d,defaultH);
-  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,heureDebut:minToH(debut),heureFin:minToH(fin)};
+  // Durée par défaut : celle du lieu si trouvé, sinon 240min (Villa) ou 90min (autres)
+  const d=lieuFinal?.d||(t==="Villa"?240:90);
+  // Heure de début : priorité à l'heure Google Calendar (startTime) si l'événement a un horaire précis
+  // sinon utilise l'heure par défaut du logement / règles métier (hDefaut)
+  const debut=ev.startTime?hToMin(ev.startTime):hDefaut(nom,defaultH);
+  // Heure de fin : si temps Calendar → début + durée ; sinon règles métier (hFin)
+  const fin=ev.startTime?debut+d:hFin(nom,d,defaultH);
+  // Construction de l'objet intervention avec :
+  //  - bla_linge : false par défaut, togglé manuellement par l'utilisateur sur la carte
+  //  - lingeProprio : hérité du lieu (true si le logement a du linge propriétaire renseigné)
+  // proprietaire : hérité du lieu matché s'il est renseigné, sinon vide
+  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",proprietaire:lieuFinal?.proprietaire||"",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,lingeProprio:!!lieuFinal?.lingeProprio,heureDebut:minToH(debut),heureFin:minToH(fin)};
 }
 
 // Algorithme d'optimisation du planning : groupe les interventions en chaînes de 2 maximum
@@ -422,16 +442,20 @@ function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,c
   const HEURES=["07:00","07:30","08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30","19:00","19:30","20:00"];
   const btnRef=useRef();
 
+  // Conteneur de carte — bordure gauche colorée selon l'employée assignée
+  // Contraint à 100% largeur pour éviter tout débordement horizontal sur mobile
   return(
-    <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||DS.line}`}}>
+    <div style={{padding:"13px 15px",background:chaineBg||"white",borderLeft:`3px solid ${ep?ep.coul:chaineBorder||DS.line}`,
+      width:"100%",maxWidth:"100%",overflowX:"hidden"}}>
 
-      {/* Ligne 1 : heure + nom */}
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+      {/* Ligne 1 : heure de début (éditable) + icône type + nom du logement
+          flexWrap:wrap permet le retour à la ligne sur petit écran smartphone */}
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,flexWrap:"wrap"}}>
 
         {/* Heure — grand bouton tactile */}
         {editHr?(
           <div style={{display:"flex",alignItems:"center",gap:4,background:"white",borderRadius:8,
-            padding:"6px 10px",border:"2px solid #3b82f6",flexShrink:0}}>
+            padding:"6px 10px",border:"2px solid #3b82f6",flexShrink:0,maxWidth:"100%",overflowX:"auto"}}>
             <select value={interv.heureDebut} onChange={e=>onChange("heureDebut",e.target.value)}
               style={{border:"none",background:"transparent",fontSize:14,fontWeight:700,color:"#3b82f6",outline:"none",cursor:"pointer"}}>
               {HEURES.map(h=><option key={h}>{h}</option>)}
@@ -455,8 +479,20 @@ function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,c
           </button>
         )}
 
-        {/* Icône + Nom */}
+        {/* Icône + Client + Nom du logement */}
         <div style={{minWidth:0,flex:1}}>
+          {/* Nom du client — affiché en haut de la carte pour identification rapide */}
+          {interv.proprietaire?(
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",
+              color:typeColor,marginBottom:3}}>
+              👤 {interv.proprietaire}
+            </div>
+          ):interv.cli&&interv.cli!=="GetHost"&&(
+            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",
+              color:"#94a3b8",marginBottom:3}}>
+              👤 {interv.cli}
+            </div>
+          )}
           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
             <span style={{width:26,height:26,borderRadius:6,background:typeBg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><TypeIC size={14} color={typeColor}/></span>
             <div style={{fontWeight:700,fontSize:14,color:"#0f172a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",lineHeight:1.2}}>{interv.nom}</div>
@@ -471,16 +507,28 @@ function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,c
         </div>
       </div>
 
-      {/* Ligne 2 : badges */}
+      {/* Ligne 2 : badges linge — uniquement pour Villa, Appartement et Riad
+          Les autres types (Bureau, etc.) n'ont pas de gestion de linge */}
+      {/villa|appartement|riad/i.test(interv.type)&&(
       <div style={{display:"flex",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+        {/* Bouton toggle Bla linge — cliquable pour activer/désactiver */}
         <button onClick={()=>onChange("bla_linge",!interv.bla_linge)}
           style={{padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:600,minHeight:44,
             background:interv.bla_linge?"#fef9c3":"rgba(255,255,255,0.7)",
             color:interv.bla_linge?"#92400e":"#94a3b8",
             border:`1.5px solid ${interv.bla_linge?"#fde68a":"rgba(0,0,0,0.1)"}`}}>
-          🧺 {interv.bla_linge?"bla linge ✓":"bla linge"}
+          🧺 {interv.bla_linge?"Bla linge ✓":"Bla linge"}
         </button>
+        {/* Badge informatif Linge propriétaire — non cliquable, affiché seulement si le lieu le requiert */}
+        {interv.lingeProprio&&(
+          <span style={{padding:"5px 12px",borderRadius:20,fontSize:12,fontWeight:600,minHeight:44,
+            background:"#ede9fe",color:"#6d28d9",
+            border:"1.5px solid #c4b5fd",display:"flex",alignItems:"center",gap:4}}>
+            👕 Linge propriétaire
+          </span>
+        )}
       </div>
+      )}
 
       {/* Ligne 3 : assignation */}
       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -552,8 +600,9 @@ function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,c
 const quartierOptions=QUARTIERS_WITH_DETAILS.map(q=>`${q.name} — ${q.category} (${q.kmCenter} km)`);
 const WQ=[
   {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
-  {id:"type",    label:"Type de logement",          placeholder:"",                        req:true,opts:TYPES},
-  {id:"cli",     label:"Client / Propriétaire",     placeholder:"ex: GetHost, Atlas",      req:false},
+  {id:"type",    label:"Type de logement",          placeholder:"",                        req:true},
+  {id:"cli",     label:"Gestionnaire",               placeholder:"ex: GetHost, Atlas",      req:false},
+  {id:"proprietaire",label:"Nom du client",             placeholder:"ex: M. Alami, Mme Bennis",req:false},
   {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true,datalist:quartierOptions},
   {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: 12 Rue Ibn Khaldoun ou https://maps.google.com/?q=...",req:false},
   {id:"lat",     label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
@@ -562,18 +611,27 @@ const WQ=[
   {id:"heureFin",label:"Heure limite du jour (opt)",placeholder:"ex: 16h00 ou 17h00",      req:false,opts:["16h00","17h00","18h00","19h00","20h00"]},
   {id:"code",    label:"Code d'accès",              placeholder:"ex: 262626#",             req:false},
   {id:"notes",   label:"Notes accès",               placeholder:"ex: 5ème étage",          req:false},
+  // Linge propriétaire : indique si le logement dispose de linge fourni par le propriétaire.
+  // Si "Oui", un badge 👕 sera affiché automatiquement sur les cartes intervention du planning.
+  {id:"lingeProprio",label:"Linge du propriétaire?",placeholder:"",                        req:false,opts:["Oui","Non"]},
 ];
-function Wizard({onSave,onClose}){
+function Wizard({onSave,onClose,lieux:lieuxProp,typesLogement:typesProp}){
   const[step,setStep]=useState(0);const[data,setData]=useState({});const[err,setErr]=useState("");
-  const q=WQ[step];
+  // Résolution dynamique de la question courante : injecte les types depuis les props
+  const rawQ=WQ[step];
+  const q=rawQ.id==="type"?{...rawQ,opts:typesProp||["Villa","Appartement","Bureau","Riad"]}:rawQ;
+  // Datalist dynamique : pour le champ proprietaire, on extrait les noms uniques déjà renseignés
+  const dynamicDatalist=q.id==="proprietaire"?[...new Set((lieuxProp||[]).map(l=>l.proprietaire).filter(Boolean))]:q.datalist;
   const next=()=>{
     if(q.req&&!data[q.id]){setErr("Champ obligatoire");return;}setErr("");
     if(step<WQ.length-1)setStep(s=>s+1);
     else {
       const heureFin = data.heureFin ? parseInt(data.heureFin)*60 : null;
+      // Sauvegarde du logement : lingeProprio est converti en booléen ("Oui" → true, autre → false)
       onSave({nom:data.nom,type:data.type||"Appartement GH",cli:data.cli||"Particulier",
+        proprietaire:data.proprietaire||"",
         q:data.q||"Guéliz",adresse:data.adresse||"",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
-        d:parseInt(data.d)||90,heureFin:heureFin,code:data.code||"",notes:data.notes||""});
+        d:parseInt(data.d)||90,heureFin:heureFin,code:data.code||"",notes:data.notes||"",lingeProprio:data.lingeProprio==="Oui"});
     }
   };
   return(
@@ -610,14 +668,14 @@ function Wizard({onSave,onClose}){
             <option value="">Sélectionner...</option>
             {q.opts.map(o=><option key={o}>{o}</option>)}
           </select>
-          :q.datalist
+          :q.datalist||q.id==="proprietaire"
           ?<>
             <input list={`list-${q.id}`} value={data[q.id]||""} onChange={e=>setData(p=>({...p,[q.id]:e.target.value}))}
               placeholder={q.placeholder} autoFocus onKeyDown={e=>e.key==="Enter"&&next()}
               style={{width:"100%",padding:"13px 14px",border:`2px solid ${err?"#dc2626":"#e2e8f0"}`,
                 borderRadius:10,fontSize:15,outline:"none",minHeight:50}}/>
             <datalist id={`list-${q.id}`}>
-              {q.datalist.map(item=><option key={item}>{item}</option>)}
+              {(dynamicDatalist||[]).map(item=><option key={item}>{item}</option>)}
             </datalist>
           </>
           :<input value={data[q.id]||""} onChange={e=>setData(p=>({...p,[q.id]:e.target.value}))}
@@ -763,14 +821,18 @@ function DaysOffWeekModal({visible,empName,initialWeekdays,onSave,onCancel}){
   );
 }
 
-// ── HELPER DESIGN : Icône + couleurs par type de propriété ────
-// Mappe chaque type sur une icône SVG DS + ses couleurs DS
+// ── HELPER DESIGN : Icône + couleurs par type de propriété / client ───
+// Priorise la couleur du client (CLIENT_COLORS) si disponible,
+// sinon fallback sur le type de propriété.
+// Permet de distinguer visuellement les interventions par client dans le planning.
 const getTypeInfo=(type,cli)=>{
-  if(cli==="Cabinet médical")return{IC:MissionIcon,color:"#b5172d",bg:"#fdeef0"};
-  if(type==="Villa")return{IC:LogementIcon,color:"#1e4fa8",bg:"#edf1fb"};
-  if(type==="Riad")return{IC:LogementIcon,color:"#c84b1f",bg:"#fdf1ec"};
-  if(type==="Bureau")return{IC:MissionIcon,color:"#3d4155",bg:"#f1f0ec"};
-  return{IC:NettoyageIcon,color:"#3a6b54",bg:"#edf4f0"};
+  // Couleur client en priorité pour l'icône et le fond
+  const cliColors=CLIENT_COLORS[cli];
+  if(cli==="Cabinet médical")return{IC:MissionIcon,color:cliColors?.color||"#b5172d",bg:cliColors?.bg||"#fdeef0"};
+  if(type==="Villa")return{IC:LogementIcon,color:cliColors?.color||"#1e4fa8",bg:cliColors?.bg||"#edf1fb"};
+  if(type==="Riad")return{IC:LogementIcon,color:cliColors?.color||"#c84b1f",bg:cliColors?.bg||"#fdf1ec"};
+  if(type==="Bureau")return{IC:MissionIcon,color:cliColors?.color||"#3d4155",bg:cliColors?.bg||"#f1f0ec"};
+  return{IC:NettoyageIcon,color:cliColors?.color||"#3a6b54",bg:cliColors?.bg||"#edf4f0"};
 };
 
 // ── APP PRINCIPALE ────────────────────────────────────────────
@@ -786,6 +848,10 @@ export default function App(){
   // ── Planning : date & chargement ───────────────────────────
   const[dateQ,setDateQ]=useState(()=>{const d=new Date();d.setDate(d.getDate()+1);return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;}); // Initialisé à J+1
   const[loading,setLoading]=useState(false);            // Indicateur de chargement agenda
+  // Option case à cocher "Associer automatiquement les logements" :
+  // Si true → l'algorithme `optimiser()` regroupe les interventions en chaînes de 2
+  // Si false (défaut) → chaque intervention reste en chaîne solo indépendante
+  const[autoAssocierLogements,setAutoAssocierLogements]=useState(false);
   const[msg,setMsg]=useState("");                       // Message de statut (succès / erreur / info)
   const[syncTime,setSyncTime]=useState("—");            // Horodatage du dernier chargement
   // ── Données métier ─────────────────────────────────────────
@@ -814,6 +880,9 @@ export default function App(){
   const[pwdUserId,setPwdUserId]=useState(null);           // ID du compte dont on modifie le mot de passe (user/admin)
   const[pwdValue,setPwdValue]=useState("");              // Nouveau mot de passe saisi
   const[editLieu,setEditLieu]=useState(null);           // Logement en cours d'édition inline (null = aucun)
+  // ── Types de logements dynamiques (chargés depuis config.json via API) ──
+  const[typesLogement,setTypesLogement]=useState(["Villa","Appartement","Bureau","Riad"]);
+  const[newType,setNewType]=useState("");               // Champ saisie nouveau type (Paramètres)
   const[showWA,setShowWA]=useState(false);              // BottomSheet WhatsApp sur mobile
   const[showCharge,setShowCharge]=useState(false);      // BottomSheet charge du jour sur mobile
   // ── Confirmation Dialog pour suppressions ──────────────
@@ -828,6 +897,8 @@ export default function App(){
   const[newEmp,setNewEmp]=useState({nom:"",emoji:"👤"});// Formulaire ajout employée
   const[empMsg,setEmpMsg]=useState("");                 // Retour ajout/suppression employée
   const[daysOffEmpId,setDaysOffEmpId]=useState(null);    // Modale jours off hebdo {id employée}
+  // Calcul du jour de la semaine (0=dimanche…6=samedi) à partir de dateQ
+  // Utilisé pour détecter si une employée est en jour off ce jour-là
   const selectedWeekday=(()=>{
     const[d,m,y]=dateQ.split("/");
     const dt=new Date(`${y}-${m}-${d}T00:00:00`);
@@ -841,15 +912,34 @@ export default function App(){
   },[]);
 
   // Chargement initial des données dès que l'utilisateur est authentifié
-  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();chargerHistorique();if(user.role==="admin")chargerUsers();}},[user]);
+  useEffect(()=>{if(user){chargerExtras();chargerLieux();chargerEquipe();chargerHistorique();chargerTypes();if(user.role==="admin")chargerUsers();}},[user]);
   // Rafraîchit l'historique à chaque visite de l'onglet Historique
   useEffect(()=>{if(onglet==="historique")chargerHistorique();},[onglet]);
+  // Sécurité UI : redirection automatique vers Planning si un non-admin
+  // tente d'accéder à l'onglet Historique (réservé aux administrateurs)
+  useEffect(()=>{
+    if(user&&user.role!=="admin"&&onglet==="historique")setOnglet("planning");
+  },[user,onglet]);
 
   // Chargement des données persistées depuis l'API (fichiers JSON côté serveur)
   const chargerExtras=()=>apiCall("/api/extras").then(d=>{if(d.extras)setExtras(d.extras);});
   const chargerLieux=()=>apiCall("/api/lieux").then(d=>{if(d.lieux)setLieux(d.lieux);});
   const chargerUsers=()=>apiCall("/api/users").then(d=>{if(d.users)setUsers(d.users);}); // Admin seulement
   const chargerEquipe=()=>apiCall("/api/equipe").then(d=>{if(d.equipe&&d.equipe.length)setEquipe(d.equipe.map(normalizeEmployeeRecord));});
+  // Chargement des types de logements depuis la config serveur
+  const chargerTypes=()=>apiCall("/api/config/types").then(d=>{if(d.types&&d.types.length)setTypesLogement(d.types);});
+
+  // ── Chaînes solo (mode sans association automatique) ─────────
+  // Chaque intervention est placée seule dans sa propre chaîne,
+  // triée par heure de début. L'utilisateur peut ensuite associer
+  // manuellement via le bouton "Associer" sur chaque chaîne.
+  const construireChainesSolo=(interventions)=>[
+    ...interventions,
+  ].sort((a,b)=>a.debut-b.debut).map(inter=>({
+    inters:[inter],     // Un seul élément par chaîne
+    trajetTotal:0,      // Pas de trajet (une seule tâche)
+    dureeTotal:inter.d,  // Durée = durée de l'intervention
+  }));
 
   // Charge le planning du jour depuis Google Calendar via l'API
   // 1. Convertit la date DD/MM/YYYY en YYYY-MM-DD pour l'API
@@ -861,11 +951,17 @@ export default function App(){
     const[d,m,y]=dateQ.split("/");
     const date=`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
     const data=await apiCall(`/api/calendar?date=${date}`);
-    if(data.events?.length>0){
+    if(data?.message && !data?.events){
+      setMsg(`❌ ${data.message}`);
+    }else if(data.events?.length>0){
+      // Parse chaque événement Google Calendar → objet intervention structuré
       const parsed=data.events.map(e=>parseEv(e,lieux,12*60));
-      const c=optimiser(parsed);setChaines(c);
+      // Si la case "Associer automatiquement" est cochée → optimiser() regroupe en chaînes de 2
+      // Sinon → construireChainesSolo() crée une chaîne par intervention (association manuelle possible)
+      const c=autoAssocierLogements?optimiser(parsed):construireChainesSolo(parsed);
+      setChaines(c);
       setSyncTime(`${dateQ} ${new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}`);
-      setMsg(`✅ ${parsed.length} interventions · ${c.length} chaînes`);
+      setMsg(`✅ ${parsed.length} interventions · ${c.length} chaînes${autoAssocierLogements?" · auto-association active":""}`);
     }else{setMsg(`ℹ️ Aucun événement — ${dateQ}`);}
     setLoading(false);
   };
@@ -993,7 +1089,12 @@ export default function App(){
     Object.entries(parEmp).sort(([,a],[,b])=>hToMin(a[0].heureDebut)-hToMin(b[0].heureDebut)).forEach(([emp,inters])=>{
       const sorted=[...inters].sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));
       const isBur=t=>t==="Bureau"||t==="Cabinet médical";
-      const lignes=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (linge)":""}`);
+      // Chaque ligne WhatsApp inclut :
+      //   - Icône client/type + nom en italique
+      //   - Horaires (Bureau : début→fin, autres : début seul)
+      //   - "(Bla linge)" si le toggle bla_linge est activé par l'utilisateur
+      //   - "(linge propriétaire)" si le logement a l'option lingeProprio activée
+      const lignes=sorted.map(i=>`${CLIENT_IC[i.cli]||TYPE_IC[i.type]||"🔵"} _${i.nom}_ ${isBur(i.type)||isBur(i.cli)?`${toWA(i.heureDebut)}->${toWA(i.heureFin)}`:toWA(i.heureDebut)}${i.bla_linge?" (Bla linge)":""}${i.lingeProprio?" (linge propriétaire)":""}`);  
       if(emp==="__none__"){
         txt+=`${lignes.map(l=>`${l} : **,`).join("\n\n")}\n\n`;
         return;
@@ -1141,8 +1242,12 @@ export default function App(){
   // Détection des conflits : si heureFin[i] > heureDebut[i+1] pour la même employée → conflit
   const conflits=equipe.filter(e=>e.actif!==false).flatMap(e=>{const all=chaines.flatMap(c=>c.inters.filter(i=>(i.employes||[]).includes(e.nom))).sort((a,b)=>hToMin(a.heureDebut)-hToMin(b.heureDebut));const cfls=[];for(let i=0;i<all.length-1;i++)if(hToMin(all[i].heureFin)>hToMin(all[i+1].heureDebut))cfls.push(`${e.nom}: ${all[i].nom.split(" ").pop()} → ${all[i+1].nom.split(" ").pop()}`);return cfls;});
   const ch=charge();
-  // Onglets de navigation — l'onglet "Comptes" n'est visible que pour l'administrateur
-  const TABS=[["planning","📋","Planning"],["historique","📅","Historique"],["lieux","🏠","Logements"],["extras","👤","Extras"],["equipe","👥","Équipe"],...(user?.role==="admin"?[["users","⚙️","Comptes"]]:[] )];
+  // Onglets de navigation — construction dynamique selon le rôle utilisateur :
+  //   - "Planning" : visible pour tous
+  //   - "Historique" : admin seulement (planning sauvegardés)
+  //   - "Logements" / "Extras" / "Équipe" : visible pour tous (lecture seule pour non-admin)
+  //   - "Comptes" : admin seulement (gestion des utilisateurs)
+  const TABS=[["planning","📋","Planning"],...(user?.role==="admin"?[["historique","📅","Historique"]]:[]),["lieux","🏠","Logements"],["extras","👤","Extras"],["equipe","👥","Équipe"],...(user?.role==="admin"?[["users","⚙️","Comptes"],["params","🔧","Paramètres"]]:[] )];
 
   if(!user)return<Login onLogin={u=>{setUser(u);}}/>;
 
@@ -1217,7 +1322,7 @@ export default function App(){
               {/* Barre chargement */}
               <div className="card" style={{padding:"16px",marginBottom:14}}>
                 <div style={{display:"flex",gap:10,alignItems:"flex-end",flexWrap:"wrap"}}>
-                  <div style={{flex:"1 1 120px"}}>
+                  <div style={{flex:"0 0 128px",minWidth:110,maxWidth:150}}>
                     <label className="section-label" style={{display:"block",marginBottom:6}}>Date</label>
                     <input value={dateQ} readOnly
                       style={{padding:"10px 13px",border:`1.5px solid ${DS.line}`,borderRadius:10,fontSize:14,
@@ -1235,6 +1340,20 @@ export default function App(){
                     <RefreshCw size={15} style={{animation:loading?"spin .8s linear infinite":"none"}}/>
                     {loading?"Chargement…":"Charger l'agenda Kleaning"}
                   </button>
+                  {/* Case à cocher "Associer automatiquement les logements"
+                      Quand cochée : au chargement agenda, l'algorithme optimiser() regroupe
+                      les interventions en chaînes de 2 (par proximité GPS + horaires proches).
+                      Quand décochée (défaut) : chaque intervention reste solo,
+                      l'utilisateur peut associer manuellement via le bouton 🔗 Associer. */}
+                  <label style={{display:"flex",alignItems:"center",gap:8,minHeight:46,padding:"0 4px",color:DS.ink2,fontSize:12,fontWeight:600,cursor:"pointer",userSelect:"none"}}>
+                    <input
+                      type="checkbox"
+                      checked={autoAssocierLogements}
+                      onChange={e=>setAutoAssocierLogements(e.target.checked)}
+                      style={{width:16,height:16,cursor:"pointer",accentColor:DS.brand,flexShrink:0}}
+                    />
+                    Associer automatiquement les logements
+                  </label>
                 </div>
 
                 {msg&&(
@@ -1665,9 +1784,9 @@ export default function App(){
                   const bC=l.type==="Villa"?"#d97706":l.type==="Riad"?"#dc2626":l.type==="Bureau"?"#2563eb":"#059669";
                   return(
                     <div key={l.id} style={{background:"white",borderRadius:12,border:`1px solid #e2e8f0`,
-                      borderLeft:`4px solid ${bC}`,overflow:"hidden"}}>
+                      borderLeft:`4px solid ${bC}`,overflow:"hidden",width:"100%",maxWidth:"100%"}}>
                       <div style={{padding:"12px 14px"}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:8}}>
                           <div style={{flex:1,minWidth:0,marginRight:10}}>
                             {isEdit
                               ?<input value={editLieu.nom} onChange={e=>setEditLieu(p=>({...p,nom:e.target.value}))}
@@ -1680,10 +1799,14 @@ export default function App(){
                               {isEdit
                                 ?<select value={editLieu.type} onChange={e=>setEditLieu(p=>({...p,type:e.target.value}))}
                                   style={{padding:"5px 8px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:12,minHeight:36}}>
-                                  {TYPES.map(t=><option key={t}>{t}</option>)}
+                                  {typesLogement.map(t=><option key={t}>{t}</option>)}
                                 </select>
                                 :<span style={{fontSize:11,color:"#64748b",background:"#f8fafc",padding:"3px 8px",borderRadius:8,border:"1px solid #e2e8f0"}}>{l.type}</span>
                               }
+                              {/* Nom du client — affiché comme badge à côté du type */}
+                              {!isEdit&&l.proprietaire&&(
+                                <span style={{fontSize:11,color:"#0f172a",background:"#f0fdf4",padding:"3px 8px",borderRadius:8,border:"1px solid #bbf7d0",fontWeight:600}}>👤 {l.proprietaire}</span>
+                              )}
                               {isEdit
                                 ?<>
                                 <input list="list-q-edit" value={editLieu.q} onChange={e=>setEditLieu(p=>({...p,q:e.target.value}))}
@@ -1748,6 +1871,45 @@ export default function App(){
                               :<span style={{fontSize:12,color:"#64748b"}}>{l.notes}</span>
                             }
                           </div>}
+                          {/* Propriétaire du logement — champ texte en édition, badge en consultation
+                              Autocomplete via datalist depuis les propriétaires déjà renseignés */}
+                          <div>
+                            <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Client</div>
+                            {isEdit
+                              ?<>
+                                <input list="list-proprio-edit" value={editLieu.proprietaire||""}
+                                  onChange={e=>setEditLieu(p=>({...p,proprietaire:e.target.value}))}
+                                  placeholder="ex: M. Alami"
+                                  style={{padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,width:160,outline:"none",minHeight:44,boxSizing:"border-box"}}/>
+                                <datalist id="list-proprio-edit">
+                                  {[...new Set(lieux.map(l=>l.proprietaire).filter(Boolean))].map(p=><option key={p}>{p}</option>)}
+                                </datalist>
+                              </>
+                              :(l.proprietaire
+                                ?<span style={{fontSize:12,fontWeight:600,color:"#0f172a"}}>👤 {l.proprietaire}</span>
+                                :<span style={{fontSize:12,color:"#94a3b8"}}>—</span>
+                              )
+                            }
+                          </div>
+                          {/* Linge — affiché uniquement pour Villa, Appartement, Riad */}
+                          {/villa|appartement|riad/i.test(isEdit?editLieu.type:l.type)&&(
+                          <div>
+                            <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Linge</div>
+                            {isEdit
+                              ?<button onClick={()=>setEditLieu(p=>({...p,lingeProprio:!p.lingeProprio}))}
+                                style={{padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:700,minHeight:36,cursor:"pointer",
+                                  background:editLieu.lingeProprio?"#ede9fe":"#FFF7ED",
+                                  color:editLieu.lingeProprio?"#6d28d9":"#c84b1f",
+                                  border:`1.5px solid ${editLieu.lingeProprio?"#c4b5fd":"#fed7aa"}`}}>
+                                👕 {editLieu.lingeProprio?"Propriétaire ✓":"Kleaning"}
+                              </button>
+                              :(l.lingeProprio
+                                ?<span style={{fontSize:12,fontWeight:600,color:"#6d28d9",background:"#ede9fe",padding:"3px 10px",borderRadius:10,border:"1px solid #c4b5fd"}}>👕 Propriétaire</span>
+                                :<span style={{fontSize:12,fontWeight:600,color:"#c84b1f",background:"#FFF7ED",padding:"3px 10px",borderRadius:10,border:"1px solid #fed7aa"}}>🧺 Kleaning</span>
+                              )
+                            }
+                          </div>
+                          )}
                         </div>
 
                         {/* Adresse */}
@@ -2059,6 +2221,59 @@ export default function App(){
               </div>
             </div>
           )}
+
+          {/* ═══ PARAMÈTRES (admin) ═══════════════════════ */}
+          {onglet==="params"&&user.role==="admin"&&(
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+                <span style={{fontSize:16}}>🔧</span>
+                <span style={{fontSize:15,fontWeight:700,color:DS.ink}}>Paramètres</span>
+              </div>
+
+              {/* Section : Types de logements */}
+              <div style={{background:"white",borderRadius:12,border:`1px solid ${DS.line}`,padding:16,marginBottom:16}}>
+                <div style={{fontSize:13,fontWeight:700,color:DS.ink,marginBottom:12}}>Types de logements autorisés</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+                  {typesLogement.map(t=>(
+                    <div key={t} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 12px",
+                      borderRadius:8,background:"#f8fafc",border:"1px solid #e2e8f0",fontSize:13,fontWeight:600}}>
+                      <span>{t}</span>
+                      <button onClick={async()=>{
+                          const next=typesLogement.filter(x=>x!==t);
+                          if(next.length===0)return;
+                          const res=await apiCall("/api/config/types","POST",{types:next});
+                          if(res.types)setTypesLogement(res.types);
+                        }}
+                        style={{background:"none",border:"none",color:"#dc2626",cursor:"pointer",fontSize:14,
+                          padding:"0 2px",lineHeight:1}}>✕</button>
+                    </div>
+                  ))}
+                </div>
+                {/* Formulaire ajout de type */}
+                <div style={{display:"flex",gap:8}}>
+                  <input value={newType} onChange={e=>setNewType(e.target.value)}
+                    onKeyDown={e=>{if(e.key==="Enter"&&newType.trim()){
+                      const next=[...typesLogement,newType.trim()];
+                      apiCall("/api/config/types","POST",{types:next}).then(res=>{if(res.types){setTypesLogement(res.types);setNewType("");}});
+                    }}}
+                    placeholder="Nouveau type..."
+                    style={{flex:1,padding:"10px 14px",border:`1.5px solid ${DS.line}`,borderRadius:10,
+                      fontSize:14,outline:"none",minHeight:44,background:"#FAFAF8",color:DS.ink,fontFamily:"inherit"}}/>
+                  <button onClick={async()=>{
+                      if(!newType.trim())return;
+                      const next=[...typesLogement,newType.trim()];
+                      const res=await apiCall("/api/config/types","POST",{types:next});
+                      if(res.types){setTypesLogement(res.types);setNewType("");}
+                    }}
+                    style={{padding:"10px 18px",background:`linear-gradient(135deg, ${DS.ink} 0%, ${DS.ink2} 100%)`,
+                      color:"white",border:"none",borderRadius:10,fontSize:13,fontWeight:600,
+                      minHeight:44,cursor:"pointer"}}>
+                    + Ajouter
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── NAVIGATION BAS — Interface mobile (<640px) ──────
@@ -2167,6 +2382,9 @@ export default function App(){
           onConfirm={confirmDialog.onConfirm}
           onCancel={()=>setConfirmDialog({visible:false,title:"",message:"",onConfirm:null})}
         />
+
+        {/* Wizard ajout logement — modale plein écran, rendu conditionnellement */}
+        {wizard&&<Wizard onSave={ajouterLieu} onClose={()=>setWizard(false)} lieux={lieux} typesLogement={typesLogement}/>}
 
         {daysOffEmpId&&<DaysOffWeekModal
           visible={true}

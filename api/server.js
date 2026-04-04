@@ -23,7 +23,14 @@ const path       = require("path");
 const fs         = require("fs");
 const helmet     = require("helmet");
 const rateLimit  = require("express-rate-limit");
-require("dotenv").config();
+
+// Charge .env de façon stable, quel que soit le dossier de démarrage du process.
+const envCandidates = [
+  path.resolve(__dirname, "..", ".env"),
+  path.resolve(__dirname, ".env"),
+];
+const envPath = envCandidates.find(p => fs.existsSync(p));
+require("dotenv").config(envPath ? { path: envPath } : undefined);
 
 // ── VÉRIFICATION VARIABLES CRITIQUES ─────────────────────────
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
@@ -369,7 +376,12 @@ app.delete("/api/extras/:id", auth, (req, res) => {
 // LOGEMENTS — CRUD avec validation
 // ══════════════════════════════════════════════════════════════
 
-const TYPES_VALIDES = ["Appartement GH","Appartement MM","Appartement","Villa","Riad","Bureau"];
+// Types de logements : chargés dynamiquement depuis data/config.json
+// L'admin peut ajouter/supprimer des types via l'API /api/config/types
+function getTypesValides() {
+  const config = readDB("config.json");
+  return config.types || ["Villa","Appartement","Bureau","Riad"];
+}
 
 app.get("/api/lieux", auth, (req, res) => {
   res.json({ lieux: readDB("lieux.json") });
@@ -389,13 +401,13 @@ app.post("/api/lieux", auth, adminOnly, (req, res) => {
 
   // Validations
   if (!nom || !type || !q) return res.status(400).json({ message: "nom, type et quartier sont requis" });
-  if (!TYPES_VALIDES.includes(type)) return res.status(400).json({ message: "Type de logement invalide" });
+  if (!getTypesValides().includes(type)) return res.status(400).json({ message: "Type de logement invalide" });
   if (isNaN(lat) || lat < 30 || lat > 36) return res.status(400).json({ message: "Latitude invalide pour le Maroc" });
   if (isNaN(lng) || lng < -14 || lng > -1) return res.status(400).json({ message: "Longitude invalide pour le Maroc" });
   if (isNaN(d) || d < 15 || d > 720) return res.status(400).json({ message: "Durée invalide (15-720 minutes)" });
 
   const lieux = readDB("lieux.json");
-  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", q, adresse: adresse||"", lat, lng, d, code, notes, createdAt: new Date().toISOString() };
+  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", proprietaire: sanitize(req.body.proprietaire, 200) || "", q, adresse: adresse||"", lat, lng, d, code, notes, lingeProprio: !!req.body.lingeProprio, createdAt: new Date().toISOString() };
   lieux.push(l);
   writeDB("lieux.json", lieux);
   res.status(201).json({ logement: l, message: "Logement ajouté" });
@@ -411,7 +423,7 @@ app.put("/api/lieux/:id", auth, adminOnly, (req, res) => {
 
   const b = req.body;
   if (b.nom)   lieux[idx].nom   = sanitize(b.nom, 200);
-  if (b.type && TYPES_VALIDES.includes(b.type)) lieux[idx].type = b.type;
+  if (b.type && getTypesValides().includes(b.type)) lieux[idx].type = b.type;
   if (b.cli)   lieux[idx].cli   = sanitize(b.cli, 100);
   if (b.q)     lieux[idx].q     = sanitize(b.q, 100);
   if (b.lat != null) { const lat = parseFloat(b.lat); if (!isNaN(lat)) lieux[idx].lat = lat; }
@@ -420,6 +432,8 @@ app.put("/api/lieux/:id", auth, adminOnly, (req, res) => {
   if (b.code    !== undefined) lieux[idx].code    = sanitize(b.code, 50);
   if (b.notes   !== undefined) lieux[idx].notes   = sanitize(b.notes, 500);
   if (b.adresse !== undefined) lieux[idx].adresse = sanitize(b.adresse, 500);
+  if (b.proprietaire !== undefined) lieux[idx].proprietaire = sanitize(b.proprietaire, 200);
+  if (b.lingeProprio !== undefined) lieux[idx].lingeProprio = !!b.lingeProprio;
   lieux[idx].updatedAt = new Date().toISOString();
 
   writeDB("lieux.json", lieux);
@@ -453,8 +467,39 @@ app.get("/api/lieux/export", auth, (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// CONFIG — Types de logements dynamiques (admin)
+// ══════════════════════════════════════════════════════════════
+
+// GET /api/config/types — retourne la liste des types autorisés
+app.get("/api/config/types", auth, (req, res) => {
+  res.json({ types: getTypesValides() });
+});
+
+// POST /api/config/types — remplace la liste complète des types (admin)
+app.post("/api/config/types", auth, adminOnly, (req, res) => {
+  const { types } = req.body;
+  if (!Array.isArray(types) || types.length === 0) return res.status(400).json({ message: "Liste de types invalide" });
+  if (types.length > 50) return res.status(400).json({ message: "Maximum 50 types" });
+  const clean = types.map(t => sanitize(String(t), 100)).filter(Boolean);
+  if (clean.length === 0) return res.status(400).json({ message: "Aucun type valide" });
+  const config = readDB("config.json");
+  config.types = clean;
+  writeDB("config.json", config);
+  res.json({ types: clean, message: "Types mis à jour" });
+});
+
+// ══════════════════════════════════════════════════════════════
 // GOOGLE CALENDAR — Lecture seule, scope minimal
 // ══════════════════════════════════════════════════════════════
+
+// Map des abréviations clients → nom complet + type de propriété par défaut
+// Utilisé par le parseur générique pour reconnaître le client depuis le 1er mot du résumé Calendar
+// Format attendu : "CLIENT ACTION NOM_PROPRIÉTÉ - détails"
+//   Exemple : "GH Ménage Escape - 1ch d 1 sdb" → cli="GetHost", type="Appartement GH"
+const CLIENT_ABBR = {
+  "GH":  { cli: "GetHost",           type: "Appartement GH" },
+  "MM":  { cli: "Maison Madeleines", type: "Appartement MM" },
+};
 
 app.get("/api/calendar", auth, async (req, res) => {
   const { date } = req.query;
@@ -495,8 +540,8 @@ app.get("/api/calendar", auth, async (req, res) => {
       singleEvents: true,
       orderBy:      "startTime",
       maxResults:   250,
-      // ✅ On ne demande que le résumé — pas d'infos personnelles inutiles
-      fields:       "items(id,summary,status,recurringEventId)",
+      // ✅ On récupère résumé + heure de début (pour horaires d'intervention)
+      fields:       "items(id,summary,status,recurringEventId,start)",
     });
 
     const seen = new Set();
@@ -504,6 +549,48 @@ app.get("/api/calendar", auth, async (req, res) => {
       .filter(e => e.status !== "cancelled")
       .map(e => {
         const s = e.summary || "";
+
+        // ── Extraction de l'heure Google Calendar ──────────────────
+        // Si l'événement a une heure précise (pas all-day), on l'extrait en "HH:MM"
+        // Cette heure sera utilisée côté frontend comme heure d'intervention
+        let startTime = null;
+        if (e.start?.dateTime) {
+          const dt = new Date(e.start.dateTime);
+          if (!isNaN(dt.getTime())) {
+            startTime = `${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}`;
+          }
+        }
+
+        // ── Parsing générique : FORMAT "CLIENT ACTION NOM_PROPRIÉTÉ - détails" ──
+        // Exemple : "GH Ménage Escape - 1ch d 1 sdb"
+        //   → client=GH (GetHost), action=Ménage, propertyName=Escape
+        //   → nom affiché = "Ménage Escape"
+        // Cas spécial : si le nom de propriété commence par "Villa" (ex: "Villa Rosa")
+        //   → le type est overridé en "Villa" et nom = "Ménage Villa Rosa"
+        const mainPart = s.split(/\s*-\s*/)[0].trim();
+        const tokens = mainPart.split(/\s+/);
+
+        if (tokens.length >= 3) {
+          const clientKey = tokens[0].toUpperCase();
+          const clientInfo = CLIENT_ABBR[clientKey];
+          if (clientInfo) {
+            // Capitalise l'action (ex: "ménage" → "Ménage", "checkin" → "Checkin")
+            const rawAction = tokens[1];
+            const action = rawAction.charAt(0).toUpperCase() + rawAction.slice(1).toLowerCase();
+            // Nom de la propriété : tous les mots restants (ex: "Escape", "Villa Rosa", "Duplex Elara")
+            const propertyName = tokens.slice(2).join(" ");
+            // Override du type si le nom de propriété commence par Villa ou Riad
+            let type = clientInfo.type;
+            if (/^villa\b/i.test(propertyName)) type = "Villa";
+            if (/^riad\b/i.test(propertyName)) type = "Riad";
+            // Le nom affiché combine action + propriété (ex: "Ménage Escape")
+            const nom = `${action} ${propertyName}`;
+            return { id: e.id, summary: s, nom, type, cli: clientInfo.cli, action, propertyName, startTime };
+          }
+        }
+
+        // ── Fallback : patterns historiques pour événements non structurés ──
+        // Conservé pour la rétrocompatibilité avec les anciens formats de résumé
         let type = "Appartement GH", cli = "GetHost", nom = s;
         if (/cabinet.m[eé]d/i.test(s))        { type="Bureau";         cli="Cabinet médical";   nom="Cabinet médical"; }
         else if (/alami/i.test(s))             { type="Bureau";         cli="Alami Ecom";        nom="Bureau Alami"; }
@@ -518,7 +605,7 @@ app.get("/api/calendar", auth, async (req, res) => {
         else if (/waky|nomade/i.test(s))       nom="Appartement GH Nomade Waky";
         else if (/enja/i.test(s))              { nom="GH Villa Enja"; type="Villa"; }
         else if (/zoraida/i.test(s))           { type="Riad"; cli="CasaMichka"; nom="Riad Zoraida"; }
-        return { id: e.id, nom, type, cli };
+        return { id: e.id, summary: s, nom, type, cli, startTime };
       })
       .filter(e => { if (seen.has(e.nom)) return false; seen.add(e.nom); return true; });
 
