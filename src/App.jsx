@@ -271,8 +271,7 @@ function parseEv(ev,lieux,defaultH=12*60){
   // Construction de l'objet intervention avec :
   //  - bla_linge : false par défaut, togglé manuellement par l'utilisateur sur la carte
   //  - lingeProprio : hérité du lieu (true si le logement a du linge propriétaire renseigné)
-  // proprietaire : hérité du lieu matché s'il est renseigné, sinon vide
-  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",proprietaire:lieuFinal?.proprietaire||"",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,lingeProprio:!!lieuFinal?.lingeProprio,heureDebut:minToH(debut),heureFin:minToH(fin)};
+  return{id:ev.id,nom,type:t,cli:ev.cli||"GetHost",lieu:lieuFinal,d,debut,fin,employes:[],bla_linge:false,lingeProprio:!!lieuFinal?.lingeProprio,heureDebut:minToH(debut),heureFin:minToH(fin)};
 }
 
 // Algorithme d'optimisation du planning : groupe les interventions en chaînes de 2 maximum
@@ -482,14 +481,9 @@ function Carte({interv,extras,equipe:equipeP,selectedWeekday,onChange,chaineBg,c
         {/* Icône + Client + Nom du logement */}
         <div style={{minWidth:0,flex:1}}>
           {/* Nom du client — affiché en haut de la carte pour identification rapide */}
-          {interv.proprietaire?(
+          {interv.cli&&(
             <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",
               color:typeColor,marginBottom:3}}>
-              👤 {interv.proprietaire}
-            </div>
-          ):interv.cli&&interv.cli!=="GetHost"&&(
-            <div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.05em",
-              color:"#94a3b8",marginBottom:3}}>
               👤 {interv.cli}
             </div>
           )}
@@ -601,12 +595,9 @@ const quartierOptions=QUARTIERS_WITH_DETAILS.map(q=>`${q.name} — ${q.category}
 const WQ=[
   {id:"nom",     label:"Nom du logement",          placeholder:"ex: Appartement GH Lotus",req:true},
   {id:"type",    label:"Type de logement",          placeholder:"",                        req:true},
-  {id:"cli",     label:"Gestionnaire",               placeholder:"ex: GetHost, Atlas",      req:false},
-  {id:"proprietaire",label:"Nom du client",             placeholder:"ex: M. Alami, Mme Bennis",req:false},
+  {id:"cli",     label:"Client",                      placeholder:"ex: GetHost, M. Alami",   req:false},
   {id:"q",       label:"Quartier / Zone",           placeholder:"ex: Guéliz, Targa",       req:true,datalist:quartierOptions},
-  {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: 12 Rue Ibn Khaldoun ou https://maps.google.com/?q=...",req:false},
-  {id:"lat",     label:"Latitude GPS",              placeholder:"ex: 31.639675",           req:true},
-  {id:"lng",     label:"Longitude GPS",             placeholder:"ex: -8.018080",           req:true},
+  {id:"adresse", label:"Adresse / Lien Google Maps",placeholder:"ex: https://maps.google.com/?q=... ou 12 Rue Ibn Khaldoun",req:false},
   {id:"d",       label:"Durée intervention (min)",  placeholder:"ex: 90",                  req:true},
   {id:"heureFin",label:"Heure limite du jour (opt)",placeholder:"ex: 16h00 ou 17h00",      req:false,opts:["16h00","17h00","18h00","19h00","20h00"]},
   {id:"code",    label:"Code d'accès",              placeholder:"ex: 262626#",             req:false},
@@ -620,8 +611,8 @@ function Wizard({onSave,onClose,lieux:lieuxProp,typesLogement:typesProp}){
   // Résolution dynamique de la question courante : injecte les types depuis les props
   const rawQ=WQ[step];
   const q=rawQ.id==="type"?{...rawQ,opts:typesProp||["Villa","Appartement","Bureau","Riad"]}:rawQ;
-  // Datalist dynamique : pour le champ proprietaire, on extrait les noms uniques déjà renseignés
-  const dynamicDatalist=q.id==="proprietaire"?[...new Set((lieuxProp||[]).map(l=>l.proprietaire).filter(Boolean))]:q.datalist;
+  // Datalist dynamique : pour le champ cli, on extrait les noms clients uniques déjà renseignés
+  const dynamicDatalist=q.id==="cli"?[...new Set((lieuxProp||[]).map(l=>l.cli).filter(Boolean))]:q.datalist;
   const next=()=>{
     if(q.req&&!data[q.id]){setErr("Champ obligatoire");return;}setErr("");
     if(step<WQ.length-1)setStep(s=>s+1);
@@ -629,8 +620,7 @@ function Wizard({onSave,onClose,lieux:lieuxProp,typesLogement:typesProp}){
       const heureFin = data.heureFin ? parseInt(data.heureFin)*60 : null;
       // Sauvegarde du logement : lingeProprio est converti en booléen ("Oui" → true, autre → false)
       onSave({nom:data.nom,type:data.type||"Appartement GH",cli:data.cli||"Particulier",
-        proprietaire:data.proprietaire||"",
-        q:data.q||"Guéliz",adresse:data.adresse||"",lat:parseFloat(data.lat)||31.635,lng:parseFloat(data.lng)||-8.010,
+        q:data.q||"Guéliz",adresse:data.adresse||"",lat:31.635,lng:-8.010,
         d:parseInt(data.d)||90,heureFin:heureFin,code:data.code||"",notes:data.notes||"",lingeProprio:data.lingeProprio==="Oui"});
     }
   };
@@ -668,7 +658,7 @@ function Wizard({onSave,onClose,lieux:lieuxProp,typesLogement:typesProp}){
             <option value="">Sélectionner...</option>
             {q.opts.map(o=><option key={o}>{o}</option>)}
           </select>
-          :q.datalist||q.id==="proprietaire"
+          :q.datalist||q.id==="cli"
           ?<>
             <input list={`list-${q.id}`} value={data[q.id]||""} onChange={e=>setData(p=>({...p,[q.id]:e.target.value}))}
               placeholder={q.placeholder} autoFocus onKeyDown={e=>e.key==="Enter"&&next()}
@@ -1804,8 +1794,8 @@ export default function App(){
                                 :<span style={{fontSize:11,color:"#64748b",background:"#f8fafc",padding:"3px 8px",borderRadius:8,border:"1px solid #e2e8f0"}}>{l.type}</span>
                               }
                               {/* Nom du client — affiché comme badge à côté du type */}
-                              {!isEdit&&l.proprietaire&&(
-                                <span style={{fontSize:11,color:"#0f172a",background:"#f0fdf4",padding:"3px 8px",borderRadius:8,border:"1px solid #bbf7d0",fontWeight:600}}>👤 {l.proprietaire}</span>
+                              {!isEdit&&l.cli&&(
+                                <span style={{fontSize:11,color:"#0f172a",background:"#f0fdf4",padding:"3px 8px",borderRadius:8,border:"1px solid #bbf7d0",fontWeight:600}}>👤 {l.cli}</span>
                               )}
                               {isEdit
                                 ?<>
@@ -1871,22 +1861,21 @@ export default function App(){
                               :<span style={{fontSize:12,color:"#64748b"}}>{l.notes}</span>
                             }
                           </div>}
-                          {/* Propriétaire du logement — champ texte en édition, badge en consultation
-                              Autocomplete via datalist depuis les propriétaires déjà renseignés */}
+                          {/* Client — champ texte en édition avec autocomplete, badge en consultation */}
                           <div>
                             <div style={{fontSize:10,color:"#94a3b8",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Client</div>
                             {isEdit
                               ?<>
-                                <input list="list-proprio-edit" value={editLieu.proprietaire||""}
-                                  onChange={e=>setEditLieu(p=>({...p,proprietaire:e.target.value}))}
-                                  placeholder="ex: M. Alami"
+                                <input list="list-cli-edit" value={editLieu.cli||""}
+                                  onChange={e=>setEditLieu(p=>({...p,cli:e.target.value}))}
+                                  placeholder="ex: GetHost, M. Alami"
                                   style={{padding:"6px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,width:160,outline:"none",minHeight:44,boxSizing:"border-box"}}/>
-                                <datalist id="list-proprio-edit">
-                                  {[...new Set(lieux.map(l=>l.proprietaire).filter(Boolean))].map(p=><option key={p}>{p}</option>)}
+                                <datalist id="list-cli-edit">
+                                  {[...new Set(lieux.map(l=>l.cli).filter(Boolean))].map(p=><option key={p}>{p}</option>)}
                                 </datalist>
                               </>
-                              :(l.proprietaire
-                                ?<span style={{fontSize:12,fontWeight:600,color:"#0f172a"}}>👤 {l.proprietaire}</span>
+                              :(l.cli
+                                ?<span style={{fontSize:12,fontWeight:600,color:"#0f172a"}}>👤 {l.cli}</span>
                                 :<span style={{fontSize:12,color:"#94a3b8"}}>—</span>
                               )
                             }

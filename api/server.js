@@ -402,12 +402,13 @@ app.post("/api/lieux", auth, adminOnly, (req, res) => {
   // Validations
   if (!nom || !type || !q) return res.status(400).json({ message: "nom, type et quartier sont requis" });
   if (!getTypesValides().includes(type)) return res.status(400).json({ message: "Type de logement invalide" });
-  if (isNaN(lat) || lat < 30 || lat > 36) return res.status(400).json({ message: "Latitude invalide pour le Maroc" });
-  if (isNaN(lng) || lng < -14 || lng > -1) return res.status(400).json({ message: "Longitude invalide pour le Maroc" });
+  // GPS optionnel — valeurs par défaut Marrakech centre si non renseigné
+  const latFinal = (!isNaN(lat) && lat >= 30 && lat <= 36) ? lat : 31.635;
+  const lngFinal = (!isNaN(lng) && lng >= -14 && lng <= -1) ? lng : -8.010;
   if (isNaN(d) || d < 15 || d > 720) return res.status(400).json({ message: "Durée invalide (15-720 minutes)" });
 
   const lieux = readDB("lieux.json");
-  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", proprietaire: sanitize(req.body.proprietaire, 200) || "", q, adresse: adresse||"", lat, lng, d, code, notes, lingeProprio: !!req.body.lingeProprio, createdAt: new Date().toISOString() };
+  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", proprietaire: sanitize(req.body.proprietaire, 200) || "", q, adresse: adresse||"", lat: latFinal, lng: lngFinal, d, code, notes, lingeProprio: !!req.body.lingeProprio, createdAt: new Date().toISOString() };
   lieux.push(l);
   writeDB("lieux.json", lieux);
   res.status(201).json({ logement: l, message: "Logement ajouté" });
