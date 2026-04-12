@@ -46,10 +46,10 @@ app.use(helmet({
     directives: {
       defaultSrc:  ["'self'"],
       scriptSrc:   ["'self'", "'unsafe-inline'"], // React nécessite inline
-      styleSrc:    ["'self'", "'unsafe-inline'"],
+      styleSrc:    ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc:      ["'self'", "data:"],
       connectSrc:  ["'self'"],
-      fontSrc:     ["'self'"],
+      fontSrc:     ["'self'", "https://fonts.gstatic.com"],
       objectSrc:   ["'none'"],
       frameSrc:    ["'none'"],
       upgradeInsecureRequests: [],
@@ -124,6 +124,26 @@ function writeDB(file, data) {
 function sanitize(str, maxLen = 200) {
   if (typeof str !== "string") return "";
   return str.trim().slice(0, maxLen);
+}
+
+function normalizeLingeMode(mode, legacyLingeProprio) {
+  const hasExplicitMode = typeof mode === "string";
+  const rawMode = sanitize(hasExplicitMode ? mode : "", 30).toLowerCase();
+
+  if (rawMode === "proprietaire") return "proprietaire";
+  if (rawMode === "kleaning") return "kleaning";
+  if (hasExplicitMode && (rawMode === "" || rawMode === "none" || rawMode === "aucun")) return "";
+
+  if (legacyLingeProprio === true) return "proprietaire";
+  return "";
+}
+
+function buildLingeFields(body = {}) {
+  const lingeMode = normalizeLingeMode(body.lingeMode, body.lingeProprio);
+  return {
+    lingeMode,
+    lingeProprio: lingeMode === "proprietaire",
+  };
 }
 
 // ── VALIDATION ID — Anti path traversal ──────────────────────
@@ -391,6 +411,7 @@ app.post("/api/lieux", auth, adminOnly, (req, res) => {
   const nom  = sanitize(req.body.nom, 200);
   const type = sanitize(req.body.type, 50);
   const cli  = sanitize(req.body.cli, 100);
+  const proprietaire = sanitize(req.body.proprietaire, 200);
   const q    = sanitize(req.body.q, 100);
   const lat  = parseFloat(req.body.lat);
   const lng  = parseFloat(req.body.lng);
@@ -398,6 +419,7 @@ app.post("/api/lieux", auth, adminOnly, (req, res) => {
   const code    = sanitize(req.body.code, 50);
   const notes   = sanitize(req.body.notes, 500);
   const adresse = sanitize(req.body.adresse, 500);
+  const { lingeMode, lingeProprio } = buildLingeFields(req.body);
 
   // Validations
   if (!nom || !type || !q) return res.status(400).json({ message: "nom, type et quartier sont requis" });
@@ -408,7 +430,7 @@ app.post("/api/lieux", auth, adminOnly, (req, res) => {
   if (isNaN(d) || d < 15 || d > 720) return res.status(400).json({ message: "Durée invalide (15-720 minutes)" });
 
   const lieux = readDB("lieux.json");
-  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "Particulier", proprietaire: sanitize(req.body.proprietaire, 200) || "", q, adresse: adresse||"", lat: latFinal, lng: lngFinal, d, code, notes, lingeProprio: !!req.body.lingeProprio, createdAt: new Date().toISOString() };
+  const l = { id: `l_${Date.now()}`, nom, type, cli: cli || "", proprietaire: proprietaire || "", q, adresse: adresse||"", lat: latFinal, lng: lngFinal, d, code, notes, lingeMode, lingeProprio, createdAt: new Date().toISOString() };
   lieux.push(l);
   writeDB("lieux.json", lieux);
   res.status(201).json({ logement: l, message: "Logement ajouté" });
@@ -425,7 +447,7 @@ app.put("/api/lieux/:id", auth, adminOnly, (req, res) => {
   const b = req.body;
   if (b.nom)   lieux[idx].nom   = sanitize(b.nom, 200);
   if (b.type && getTypesValides().includes(b.type)) lieux[idx].type = b.type;
-  if (b.cli)   lieux[idx].cli   = sanitize(b.cli, 100);
+  if (b.cli !== undefined) lieux[idx].cli = sanitize(b.cli, 100);
   if (b.q)     lieux[idx].q     = sanitize(b.q, 100);
   if (b.lat != null) { const lat = parseFloat(b.lat); if (!isNaN(lat)) lieux[idx].lat = lat; }
   if (b.lng != null) { const lng = parseFloat(b.lng); if (!isNaN(lng)) lieux[idx].lng = lng; }
@@ -434,7 +456,11 @@ app.put("/api/lieux/:id", auth, adminOnly, (req, res) => {
   if (b.notes   !== undefined) lieux[idx].notes   = sanitize(b.notes, 500);
   if (b.adresse !== undefined) lieux[idx].adresse = sanitize(b.adresse, 500);
   if (b.proprietaire !== undefined) lieux[idx].proprietaire = sanitize(b.proprietaire, 200);
-  if (b.lingeProprio !== undefined) lieux[idx].lingeProprio = !!b.lingeProprio;
+  if (b.lingeMode !== undefined || b.lingeProprio !== undefined) {
+    const { lingeMode, lingeProprio } = buildLingeFields(b);
+    lieux[idx].lingeMode = lingeMode;
+    lieux[idx].lingeProprio = lingeProprio;
+  }
   lieux[idx].updatedAt = new Date().toISOString();
 
   writeDB("lieux.json", lieux);

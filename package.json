@@ -6,6 +6,7 @@
     "start": "NODE_ENV=production node api/server.js",
     "dev": "node api/server.js",
     "build": "vite build",
+    "test": "node --test tests/planning-utils.test.mjs",
     "setup": "node scripts/setup.js"
   },
   "dependencies": {
