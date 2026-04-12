@@ -52,5 +52,15 @@
       6
     ],
     "updatedAt": "2026-03-28T23:51:54.324Z"
+  },
+  {
+    "id": "emp_1776016591467",
+    "nom": "abdssamad",
+    "emoji": "👤",
+    "coul": "#475569",
+    "bg": "#f1f5f9",
+    "actif": true,
+    "joursOff": [],
+    "createdAt": "2026-04-12T17:56:31.467Z"
   }
 ]
