@@ -214,6 +214,12 @@ test("les helpers de chaînes gardent les assignations et détectent les conflit
   assert.equal(merged.length, 1);
   assert.deepEqual(merged[0].inters[0].employes.sort(), ["Amina", "Majda"]);
   assert.deepEqual(merged[0].inters[1].employes.sort(), ["Amina", "Majda"]);
+  assert.equal(merged[0].inters[0].heureDebut, "10:00");
+  assert.equal(merged[0].inters[0].heureFin, "11:30");
+  assert.equal(merged[0].inters[1].heureDebut, "10:20");
+  assert.equal(merged[0].inters[1].heureFin, "11:20");
+  assert.equal(merged[0].inters[1].debut, 620);
+  assert.equal(merged[0].inters[1].fin, 680);
 
   const updated = updateInterventionInChaines(merged, 0, 0, "employes", ["Touria"]);
   assert.deepEqual(updated[0].inters[0].employes, ["Touria"]);

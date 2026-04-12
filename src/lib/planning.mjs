@@ -305,33 +305,21 @@ export function mergeChainesAtIndexes(chaines, ci1, ci2, centre = DEFAULT_CENTRE
   const b = nextChaines[ci2].inters[0];
   const [first, second] = a.debut <= b.debut ? [a, b] : [b, a];
   const trajet = trajetMin(first.lieu || centre, second.lieu || centre);
-  const d1 = first.debut;
-  const f1 = d1 + first.d;
-  const d2 = arrondir5(f1 + trajet);
-  const f2 = d2 + second.d;
   const employes = [...new Set([...(first.employes || []), ...(second.employes || [])])];
 
   const inter1 = {
     ...first,
-    debut: d1,
-    fin: f1,
-    heureDebut: minToH(d1),
-    heureFin: minToH(f1),
     employes,
   };
   const inter2 = {
     ...second,
-    debut: d2,
-    fin: f2,
-    heureDebut: minToH(d2),
-    heureFin: minToH(f2),
     employes,
   };
 
   const merged = {
     inters: [inter1, inter2],
     trajetTotal: trajet,
-    dureeTotal: f2 - d1,
+    dureeTotal: Math.max(inter1.fin, inter2.fin) - Math.min(inter1.debut, inter2.debut),
   };
 
   const [hi, lo] = ci1 > ci2 ? [ci1, ci2] : [ci2, ci1];
