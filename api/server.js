@@ -126,6 +126,21 @@ function sanitize(str, maxLen = 200) {
   return str.trim().slice(0, maxLen);
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LEGACY_USERNAME_RE = /^[a-zA-Z0-9._-]+$/;
+
+function normalizeLoginIdentifier(value) {
+  return sanitize(value, 100).toLowerCase();
+}
+
+function isValidEmail(value) {
+  return EMAIL_RE.test(value);
+}
+
+function isValidLegacyUsername(value) {
+  return LEGACY_USERNAME_RE.test(value);
+}
+
 function normalizeLingeMode(mode, legacyLingeProprio) {
   const hasExplicitMode = typeof mode === "string";
   const rawMode = sanitize(hasExplicitMode ? mode : "", 30).toLowerCase();
@@ -189,11 +204,12 @@ app.post("/api/auth/login", async (req, res) => {
 
   // Validation de base
   if (!username || !password || typeof username !== "string" || typeof password !== "string") {
-    return res.status(400).json({ message: "Identifiant et mot de passe requis" });
+    return res.status(400).json({ message: "Email ou identifiant et mot de passe requis" });
   }
 
+  const loginIdentifier = normalizeLoginIdentifier(username);
   const users = readDB("users.json");
-  const user  = users.find(u => u.username.toLowerCase() === username.toLowerCase().trim());
+  const user  = users.find(u => u.username.toLowerCase() === loginIdentifier);
 
   // ✅ Anti-timing attack : même temps de réponse si user inexistant ou mdp incorrect
   // On compare toujours avec bcrypt (même si user inexistant → compare avec hash factice)
@@ -229,7 +245,7 @@ app.get("/api/users", auth, adminOnly, (req, res) => {
 });
 
 app.post("/api/users", auth, adminOnly, async (req, res) => {
-  const username    = sanitize(req.body.username, 50);
+  const username    = normalizeLoginIdentifier(req.body.username);
   const password    = req.body.password; // Ne pas sanitizer le mdp (perd les caractères spéciaux)
   const displayName = sanitize(req.body.displayName, 100);
   const roleInput   = sanitize(req.body.role, 20).toLowerCase();
@@ -237,7 +253,7 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   const role        = roleMap[roleInput] || "user";
 
   if (!username || !password || !displayName) {
-    return res.status(400).json({ message: "username, password et displayName sont requis" });
+    return res.status(400).json({ message: "Pseudo, identifiant de connexion et mot de passe sont requis" });
   }
   if (password.length < 8) {
     return res.status(400).json({ message: "Mot de passe trop court (minimum 8 caractères)" });
@@ -245,13 +261,16 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   if (password.length > 128) {
     return res.status(400).json({ message: "Mot de passe trop long" });
   }
-  if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
-    return res.status(400).json({ message: "Identifiant invalide (lettres, chiffres, . _ - uniquement)" });
+  if (role === "user" && !isValidEmail(username)) {
+    return res.status(400).json({ message: "Email invalide pour ce compte utilisateur" });
+  }
+  if (role === "admin" && !isValidEmail(username) && !isValidLegacyUsername(username)) {
+    return res.status(400).json({ message: "Identifiant admin invalide (email ou lettres, chiffres, . _ - uniquement)" });
   }
 
   const users = readDB("users.json");
   if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
-    return res.status(409).json({ message: "Cet identifiant est déjà utilisé" });
+    return res.status(409).json({ message: "Cet email ou identifiant est déjà utilisé" });
   }
 
   const hash = await bcrypt.hash(password, 12);
@@ -274,33 +293,33 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
 });
 
 app.put("/api/users/:id", auth, adminOnly, (req, res) => {
-  // Édition profil (identifiant/nom) limitée aux comptes utilisateur.
+  // Édition profil (email/pseudo) limitée aux comptes utilisateur.
   // Le profil d'un admin n'est pas modifiable ici pour éviter une perte d'accès accidentelle.
   const id = req.params.id;
   if (!isValidId(id)) return res.status(400).json({ message: "ID invalide" });
 
-  const username = sanitize(req.body.username, 50);
+  const username = normalizeLoginIdentifier(req.body.username);
   const displayName = sanitize(req.body.displayName, 100);
 
   if (!username && !displayName) {
-    return res.status(400).json({ message: "username ou displayName requis" });
+    return res.status(400).json({ message: "Email ou pseudo requis" });
   }
 
   const users = readDB("users.json");
   const idx = users.findIndex(u => u.id === id);
   if (idx === -1) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
-  // Règle demandée: le nom/identifiant est modifiable pour les comptes utilisateur.
+  // Règle demandée: le pseudo et l'email sont modifiables pour les comptes utilisateur.
   if (users[idx].role === "admin") {
     return res.status(400).json({ message: "Le nom d'un administrateur n'est pas modifiable ici" });
   }
 
   if (username) {
-    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
-      return res.status(400).json({ message: "Identifiant invalide (lettres, chiffres, . _ - uniquement)" });
+    if (!isValidEmail(username)) {
+      return res.status(400).json({ message: "Email invalide pour ce compte utilisateur" });
     }
     const exists = users.find(u => u.id !== id && u.username.toLowerCase() === username.toLowerCase());
-    if (exists) return res.status(409).json({ message: "Cet identifiant est déjà utilisé" });
+    if (exists) return res.status(409).json({ message: "Cet email est déjà utilisé" });
     users[idx].username = username;
   }
 

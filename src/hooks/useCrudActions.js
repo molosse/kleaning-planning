@@ -8,6 +8,11 @@ import {
 } from "../lib/api.mjs";
 import { normalizeLieuRecord, prepareLieuPayload } from "../lib/lieux.mjs";
 import { normalizeEmployeeRecord } from "../lib/team.mjs";
+import {
+  formatUserLogin,
+  isValidLoginIdentifier,
+  normalizeUserLogin,
+} from "../lib/users.mjs";
 
 export default function useCrudActions({
   equipe,
@@ -141,7 +146,23 @@ export default function useCrudActions({
   };
 
   const creerUser = async () => {
-    const data = await usersApi.create(newUser);
+    const payload = {
+      ...newUser,
+      username: normalizeUserLogin(newUser.username),
+      displayName: newUser.displayName.trim(),
+    };
+
+    if (!payload.username) {
+      setUserMsg(payload.role === "user" ? "Email de connexion requis" : "Identifiant admin requis");
+      return;
+    }
+
+    if (!isValidLoginIdentifier(payload.username, payload.role)) {
+      setUserMsg(payload.role === "user" ? "Email invalide pour ce compte utilisateur" : "Identifiant admin invalide");
+      return;
+    }
+
+    const data = await usersApi.create(payload);
     if (data.user) {
       setUsers((prev) => [...prev, data.user]);
       setNewUser({ username: "", password: "", displayName: "", role: "user" });
@@ -166,10 +187,29 @@ export default function useCrudActions({
   };
 
   const sauverEditionUser = async (id) => {
-    const payload = {
-      username: editUserForm.username.trim(),
-      displayName: editUserForm.displayName.trim(),
-    };
+    const currentUser = users.find((current) => current.id === id);
+    const nextUsername = normalizeUserLogin(editUserForm.username);
+    const nextDisplayName = editUserForm.displayName.trim();
+    const payload = {};
+
+    if (nextUsername && nextUsername !== currentUser?.username) {
+      payload.username = nextUsername;
+    }
+
+    if (nextDisplayName && nextDisplayName !== currentUser?.displayName) {
+      payload.displayName = nextDisplayName;
+    }
+
+    if (payload.username && !isValidLoginIdentifier(payload.username, "user")) {
+      setUserMsg("Email invalide pour ce compte utilisateur");
+      return;
+    }
+
+    if (!payload.username && !payload.displayName) {
+      setUserMsg("Aucune modification à enregistrer");
+      return;
+    }
+
     const data = await usersApi.update(id, payload);
     if (data.user) {
       setUsers((prev) => prev.map((current) => (current.id === id ? data.user : current)));
@@ -210,7 +250,7 @@ export default function useCrudActions({
     setConfirmDialog({
       visible: true,
       title: `Supprimer ${user?.displayName}?`,
-      message: `L'utilisateur "${user?.displayName}" (@${user?.username}) sera supprimé définitivement. Cette action ne peut pas être annulée.`,
+      message: `L'utilisateur "${user?.displayName}" (${formatUserLogin(user?.username)}) sera supprimé définitivement. Cette action ne peut pas être annulée.`,
       onConfirm: async () => {
         const data = await usersApi.remove(id);
         if (data.message) {

@@ -33,6 +33,11 @@ import {
   getInitialDateQ,
   getSelectedWeekday,
 } from "../src/lib/appState.mjs";
+import {
+  formatUserLogin,
+  isValidLoginIdentifier,
+  normalizeUserLogin,
+} from "../src/lib/users.mjs";
 
 test("les helpers horaires gardent un format cohérent", () => {
   assert.equal(minToH(750), "12:30");
@@ -261,4 +266,13 @@ test("les helpers d'état calculent les dérivés de l'app", () => {
   assert.equal(userTabs.some(([key]) => key === "users"), false);
 
   assert.equal(createDefaultEquipe().length >= 4, true);
+});
+
+test("les helpers accès normalisent les emails et gardent les anciens identifiants admin", () => {
+  assert.equal(normalizeUserLogin(" Amina@Kleaning.ma "), "amina@kleaning.ma");
+  assert.equal(isValidLoginIdentifier("amina@kleaning.ma", "user"), true);
+  assert.equal(isValidLoginIdentifier("amina", "user"), false);
+  assert.equal(isValidLoginIdentifier("admin_local", "admin"), true);
+  assert.equal(formatUserLogin("amina@kleaning.ma"), "amina@kleaning.ma");
+  assert.equal(formatUserLogin("admin_local"), "@admin_local");
 });

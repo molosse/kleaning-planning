@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DS_LOGIN, DS } from "./constants";
+import { normalizeUserLogin } from "./lib/users.mjs";
 
 const heroGradient = `linear-gradient(155deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 40%, ${DS_LOGIN.darkNavy} 70%, ${DS_LOGIN.darkNavy} 100%)`;
 const mobileGradient = `linear-gradient(155deg, ${DS_LOGIN.darkNavy} 0%, ${DS_LOGIN.navyMid} 100%)`;
@@ -107,7 +108,7 @@ export default function Login({ onLogin }) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: normalizeUserLogin(username), password }),
       });
       const data = await res.json();
 
@@ -265,7 +266,7 @@ export default function Login({ onLogin }) {
                   textTransform: "uppercase",
                 }}
               >
-                Identifiant
+                Email ou identifiant
               </label>
               <div style={{ position: "relative" }}>
                 <svg
@@ -288,8 +289,9 @@ export default function Login({ onLogin }) {
                 <input
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="votre identifiant"
+                  placeholder="votre email ou identifiant admin"
                   autoComplete="username"
+                  inputMode="email"
                   required
                   onFocus={() => setFocusUser(true)}
                   onBlur={() => setFocusUser(false)}
