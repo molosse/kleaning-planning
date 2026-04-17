@@ -21,6 +21,7 @@ export default function PlanningTab({
   dateQ,
   loading,
   onLoadAgenda,
+  onRelancerAssignation,
   autoAssocierLogements,
   onAutoAssocierChange,
   msg,
@@ -68,6 +69,16 @@ export default function PlanningTab({
             <RefreshCw size={15} style={{ animation: loading ? "spin .8s linear infinite" : "none" }} />
             {loading ? "Chargement…" : "Charger l'agenda Kleaning"}
           </button>
+          {chaines?.length > 0 && onRelancerAssignation && (
+            <button
+              onClick={onRelancerAssignation}
+              title="Re-assigner automatiquement les employées selon les règles (jours, capacité, priorité)"
+              style={{ flex: "0 0 auto", padding: "10px 14px", background: DS.sageSoft, color: DS.sage, border: `1.5px solid ${DS.sage}`, borderRadius: 10, fontSize: 13, fontWeight: 600, minHeight: 46, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, cursor: "pointer" }}
+            >
+              <Zap size={14} />
+              Auto-assigner
+            </button>
+          )}
           <label className="planning-auto-associate" style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 46, padding: "0 4px", color: DS.ink2, fontSize: 12, fontWeight: 600, cursor: "pointer", userSelect: "none" }}>
             <input
               type="checkbox"

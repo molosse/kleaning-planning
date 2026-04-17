@@ -1,6 +1,7 @@
 import { CLIENT_IC, TYPE_IC } from "../constants";
 import { planningApi } from "../lib/api.mjs";
 import {
+  autoAssigner,
   buildWhatsAppText,
   construireChainesSolo,
   mergeChainesAtIndexes,
@@ -14,6 +15,8 @@ import {
 export default function usePlanningActions({
   dateQ,
   lieux,
+  equipe,
+  extras,
   autoAssocierLogements,
   chaines,
   waText,
@@ -36,17 +39,27 @@ export default function usePlanningActions({
     const data = await planningApi.calendar(date);
 
     if (data?.message && !data?.events) {
+      setChaines([]);
       setMsg(`❌ ${data.message}`);
     } else if (data.events?.length > 0) {
       const parsed = data.events.map((event) => parseEv(event, lieux, 12 * 60));
-      const nextChaines = autoAssocierLogements ? optimiser(parsed) : construireChainesSolo(parsed);
+      const optimised = autoAssocierLogements ? optimiser(parsed) : construireChainesSolo(parsed);
+      const nextChaines = autoAssigner(optimised, equipe || [], extras || [], date);
       setChaines(nextChaines);
-      setMsg(`✅ ${parsed.length} interventions · ${nextChaines.length} chaînes${autoAssocierLogements ? " · auto-association active" : ""}`);
+      setMsg(`✅ ${parsed.length} interventions · ${nextChaines.length} chaînes · employées assignées`);
     } else {
+      setChaines([]);
       setMsg(`ℹ️ Aucun événement — ${dateQ}`);
     }
 
     setLoading(false);
+  };
+
+  const relancerAssignation = () => {
+    const [day, month, year] = dateQ.split("/");
+    const date = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    setChaines((prev) => autoAssigner(prev, equipe || [], extras || [], date));
+    setWaText("");
   };
 
   const changeInChaine = (ci, ii, field, value) => {
@@ -114,6 +127,7 @@ export default function usePlanningActions({
 
   return {
     chargerAgenda,
+    relancerAssignation,
     changeInChaine,
     supprimerChaine,
     associerChaines,

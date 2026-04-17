@@ -130,6 +130,7 @@ export default function App(){
 
   const {
     chargerAgenda,
+    relancerAssignation,
     changeInChaine,
     supprimerChaine,
     associerChaines,
@@ -139,6 +140,8 @@ export default function App(){
   } = usePlanningActions({
     dateQ,
     lieux,
+    equipe,
+    extras,
     autoAssocierLogements,
     chaines,
     waText,
@@ -249,6 +252,7 @@ export default function App(){
               dateQ={dateQ}
               loading={loading}
               onLoadAgenda={chargerAgenda}
+              onRelancerAssignation={relancerAssignation}
               autoAssocierLogements={autoAssocierLogements}
               onAutoAssocierChange={setAutoAssocierLogements}
               msg={msg}

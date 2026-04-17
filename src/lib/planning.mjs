@@ -113,8 +113,9 @@ export function parseEv(ev, lieux, defaultH = 12 * 60) {
 
   const lieuFinal = lieuVilla || lieu;
   const duree = lieuFinal?.d || (type === "Villa" ? 240 : 90);
-  const debut = ev.startTime ? hToMin(ev.startTime) : hDefaut(nom, defaultH);
-  const fin = ev.startTime ? debut + duree : hFin(nom, duree, defaultH);
+  const lieuDefaultH = lieuFinal?.heureDebutDefault ? hToMin(lieuFinal.heureDebutDefault) : null;
+  const debut = ev.startTime ? hToMin(ev.startTime) : hDefaut(nom, lieuDefaultH ?? defaultH);
+  const fin = ev.startTime ? debut + duree : hFin(nom, duree, lieuDefaultH ?? defaultH);
   const lingeMode = normalizeLingeMode(lieuFinal?.lingeMode, lieuFinal?.lingeProprio);
 
   return {
@@ -402,6 +403,149 @@ export function buildChargeByEmployee(chaines) {
     });
   });
   return charge;
+}
+
+// ─── AUTO-ASSIGNATION ────────────────────────────────────────────────────────
+
+// Ordre de priorité des extras. Saïda est réservée exclusivement à Clara.
+const EXTRAS_PRIORITY = ['Rachida', 'Saïda', 'Fatim Zahra', 'Fatiha', 'Nawal', 'Amal'];
+const CLARA_ASSIGNEE = 'Saïda';
+
+function normalizeNom(nom) {
+  return (nom || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function hasNom(pool, name) {
+  const n = normalizeNom(name);
+  return pool.some((e) => normalizeNom(e.nom) === n);
+}
+
+/**
+ * Assigne automatiquement les employées aux chaînes selon les règles :
+ *  - Imane : sam+dim uniquement / Majda : lun-sam
+ *  - Extras dans l'ordre EXTRAS_PRIORITY, seulement si fixe insuffisant
+ *  - Saïda → Clara uniquement (priorité absolue)
+ *  - Cabinet médical → première fixe disponible
+ *  - Villa = journée complète (pas cumulable)
+ *  - Appartement = 2 max / jour / personne
+ *  - Pas de chevauchement horaire
+ */
+export function autoAssigner(chaines, equipe, extras, dateISO) {
+  if (!chaines?.length) return chaines;
+
+  const dayOfWeek = new Date(dateISO + 'T00:00:00').getDay(); // 0=Dim, 6=Sam
+
+  // Employées fixes travaillant ce jour-là (ordre du tableau = priorité)
+  const fixedWorking = equipe
+    .filter((e) => e.actif !== false && !(e.joursOff || []).includes(dayOfWeek))
+    .map((e) => e.nom);
+
+  // Extras disponibles pour missions générales (Saïda exclue, réservée Clara)
+  const extrasGeneral = EXTRAS_PRIORITY.filter((name) => {
+    if (name === CLARA_ASSIGNEE) return false;
+    return hasNom(extras, name) || hasNom(equipe, name);
+  });
+
+  const saidaDisponible =
+    hasNom(extras, CLARA_ASSIGNEE) || hasNom(equipe, CLARA_ASSIGNEE);
+
+  // Suivi par employée
+  const schedule = {}; // { nom: [{debut, fin}] }
+  const capacity = {}; // { nom: { apts: 0, villas: 0 } }
+
+  const initEmp = (nom) => {
+    if (!schedule[nom]) schedule[nom] = [];
+    if (!capacity[nom]) capacity[nom] = { apts: 0, villas: 0 };
+  };
+
+  [...fixedWorking, ...EXTRAS_PRIORITY].forEach(initEmp);
+
+  const canAssign = (nom, chaine) => {
+    initEmp(nom);
+    const hasVilla = chaine.inters.some((i) => isVillaInter(i));
+    const aptCount = chaine.inters.filter((i) => !isVillaInter(i)).length;
+    const cap = capacity[nom];
+
+    if (hasVilla) {
+      if (cap.villas > 0 || cap.apts > 0) return false;
+    } else {
+      if (cap.villas > 0) return false;
+      if (cap.apts + aptCount > 2) return false;
+    }
+
+    for (const inter of chaine.inters) {
+      for (const slot of schedule[nom]) {
+        if (inter.debut < slot.fin && inter.fin > slot.debut) return false;
+      }
+    }
+    return true;
+  };
+
+  const assign = (nom, chaine) => {
+    initEmp(nom);
+    const hasVilla = chaine.inters.some((i) => isVillaInter(i));
+    const aptCount = chaine.inters.filter((i) => !isVillaInter(i)).length;
+
+    if (hasVilla) capacity[nom].villas += 1;
+    else capacity[nom].apts += aptCount;
+
+    chaine.inters.forEach((inter) => {
+      schedule[nom].push({ debut: inter.debut, fin: inter.fin });
+      inter.employes = [nom];
+    });
+  };
+
+  // Clone profond
+  const result = chaines.map((chaine) => ({
+    ...chaine,
+    inters: chaine.inters.map((inter) => ({ ...inter, employes: [] })),
+  }));
+
+  // ÉTAPE 1 — Clara → Saïda (priorité absolue)
+  if (saidaDisponible) {
+    initEmp(CLARA_ASSIGNEE);
+    result.forEach((chaine) => {
+      if (chaine.inters.some((i) => /\bclara\b/i.test(i.nom))) {
+        assign(CLARA_ASSIGNEE, chaine);
+      }
+    });
+  }
+
+  // ÉTAPE 2 — Cabinet médical → première fixe disponible
+  result.forEach((chaine) => {
+    if (chaine.inters[0]?.employes?.length) return;
+    if (chaine.inters.some((i) => /cabinet/i.test(i.nom))) {
+      for (const nom of fixedWorking) {
+        if (canAssign(nom, chaine)) { assign(nom, chaine); break; }
+      }
+    }
+  });
+
+  // ÉTAPE 3 — Missions restantes par ordre chronologique
+  const remaining = result
+    .filter((chaine) => !chaine.inters[0]?.employes?.length)
+    .sort((a, b) => a.inters[0].debut - b.inters[0].debut);
+
+  for (const chaine of remaining) {
+    if (chaine.inters[0]?.employes?.length) continue;
+
+    let done = false;
+
+    // Priorité : employées fixes
+    for (const nom of fixedWorking) {
+      if (canAssign(nom, chaine)) { assign(nom, chaine); done = true; break; }
+    }
+
+    // Sinon : extras dans l'ordre (sans Saïda)
+    if (!done) {
+      for (const nom of extrasGeneral) {
+        initEmp(nom);
+        if (canAssign(nom, chaine)) { assign(nom, chaine); break; }
+      }
+    }
+  }
+
+  return result;
 }
 
 export function buildConflits(chaines, equipe) {

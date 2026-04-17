@@ -18,8 +18,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "4620",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_002",
@@ -40,8 +42,10 @@
     "nbSdb": 4,
     "consommable": true,
     "codeBoiteCle": "4619",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_003",
@@ -62,8 +66,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_004",
@@ -84,14 +90,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "11:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_005",
     "nom": "Alba",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -106,14 +114,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_006",
     "nom": "Alma",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -128,20 +138,22 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_007",
     "nom": "Arbia",
     "type": "Villa",
-    "cli": "GetHost",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
     "lat": 31.635,
     "lng": -8.01,
-    "d": 270,
+    "d": 240,
     "code": "",
     "notes": "5 ch • 5 sdb • Consommables: oui",
     "lingeMode": "kleaning",
@@ -150,14 +162,16 @@
     "nbSdb": 5,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_008",
     "nom": "Berbère",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -172,14 +186,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_009",
     "nom": "Darna",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -194,14 +210,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_010",
     "nom": "Enja",
     "type": "Villa",
-    "cli": "GetHost",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -216,14 +234,16 @@
     "nbSdb": 4,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_011",
     "nom": "Kasbah",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -238,14 +258,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "9224",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_012",
     "nom": "Lotus",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -260,14 +282,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_013",
     "nom": "Lys",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -282,14 +306,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_014",
     "nom": "Medina",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -304,14 +330,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "bas:2626-haut:1984",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_015",
     "nom": "Mirage",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -326,14 +354,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "2022",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_016",
     "nom": "Moroccan Escape",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -348,14 +378,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_017",
     "nom": "Nahla",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -370,14 +402,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "7818",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_018",
     "nom": "Nomade",
     "type": "Villa",
-    "cli": "GetHost",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -392,14 +426,16 @@
     "nbSdb": 4,
     "consommable": true,
     "codeBoiteCle": "0902",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_019",
     "nom": "Noria",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -414,14 +450,16 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "0307",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_020",
     "nom": "Perle",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -436,14 +474,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_021",
     "nom": "Razane",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -458,14 +498,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_022",
     "nom": "Sahara",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -480,14 +522,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_023",
     "nom": "Salima",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -502,14 +546,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_024",
     "nom": "Sunset",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -524,14 +570,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_025",
     "nom": "l'Amira",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -546,14 +594,16 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_026",
     "nom": "l'Elara",
-    "type": "Appartement GH",
-    "cli": "GetHost",
+    "type": "Appartement",
+    "cli": "GH – Get Host",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -568,8 +618,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_027",
@@ -590,8 +642,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "11:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_028",
@@ -612,8 +666,10 @@
     "nbSdb": 1,
     "consommable": true,
     "codeBoiteCle": "0902",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_029",
@@ -634,8 +690,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "11:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_030",
@@ -656,14 +714,16 @@
     "nbSdb": 4,
     "consommable": true,
     "codeBoiteCle": "2026",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_031",
     "nom": "Les Orangers",
     "type": "Villa",
-    "cli": "Maison Madeleines",
+    "cli": "MM - maison madeleines",
     "proprietaire": "",
     "q": "À compléter",
     "adresse": "",
@@ -678,8 +738,10 @@
     "nbSdb": 3,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_032",
@@ -700,8 +762,10 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_033",
@@ -722,8 +786,10 @@
     "nbSdb": 4,
     "consommable": true,
     "codeBoiteCle": "",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "16:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   },
   {
     "id": "l_034",
@@ -744,7 +810,9 @@
     "nbSdb": 2,
     "consommable": true,
     "codeBoiteCle": "241616",
-    "source": "Tableau de bord 2026.pdf",
-    "updatedAt": "2026-04-12T19:13:53.000Z"
+    "heureDebutDefault": "12:00",
+    "heureFinDefault": "15:00",
+    "source": "Tableau de bord 2 2026.pdf",
+    "updatedAt": "2026-04-17T00:00:00.000Z"
   }
 ]
