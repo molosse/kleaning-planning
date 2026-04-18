@@ -86,6 +86,37 @@ test("parseEv utilise l'horaire Calendar et le logement correspondant", () => {
   assert.equal(intervention.lingeProprio, true);
 });
 
+test("parseEv garde le libellé d'un événement technique tout en retrouvant le logement", () => {
+  const lieux = [
+    {
+      id: "l_lys",
+      nom: "Lys",
+      type: "Appartement GH",
+      d: 180,
+      cli: "GetHost",
+      proprietaire: "",
+      lat: 31.63,
+      lng: -8.01,
+    },
+  ];
+
+  const intervention = parseEv(
+    {
+      id: "evt_lys",
+      summary: "Tech Lys, reparation poignee",
+      nom: "Tech Lys, reparation poignee",
+      startTime: "10:00",
+    },
+    lieux
+  );
+
+  assert.equal(intervention.nom, "Tech Lys, reparation poignee");
+  assert.equal(intervention.lieu?.id, "l_lys");
+  assert.equal(intervention.type, "Appartement GH");
+  assert.equal(intervention.heureDebut, "10:00");
+  assert.equal(intervention.heureFin, "13:00");
+});
+
 test("les helpers logement normalisent propriétaire et linge", () => {
   assert.equal(normalizeLingeMode("proprietaire"), "proprietaire");
   assert.equal(normalizeLingeMode("kleaning"), "kleaning");

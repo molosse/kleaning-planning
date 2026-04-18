@@ -622,6 +622,8 @@ app.get("/api/calendar", auth, async (req, res) => {
           if (clientInfo) {
             // Capitalise l'action (ex: "ménage" → "Ménage", "checkin" → "Checkin")
             const rawAction = tokens[1];
+            // Ne garder que les événements de ménage/nettoyage — ignorer checkin, checkout, arrivée, départ…
+            if (!/^(m[eé]nage|nettoyage|clean|entretien)/i.test(rawAction)) return null;
             const action = rawAction.charAt(0).toUpperCase() + rawAction.slice(1).toLowerCase();
             // Nom de la propriété : tous les mots restants (ex: "Escape", "Villa Rosa", "Duplex Elara")
             const propertyName = tokens.slice(2).join(" ");
@@ -635,25 +637,21 @@ app.get("/api/calendar", auth, async (req, res) => {
           }
         }
 
-        // ── Fallback : patterns historiques pour événements non structurés ──
-        // Conservé pour la rétrocompatibilité avec les anciens formats de résumé
+        // ── Fallback : événements non structurés ─────────────────────────
+        // On garde désormais le libellé Calendar d'origine pour éviter de
+        // transformer à tort un événement technique/maintenance en faux
+        // "ménage logement". Le rapprochement avec le logement se fait
+        // ensuite côté planning via la recherche floue sur le résumé.
         let type = "Appartement GH", cli = "GetHost", nom = s;
         if (/cabinet.m[eé]d/i.test(s))        { type="Bureau";         cli="Cabinet médical";   nom="Cabinet médical"; }
         else if (/alami/i.test(s))             { type="Bureau";         cli="Alami Ecom";        nom="Bureau Alami"; }
-        else if (/coralia/i.test(s))           { type="Appartement MM"; cli="Maison Madeleines"; nom="Appartement MM Coralia"; }
-        else if (/marrakea|nathalie/i.test(s)) { type="Appartement";    cli="Particulier";       nom="Appartement Marrakea Nathalie"; }
-        else if (/nahla/i.test(s))             nom="Appartement GH Nahla";
-        else if (/noria/i.test(s))             nom="Appartement GH Noria 3";
-        else if (/lys|prestigia/i.test(s))     nom="Appartement GH Lys Prestigia";
-        else if (/perle/i.test(s))             nom="Appartement GH La Perle";
-        else if (/razane/i.test(s))            nom="Appartement GH Razane";
-        else if (/elara|duplex/i.test(s))      nom="Appartement GH Duplex Elara";
-        else if (/waky|nomade/i.test(s))       nom="Appartement GH Nomade Waky";
-        else if (/enja/i.test(s))              { nom="GH Villa Enja"; type="Villa"; }
-        else if (/zoraida/i.test(s))           { type="Riad"; cli="CasaMichka"; nom="Riad Zoraida"; }
+        else if (/coralia/i.test(s))           { type="Appartement MM"; cli="Maison Madeleines"; }
+        else if (/marrakea|nathalie/i.test(s)) { type="Appartement";    cli="Particulier"; }
+        else if (/zoraida/i.test(s))           { type="Riad"; cli="CasaMichka"; }
         return { id: e.id, summary: s, nom, type, cli, startTime };
       })
-      .filter(e => { if (seen.has(e.nom)) return false; seen.add(e.nom); return true; });
+      .filter(Boolean)
+      .filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; });
 
     res.json({ events, count: events.length, date });
 
